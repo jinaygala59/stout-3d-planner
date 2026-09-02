@@ -2,67 +2,136 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Stout — 3D Bathroom Planner</title>
+  <meta name="description" content="Design your bathroom with Stout sanitaryware — place real fittings in a 3D room, try every finish, and take away a spec sheet." />
+  <meta property="og:title" content="Stout — 3D Bathroom Planner" />
+  <meta property="og:description" content="Place real Stout fittings in a 3D bathroom, try every finish, and take away a spec sheet." />
+  <meta property="og:type" content="website" />
+  <link rel="icon" href="assets/brand/favicon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="assets/brand/favicon.svg" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/planner.css?v=3d11cats" />
+  <link rel="stylesheet" href="assets/planner.css?v=DEV" />
 </head>
 <body>
   <div id="app">
-    <!-- top bar -->
+    <!-- ── top bar: brand · room · view · design ───────────────────────── -->
     <header class="topbar">
-      <div class="brand"><span class="mark">STO<b>U</b>T</span><span class="sub">3D Planner</span></div>
+      <div class="brand">
+        <span class="mark">STO<b>U</b>T</span><span class="sub">3D Planner</span>
+      </div>
       <div class="spacer"></div>
-      <div class="themes" id="themeTabs" title="Room finish — white, black or grey">
-        <button data-theme="white" class="on"><i style="--c:linear-gradient(135deg,#fbf9f5,#e2ddd3)"></i>White</button>
-        <button data-theme="black"><i style="--c:linear-gradient(135deg,#3a3a3f,#131315)"></i>Black</button>
-        <button data-theme="grey"><i style="--c:linear-gradient(135deg,#c3c1be,#7d7a77)"></i>Grey</button>
+
+      <div class="group" role="group" aria-label="Room">
+        <span class="glabel">Room</span>
+        <div class="themes" id="themeTabs">
+          <button type="button" data-theme="white" class="on" aria-pressed="true">
+            <i style="--c:linear-gradient(135deg,#fbf9f5,#e2ddd3)"></i><span>White</span></button>
+          <button type="button" data-theme="black" aria-pressed="false">
+            <i style="--c:linear-gradient(135deg,#3a3a3f,#131315)"></i><span>Black</span></button>
+          <button type="button" data-theme="grey" aria-pressed="false">
+            <i style="--c:linear-gradient(135deg,#c3c1be,#7d7a77)"></i><span>Grey</span></button>
+        </div>
+        <button type="button" id="toggleBasin" class="btn ghost" aria-pressed="true">Vanity</button>
       </div>
-      <div class="wall-tabs" id="wallTabs" title="Choose which wall to design on">
-        <button data-wall="back" class="on">Back wall</button>
-        <button data-wall="left">Left</button>
-        <button data-wall="right">Right</button>
+
+      <div class="group" role="group" aria-label="View">
+        <span class="glabel">View</span>
+        <div class="wall-tabs" id="wallTabs">
+          <button type="button" data-wall="back" class="on" aria-pressed="true">Back</button>
+          <button type="button" data-wall="left" aria-pressed="false">Left</button>
+          <button type="button" data-wall="right" aria-pressed="false">Right</button>
+        </div>
+        <button type="button" id="resetView" class="btn ghost" title="Back to the opening view">Reset</button>
+        <button type="button" id="lookToggle" class="btn ghost" aria-pressed="true"
+                title="Turn the room by moving the cursor over it">Cursor turn</button>
       </div>
-      <button id="toggleBasin" class="btn ghost" title="Show / hide the vanity basin">Remove vanity</button>
-      <button id="clearAll" class="btn ghost" title="Remove all fittings">Clear</button>
-      <button id="lookToggle" class="btn ghost" title="Turn the room just by moving the cursor over it">Cursor turn: On</button>
-      <button id="resetView" class="btn ghost">Reset view</button>
-      <button id="downloadPdf" class="btn ghost" title="Download this design as a PDF spec sheet">Download PDF</button>
-      <button id="snapCol" class="btn gold">Auto‑arrange</button>
+
+      <div class="group" role="group" aria-label="Design">
+        <button type="button" id="downloadPdf" class="btn ghost">Spec sheet</button>
+        <button type="button" id="moreBtn" class="btn ghost icon" aria-haspopup="menu"
+                aria-expanded="false" aria-controls="moreMenu" aria-label="More actions">···</button>
+        <div class="menu" id="moreMenu" role="menu" hidden>
+          <button type="button" role="menuitem" id="snapCol">Auto-arrange a shower set</button>
+          <button type="button" role="menuitem" id="clearAll" class="danger">Clear the room…</button>
+        </div>
+      </div>
     </header>
 
-    <!-- product rail -->
+    <!-- ── product rail ─────────────────────────────────────────────────── -->
     <aside class="rail" id="rail">
-      <div class="rail-head">Products</div>
-      <div id="catAccordion" class="cats"></div>
-      <div class="rail-foot">
-        <div class="hint">Tap a product to add it — or tap one of its colour dots to add it in that finish — it locks into the right spot. Tap a placed product to change its finish, resize or remove it. Move the cursor over the room to turn it; drag or pinch for full control, scroll to zoom.</div>
+      <button type="button" class="sheet-grip" id="sheetGrip" aria-expanded="false"
+              aria-controls="railBody" aria-label="Show products"><i></i><span>Products</span></button>
+
+      <div class="rail-body" id="railBody">
+        <div class="rail-head">
+          <span class="rh-title">Products</span>
+          <span class="rh-count" id="railCount"></span>
+        </div>
+
+        <div class="rail-tools">
+          <label class="srch">
+            <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+              <circle cx="7" cy="7" r="4.6" fill="none" stroke="currentColor" stroke-width="1.4"/>
+              <path d="M10.4 10.4 14 14" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+            </svg>
+            <input id="search" type="search" autocomplete="off" spellcheck="false"
+                   placeholder="Search name or code" aria-label="Search products by name or code">
+          </label>
+          <div class="fin-filter" id="finFilter" role="group" aria-label="Filter by finish"></div>
+        </div>
+
+        <div id="catAccordion" class="cats"></div>
+
+        <div class="rail-foot">
+          <p class="hint">Tap a product to add it, or tap one of its finish dots to add it in that
+            finish — each piece locks into its correct spot. Tap a piece in the room to change its
+            finish, resize or remove it. Move the cursor over the room to turn it; drag or pinch for
+            full control, scroll to zoom.</p>
+        </div>
       </div>
     </aside>
 
-    <!-- 3D canvas -->
+    <!-- ── 3D canvas ────────────────────────────────────────────────────── -->
     <main class="stage3d">
       <div id="canvasHolder"></div>
       <div id="loading" class="loading">Building your 3D room…</div>
-      <!-- floating controls for the selected product -->
-      <div id="tool" class="tool" hidden>
+
+      <!-- controls for the selected product -->
+      <div id="tool" class="tool" role="group" aria-label="Selected product" hidden>
         <div class="tool-name" id="toolName">Product</div>
         <div class="tool-fins" id="toolFins"></div>
         <div class="tool-row">
-          <button data-a="bigger" title="Bigger">＋</button>
-          <button data-a="smaller" title="Smaller">－</button>
-          <button data-a="remove" class="danger" title="Remove">Remove</button>
+          <button type="button" data-a="bigger" aria-label="Make bigger" title="Bigger">＋</button>
+          <button type="button" data-a="smaller" aria-label="Make smaller" title="Smaller">－</button>
+          <button type="button" data-a="remove" class="danger">Remove</button>
         </div>
       </div>
+
+      <!-- what is currently in the room, for screen readers -->
+      <p id="a11ySummary" class="sr-only" role="status" aria-live="polite"></p>
     </main>
+  </div>
+
+  <!-- confirm dialog (Clear) -->
+  <div class="modal" id="confirm" role="dialog" aria-modal="true" aria-labelledby="confirmTitle" hidden>
+    <div class="modal-card">
+      <h2 id="confirmTitle">Clear the room?</h2>
+      <p id="confirmBody">This removes every fitting you have placed. The room itself stays.</p>
+      <div class="modal-row">
+        <button type="button" class="btn ghost" id="confirmNo">Keep them</button>
+        <button type="button" class="btn gold" id="confirmYes">Clear</button>
+      </div>
+    </div>
   </div>
 
   <script src="assets/lib/three.min.js"></script>
   <script src="assets/lib/OrbitControls.js"></script>
   <script src="assets/lib/OBJLoader.js"></script>
   <script src="assets/lib/jspdf.umd.min.js"></script>
-  <script src="assets/catalog.js?v=3d11cats"></script>
-  <script src="assets/planner.js?v=3d11cats"></script>
+  <script src="assets/catalog.js?v=DEV"></script>
+  <script src="assets/planner.js?v=DEV"></script>
 </body>
 </html>

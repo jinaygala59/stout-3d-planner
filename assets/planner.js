@@ -926,7 +926,10 @@ function applyTheme(id, silent) {
   const cap = t.diffEnv == null ? 0.4 : t.diffEnv;
   tameDiffuseEnv(shell, cap); tameDiffuseEnv(cornerBasinUnit, cap); tameDiffuseEnv(lightRig, cap);
   setBasin(basinVisible);
-  document.querySelectorAll("#themeTabs [data-theme]").forEach(b => b.classList.toggle("on", b.dataset.theme === t.id));
+  document.querySelectorAll("#themeTabs [data-theme]").forEach(b => {
+    const on = b.dataset.theme === t.id;
+    b.classList.toggle("on", on); b.setAttribute("aria-pressed", String(on));
+  });
   try { localStorage.setItem(THEME_KEY, t.id); } catch (_) { /* storage blocked */ }
   if (!silent && typeof toast === "function") toast(t.label + " bathroom");
 }
@@ -1672,37 +1675,86 @@ function cardFinish(p) {
   return railFinish.get(p.id) || p.defaultFinish;
 }
 
+/* what the rail is currently filtered to */
+const railQuery = { text: "", finish: null };
+
+function railItems(group) {
+  const items = group.cats.reduce((a, c) => a.concat(PRODUCTS[c] || []), []);
+  const q = railQuery.text.trim().toLowerCase();
+  return items.filter(p => {
+    if (railQuery.finish && !(p.finishes || []).includes(railQuery.finish)) return false;
+    if (!q) return true;
+    return (p.name + " " + p.code + " " + (p.variant || "")).toLowerCase().includes(q);
+  });
+}
+
+/* finish filter chips — only the finishes that actually exist on the rail */
+function renderFinFilter() {
+  const el = $("#finFilter"); if (!el) return;
+  const present = new Set();
+  RAIL_GROUPS.forEach(g => g.cats.forEach(c => (PRODUCTS[c] || [])
+    .forEach(p => (p.finishes || []).forEach(f => present.add(f)))));
+  const order = FINISH_ORDER.filter(f => present.has(f));
+  el.innerHTML = order.map(fid => {
+    const f = FINISHES[fid];
+    return `<button type="button" data-finfilter="${fid}" aria-pressed="${railQuery.finish === fid}"
+      class="${railQuery.finish === fid ? "on" : ""}" style="--c:${f.swatch}"><i></i>${f.name}</button>`;
+  }).join("");
+  el.querySelectorAll("[data-finfilter]").forEach(b => b.onclick = () => {
+    railQuery.finish = railQuery.finish === b.dataset.finfilter ? null : b.dataset.finfilter;
+    renderFinFilter(); renderRail();
+  });
+}
+
 function renderRail() {
   const acc = $("#catAccordion");
+  let shown = 0, total = 0;
+  RAIL_GROUPS.forEach(g => g.cats.forEach(c => (total += (PRODUCTS[c] || []).length)));
+
   acc.innerHTML = RAIL_GROUPS.map((g, i) => {
-    const items = g.cats.reduce((a, c) => a.concat(PRODUCTS[c] || []), []);
+    const items = railItems(g);
+    shown += items.length;
     if (!items.length) return "";
+    const openByDefault = railQuery.text || railQuery.finish ? true : i === 0;
     const cards = items.map(p => {
       const fin = cardFinish(p);
       const img = (p.images && (p.images[fin] || p.images[p.defaultFinish])) || "";
       const fins = (p.finishes || []).map(fid => {
         const f = FINISHES[fid]; if (!f) return "";
-        return `<span class="fin ${fid === fin ? "on" : ""}" data-fin="${fid}" data-for="${p.id}"
-                 style="background:${f.swatch}" title="${f.name}"></span>`;
+        return `<button type="button" class="fin ${fid === fin ? "on" : ""}" data-fin="${fid}"
+                 style="--c:${f.swatch}" title="${f.name}"
+                 aria-label="${p.name} in ${f.name}"></button>`;
       }).join("");
       return `<div class="pcard ${isPlaced(p.id) ? "placed" : ""}" data-prod="${p.id}" data-cat="${p.catId}">
-        <div class="pic"><img src="${img}" loading="lazy" alt="${p.name}"></div>
-        <div class="nm">${p.name}</div>
-        <div class="sub">${p.code}${p.variant ? " · " + p.variant : ""}</div>
+        <button type="button" class="pc-main" data-add
+                aria-label="Add ${p.name}, ${p.code}${isPlaced(p.id) ? ", already in the room" : ""}">
+          <span class="pic"><img src="${img}" loading="lazy" alt=""></span>
+          <span class="nm">${p.name}</span>
+          <span class="sub">${p.code}${p.variant ? " · " + p.variant : ""}</span>
+        </button>
         ${fins ? `<div class="fins">${fins}</div>` : ""}
       </div>`;
     }).join("");
-    return `<div class="cat-group ${i === 0 ? "open" : ""}" data-group="${g.id}">
-      <button class="cat-title" data-toggle="${g.id}">
+    return `<div class="cat-group ${openByDefault ? "open" : ""}" data-group="${g.id}">
+      <button type="button" class="cat-title" data-toggle="${g.id}" aria-expanded="${openByDefault}">
         <span class="ic"><img src="${(items[0].images && items[0].images[items[0].defaultFinish]) || ""}" alt=""></span>
-        <b>${g.name}</b><span class="chev">▶</span>
+        <b>${g.name}</b><span class="n">${items.length}</span><span class="chev" aria-hidden="true">▶</span>
       </button>
       <div class="cat-items">${cards}</div>
     </div>`;
   }).join("");
 
-  acc.querySelectorAll("[data-toggle]").forEach(b => b.onclick = () =>
-    b.closest(".cat-group").classList.toggle("open"));
+  if (!shown) {
+    acc.innerHTML = `<p class="rail-empty">Nothing matches that.<br>Try a different word, or clear the finish filter.</p>`;
+  }
+  const count = $("#railCount");
+  if (count) count.textContent = shown === total ? `${total} designs` : `${shown} of ${total}`;
+
+  acc.querySelectorAll("[data-toggle]").forEach(b => b.onclick = () => {
+    const g = b.closest(".cat-group");
+    g.classList.toggle("open");
+    b.setAttribute("aria-expanded", g.classList.contains("open"));
+  });
 
   const productFor = card => (PRODUCTS[card.dataset.cat] || []).find(x => x.id === card.dataset.prod);
   const add = (p, fin) => {
@@ -1710,12 +1762,15 @@ function renderRail() {
     // always mount there, regardless of which wall tab is active. Deterministic
     // placement: a spout can never end up on the wrong wall. placeProduct flies
     // the camera to frame the piece once its artwork is in (async).
+    const replaced = [...placed.values()].find(r => r.product.catId === p.catId && r.product.id !== p.id);
+    const undo = snapshot();
     placeProduct(p, fin, skuCfg(p).mount || "back", true);
-    toast(`${p.name} · ${(FINISHES[fin] || {}).name || ""} added to your bathroom`);
+    toast(replaced ? `${p.name} replaced ${replaced.product.name}` : `${p.name} added`,
+          { label: "Undo", run: () => restore(undo) });
   };
 
   // a swatch picks the colour: recolour it if it is already in the room, else add
-  // it in that colour. Stop the click reaching the card, or it would add twice.
+  // it in that colour.
   acc.querySelectorAll(".fin[data-fin]").forEach(sw => sw.onclick = e => {
     e.stopPropagation();
     const card = sw.closest(".pcard"), p = productFor(card); if (!p) return;
@@ -1727,10 +1782,38 @@ function renderRail() {
     renderRail();
   });
 
-  acc.querySelectorAll("[data-prod]").forEach(card => card.onclick = () => {
-    const p = productFor(card); if (!p) return;
+  acc.querySelectorAll("[data-add]").forEach(btn => btn.onclick = () => {
+    const card = btn.closest(".pcard"), p = productFor(card); if (!p) return;
     add(p, cardFinish(p));
   });
+  describeRoom();
+  if (typeof renderEmptyState === "function") renderEmptyState();
+}
+
+/* a plain-language description of the room for screen readers */
+function describeRoom() {
+  const el = $("#a11ySummary"); if (!el) return;
+  const items = [...placed.values()];
+  el.textContent = items.length
+    ? `${items.length} fitting${items.length > 1 ? "s" : ""} in the room: ` +
+      items.map(r => `${r.product.name} in ${(FINISHES[r.finishId] || {}).name || r.finishId}`).join(", ")
+    : "The room is empty.";
+}
+
+/* ---- undo: snapshot / restore the whole placement set ------------------- */
+function snapshot() {
+  return [...placed.values()].map(r => ({
+    pid: r.product.id, cat: r.product.catId, fin: r.finishId, wall: r.wall, scale: baseScale(r.mesh),
+  }));
+}
+function restore(items) {
+  [...placed.keys()].forEach(removeProduct);
+  items.forEach(it => {
+    const p = (PRODUCTS[it.cat] || []).find(x => x.id === it.pid); if (!p) return;
+    const uid = placeProduct(p, it.fin, it.wall, false);
+    const rec = placed.get(uid); if (rec && it.scale) setBaseScale(rec.mesh, it.scale);
+  });
+  deselect(); renderRail(); saveDesign();
 }
 
 /* =========================================================================
@@ -1738,7 +1821,9 @@ function renderRail() {
    ========================================================================= */
 $("#wallTabs").querySelectorAll("[data-wall]").forEach(b => b.onclick = () => {
   activeWall = b.dataset.wall;
-  $("#wallTabs").querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b));
+  $("#wallTabs").querySelectorAll("button").forEach(x => {
+    x.classList.toggle("on", x === b); x.setAttribute("aria-pressed", String(x === b));
+  });
   faceWall(activeWall);
 });
 function faceWall(wall) {
@@ -1759,20 +1844,27 @@ $("#snapCol").onclick = () => autoArrange();
    their finish + Stout code. NO PRICING (ever) — pricing is the consultant's.
    ========================================================================= */
 let toastEl = null, toastTimer = null;
-function toast(msg) {
+function toast(msg, action) {
   if (!toastEl) {
     toastEl = document.createElement("div");
-    toastEl.style.cssText = "position:fixed;left:50%;bottom:170px;transform:translateX(-50%);" +
-      "background:rgba(18,18,20,.94);color:#f4efe6;font:600 13px/1.3 Manrope,sans-serif;" +
-      "padding:10px 18px;border:1px solid rgba(198,161,91,.5);border-radius:10px;z-index:9999;" +
-      "box-shadow:0 8px 24px rgba(0,0,0,.4);opacity:0;transition:opacity .2s;pointer-events:none";
+    toastEl.className = "toast";
+    toastEl.innerHTML = '<span></span>';
     document.body.appendChild(toastEl);
   }
-  toastEl.textContent = msg;
-  toastEl.style.opacity = "1";
+  toastEl.firstChild.textContent = msg;
+  const old = toastEl.querySelector("button"); if (old) old.remove();
+  if (action) {
+    const b = document.createElement("button");
+    b.type = "button"; b.textContent = action.label;
+    b.onclick = () => { action.run(); hideToast(); };
+    toastEl.appendChild(b);
+  }
+  toastEl.classList.add("show");
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => { toastEl.style.opacity = "0"; }, 2200);
+  toastTimer = setTimeout(hideToast, action ? 5200 : 2400);
 }
+function hideToast() { if (toastEl) toastEl.classList.remove("show"); }
+
 function categoryName(catId) {
   const c = (CATEGORIES || []).find(x => x.id === catId);
   return c ? c.name : catId;
@@ -1929,10 +2021,70 @@ function setBasin(show) {
   if (!cornerBasinUnit) return;
   if (show && !cornerBasinUnit.parent) shell.add(cornerBasinUnit);
   else if (!show && cornerBasinUnit.parent) shell.remove(cornerBasinUnit);
-  const btn = $("#toggleBasin"); if (btn) btn.textContent = show ? "Remove vanity" : "Add vanity";
+  const btn = $("#toggleBasin");
+  if (btn) { btn.classList.toggle("on", show); btn.setAttribute("aria-pressed", show);
+             btn.title = show ? "Hide the vanity" : "Show the vanity"; }
 }
 function clearAll() { [...placed.keys()].forEach(removeProduct); deselect(); saveDesign(); }
-$("#clearAll").onclick = clearAll;
+$("#clearAll").onclick = () => {
+  if (!placed.size) { toast("The room is already empty"); return; }
+  askConfirm(() => { const undo = snapshot(); clearAll(); toast("Room cleared", { label: "Undo", run: () => restore(undo) }); });
+};
+
+/* ---- confirm dialog ----------------------------------------------------- */
+let confirmRun = null;
+function askConfirm(run) {
+  confirmRun = run;
+  const m = $("#confirm"); if (!m) { run(); return; }
+  m.hidden = false;
+  $("#confirmYes").focus();
+}
+function closeConfirm() { const m = $("#confirm"); if (m) m.hidden = true; confirmRun = null; }
+if ($("#confirmNo")) $("#confirmNo").onclick = closeConfirm;
+if ($("#confirmYes")) $("#confirmYes").onclick = () => { const r = confirmRun; closeConfirm(); if (r) r(); };
+if ($("#confirm")) $("#confirm").addEventListener("click", e => { if (e.target === $("#confirm")) closeConfirm(); });
+
+/* ---- ··· menu ----------------------------------------------------------- */
+(function initMenu() {
+  const btn = $("#moreBtn"), menu = $("#moreMenu");
+  if (!btn || !menu) return;
+  const close = () => { menu.hidden = true; btn.setAttribute("aria-expanded", "false"); };
+  btn.onclick = e => {
+    e.stopPropagation();
+    const open = menu.hidden;
+    menu.hidden = !open;
+    btn.setAttribute("aria-expanded", String(open));
+  };
+  menu.querySelectorAll("button").forEach(b => b.addEventListener("click", close));
+  document.addEventListener("click", e => { if (!menu.hidden && !menu.contains(e.target)) close(); });
+  document.addEventListener("keydown", e => {
+    if (e.key !== "Escape") return;
+    if (!menu.hidden) { close(); btn.focus(); }
+    else if ($("#confirm") && !$("#confirm").hidden) closeConfirm();
+    else if (selected) deselect();
+  });
+})();
+
+/* ---- search + finish filter -------------------------------------------- */
+(function initSearch() {
+  const inp = $("#search"); if (!inp) return;
+  let t = null;
+  inp.addEventListener("input", () => {
+    clearTimeout(t);
+    t = setTimeout(() => { railQuery.text = inp.value; renderRail(); }, 110);
+  });
+})();
+
+/* ---- products sheet on a phone ----------------------------------------- */
+(function initSheet() {
+  const grip = $("#sheetGrip"), rail = $("#rail"); if (!grip || !rail) return;
+  grip.onclick = () => {
+    const open = !rail.classList.contains("open");
+    rail.classList.toggle("open", open);
+    grip.setAttribute("aria-expanded", String(open));
+    grip.querySelector("span").textContent = open ? "Close" : "Products";
+  };
+})();
 $("#toggleBasin").onclick = () => { setBasin(!basinVisible); saveDesign(); };
 
 /* smooth camera move */
@@ -1997,6 +2149,17 @@ renderer.domElement.addEventListener("pointermove", e => {
   look.tgtY = ny * look.RANGE_Y;
 });
 renderer.domElement.addEventListener("pointerleave", () => { look.tgtX = 0; look.tgtY = 0; });
+
+/* hover: nothing in the 3D view used to look clickable — cursor + a soft lift */
+let hovered = null;
+renderer.domElement.addEventListener("pointermove", e => {
+  const uid = pickProduct(e);
+  if (uid === hovered) return;
+  if (hovered && hovered !== selected) { const r = placed.get(hovered); if (r) setEmissive(r.mesh, 0x000000); }
+  hovered = uid;
+  if (hovered && hovered !== selected) { const r = placed.get(hovered); if (r) setEmissive(r.mesh, 0x140f08); }
+  holder.classList.toggle("over-product", !!hovered);
+});
 controls.addEventListener("start", () => { lookSuspended = true; });
 controls.addEventListener("end", () => { lookSuspended = false; look.hold = 20; });  // let the damping settle, then re-base
 
@@ -2004,7 +2167,8 @@ function setLook(on) {
   look.on = on;
   if (on) rebaseLook();
   const b = $("#lookToggle");
-  if (b) { b.textContent = "Cursor turn: " + (on ? "On" : "Off"); b.classList.toggle("on", on); }
+  if (b) { b.classList.toggle("on", on); b.setAttribute("aria-pressed", on);
+           b.title = on ? "Cursor turn is on — move the pointer to turn the room" : "Cursor turn is off"; }
   try { localStorage.setItem(LOOK_KEY, on ? "1" : "0"); } catch (_) { /* storage blocked */ }
 }
 if ($("#lookToggle")) $("#lookToggle").onclick = () => setLook(!look.on);
@@ -2043,8 +2207,37 @@ function loop() {
 
 window.__STOUT3D = { scene, camera, controls, renderer, shell, lightRig, room, THEMES, applyTheme, animateCam };
 
+/* ---- empty state: an invitation, not an instruction paragraph -----------
+   NOT an auto-placed demo — products must never appear on their own when the
+   site is opened (that was a specific complaint). This is a card that offers
+   the first move and disappears the moment anything is in the room.        */
+function renderEmptyState() {
+  let el = $("#empty");
+  if (placed.size) { if (el) el.remove(); return; }
+  if (el) return;
+  el = document.createElement("div");
+  el.id = "empty"; el.className = "empty";
+  el.innerHTML =
+    '<p class="e-kicker">Start your bathroom</p>' +
+    '<h2>Choose an overhead shower</h2>' +
+    '<p class="e-body">Pick anything from the left and it locks into its correct place, ' +
+    'in the finish you choose. Nothing is priced here — your Stout consultant does that.</p>' +
+    '<div class="e-row">' +
+      '<button type="button" data-e="first">Add a rain shower</button>' +
+      '<button type="button" data-e="set">Auto-arrange a full set</button>' +
+    '</div>';
+  $(".stage3d").appendChild(el);
+  el.querySelector('[data-e="first"]').onclick = () => {
+    const list = PRODUCTS["rain-shower"] || []; const p = list[0]; if (!p) return;
+    placeProduct(p, cardFinish(p), skuCfg(p).mount || "back", true);
+    toast(`${p.name} added`); renderRail();
+  };
+  el.querySelector('[data-e="set"]').onclick = () => autoArrange();
+}
+
 /* boot */
 resize();
+renderFinFilter();
 renderRail();
 setBasin(true);   // vanity is part of the furnished room — shown by default
 // ALWAYS open on a CLEAN furnished room: no demo auto-arrange AND no restore of a
