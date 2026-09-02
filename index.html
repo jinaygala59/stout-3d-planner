@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Stout — 3D Bathroom Planner</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/planner.css?v=3d11cats" />
+</head>
+<body>
+  <div id="app">
+    <!-- top bar -->
+    <header class="topbar">
+      <div class="brand"><span class="mark">STO<b>U</b>T</span><span class="sub">3D Planner</span></div>
+      <div class="spacer"></div>
+      <div class="themes" id="themeTabs" title="Room finish — white, black or grey">
+        <button data-theme="white" class="on"><i style="--c:linear-gradient(135deg,#fbf9f5,#e2ddd3)"></i>White</button>
+        <button data-theme="black"><i style="--c:linear-gradient(135deg,#3a3a3f,#131315)"></i>Black</button>
+        <button data-theme="grey"><i style="--c:linear-gradient(135deg,#c3c1be,#7d7a77)"></i>Grey</button>
+      </div>
+      <div class="wall-tabs" id="wallTabs" title="Choose which wall to design on">
+        <button data-wall="back" class="on">Back wall</button>
+        <button data-wall="left">Left</button>
+        <button data-wall="right">Right</button>
+      </div>
+      <button id="toggleBasin" class="btn ghost" title="Show / hide the vanity basin">Remove vanity</button>
+      <button id="clearAll" class="btn ghost" title="Remove all fittings">Clear</button>
+      <button id="lookToggle" class="btn ghost" title="Turn the room just by moving the cursor over it">Cursor turn: On</button>
+      <button id="resetView" class="btn ghost">Reset view</button>
+      <button id="downloadPdf" class="btn ghost" title="Download this design as a PDF spec sheet">Download PDF</button>
+      <button id="snapCol" class="btn gold">Auto‑arrange</button>
+    </header>
+
+    <!-- product rail -->
+    <aside class="rail" id="rail">
+      <div class="rail-head">Products</div>
+      <div id="catAccordion" class="cats"></div>
+      <div class="rail-foot">
+        <div class="hint">Tap a product to add it — or tap one of its colour dots to add it in that finish — it locks into the right spot. Tap a placed product to change its finish, resize or remove it. Move the cursor over the room to turn it; drag or pinch for full control, scroll to zoom.</div>
+      </div>
+    </aside>
+
+    <!-- 3D canvas -->
+    <main class="stage3d">
+      <div id="canvasHolder"></div>
+      <div id="loading" class="loading">Building your 3D room…</div>
+      <!-- floating controls for the selected product -->
+      <div id="tool" class="tool" hidden>
+        <div class="tool-name" id="toolName">Product</div>
+        <div class="tool-fins" id="toolFins"></div>
+        <div class="tool-row">
+          <button data-a="bigger" title="Bigger">＋</button>
+          <button data-a="smaller" title="Smaller">－</button>
+          <button data-a="remove" class="danger" title="Remove">Remove</button>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="assets/lib/three.min.js"></script>
+  <script src="assets/lib/OrbitControls.js"></script>
+  <script src="assets/lib/OBJLoader.js"></script>
+  <script src="assets/lib/jspdf.umd.min.js"></script>
+  <script src="assets/catalog.js?v=3d11cats"></script>
+  <script src="assets/planner.js?v=3d11cats"></script>
+</body>
+</html>
