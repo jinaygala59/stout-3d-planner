@@ -1799,6 +1799,35 @@ function faceWall(wall) {
   if (!targets) return;
   animateCam(new THREE.Vector3(...targets.pos), new THREE.Vector3(...targets.tgt));
 }
+/* ---- send the design on ------------------------------------------------
+   No backend to post to yet, so this does what the 2D site does: opens the
+   visitor's mail client with the design written out, and copies the same text
+   to the clipboard so a lead is never lost when there is no mail client. */
+const CONSULT_EMAIL = "skventuresdirect@gmail.com";
+function designAsText() {
+  const items = [...placed.values()];
+  const lines = items.map((r, i) =>
+    `${String(i + 1).padStart(2, "0")}. ${r.product.name}  (${r.product.code})  —  ` +
+    `${(FINISHES[r.finishId] || {}).name || r.finishId}`);
+  return [
+    `My Stout bathroom design`,
+    `Room finish: ${THEME.label}`,
+    ``,
+    ...lines,
+    ``,
+    `Please send me availability and a quotation for these.`,
+  ].join("\n");
+}
+if ($("#emailDesign")) $("#emailDesign").onclick = () => {
+  if (!placed.size) { toast("Add a few products first"); return; }
+  const body = designAsText();
+  try { navigator.clipboard.writeText(body); } catch (_) { /* not permitted */ }
+  const url = `mailto:${CONSULT_EMAIL}?subject=${encodeURIComponent("Stout bathroom design enquiry")}` +
+              `&body=${encodeURIComponent(body)}`;
+  window.location.href = url;
+  toast(`Copied — email us at ${CONSULT_EMAIL}`);
+};
+
 $("#resetView").onclick = () => animateCam(new THREE.Vector3(1.32, 1.52, 2.05), new THREE.Vector3(-0.25, 1.18, -1.15));
 $("#snapCol").onclick = () => autoArrange();
 
