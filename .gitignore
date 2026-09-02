@@ -2,3 +2,4 @@
 _dev/
 *.bak-*
 assets/*.bak-*
+dist/

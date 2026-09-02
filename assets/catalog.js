@@ -168,7 +168,10 @@ function buildProducts() {
     const cat = CATEGORIES.find(c => c.id === rp.cat);
     const finishes = rp.finishes.slice().sort((a, b) => FINISH_ORDER.indexOf(a) - FINISH_ORDER.indexOf(b));
     const images = {};
-    finishes.forEach(f => (images[f] = `assets/products/${rp.code}-${f}.png`));
+    // WebP: the source renders are ~200-550 KB each as PNG-24 and 20-30 KB as
+    // WebP at q0.9 — 23 MB down to 2.4 MB across the catalogue. The PNGs stay in
+    // the repo as the masters; only the WebP copies ship.
+    finishes.forEach(f => (images[f] = `assets/products/${rp.code}-${f}.webp`));
     byCat[rp.cat].push({
       id: rp.code,
       catId: rp.cat,
