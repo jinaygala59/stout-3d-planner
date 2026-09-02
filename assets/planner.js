@@ -24,17 +24,16 @@ const CAT3D = {
   // Shower column (x=0), user-specified order TOP→BOTTOM:
   //   body jet (1.61-2.03) → wall spout (1.28-1.56) → diverter (0.62-1.19)
   //   → wall bib TAP at the bottom (0.31-0.53). Even ~9cm gaps.
-  "body-jet":     { mount: "back", width: 0.17, x: 0, y: 1.35 },   // CENTRE of the 4-jet flanking set
+  "body-jet":     { mount: "back", width: 0.17, x: 0, y: 1.35, panel: true },   // CENTRE of the 4-jet flanking set
   "bath-spout":   { mount: "back", width: 0.44, y: 1.42 },
-  "diverter":     { mount: "back", width: 0.18, y: 0.90 },   // its render is a TALL trim panel — keep it slim so it doesn't read as a plank
+  "diverter":     { mount: "back", width: 0.18, y: 0.90, panel: true },   // its render is a TALL trim panel — keep it slim so it doesn't read as a plank
   "wall-tap":     { mount: "back", width: 0.34, y: 0.42 },   // bucket tap sits LAST, near the floor
   // Off-column pieces — each has its OWN clear patch of wall:
-  "thermostatic": { mount: "back", width: 0.50, y: 1.60, x:  1.16 },  // button panel — clear wall right of the niche (left side is all vanity+mirror)
+  "thermostatic": { mount: "back", width: 0.50, y: 1.60, x:  1.16, panel: true },  // button panel — clear wall right of the niche (left side is all vanity+mirror)
   "basin-mixer":  { mount: "back", width: 0.34, y: 0.98, x:  1.18 },  // open wall to the right of the niche
   "hand-shower":  { mount: "back", width: 0.17, y: 0.72, x:  0.72 },  // handset on a bracket, right of the shower column (like the reference)
   "health-faucet":{ mount: "right", width: 0.20, y: 0.72, z: 0.52 },  // shattaf on the wall beside the WC (wcZ 0.95)
   "waste":        { mount: "back", width: 0.16, y: 0.40, x:  0.42 },  // small accessory, beside the tap
-  "shower-seat":  { mount: "back", width: 0.52, y: 0.48, x:  0.95 },
 };
 const catCfg = id => CAT3D[id] || { mount: "back", width: 0.34, y: 1.30 };
 
@@ -426,7 +425,7 @@ const THEMES = {
               spot: 0.42, spotColor: 0xffe9c9, trim: 0xa9a294, bulb: 0xfff6e6,
               cove: 0.2, coveColor: 0xffe6c4, coveAlpha: 0.3, niche: 0.16, mirror: 0.22, mirrorColor: 0xfff2e0 },
     furn:   { cab: 0xefebe3, counter: 0xf9f7f2, bowl: 0xfdfcfa, mixer: 0x4a4540, mixerRough: 0.34,
-              wc: 0xfbfaf7, mirrorFrame: 0xd6d0c5, rail: 0x4a4540, towel: 0xf1ede4, mat: 0xded7c8, drain: 0xb2aca1,
+              wc: 0xfbfaf7, mirrorFrame: 0xd6d0c5, rail: 0x4a4540, towel: 0xf1ede4, mat: 0xded7c8, drain: 0xb2aca1, wet: 0xd8d2c4,
               pelmet: 0xf1eee7 },
     ao: 0.5, diffEnv: 0.34,
   },
@@ -448,7 +447,7 @@ const THEMES = {
               spot: 0.55, spotColor: 0xffeed4, trim: 0x1d1d1f, bulb: 0xfff3e2,
               cove: 0.34, coveColor: 0xffd8a4, coveAlpha: 0.55, niche: 0.26, mirror: 0.4, mirrorColor: 0xfff0d8 },
     furn:   { cab: 0x3a2b20, counter: 0xefece6, bowl: 0x17171a, mixer: 0x1b1b1d, mixerRough: 0.42,
-              wc: 0xf7f6f3, mirrorFrame: 0x161619, rail: 0x1b1b1d, towel: 0xd6d3cd, mat: 0x1c1c1f, drain: 0x1e1e21,
+              wc: 0xf7f6f3, mirrorFrame: 0x161619, rail: 0x1b1b1d, towel: 0xd6d3cd, mat: 0x1c1c1f, drain: 0x1e1e21, wet: 0x232327,
               pelmet: 0x232326 },
     ao: 0.7, diffEnv: 0.46,
   },
@@ -471,7 +470,7 @@ const THEMES = {
               spot: 0.5, spotColor: 0xfff3e2, trim: 0x2a2c2f, bulb: 0xfff6ea,
               cove: 0.24, coveColor: 0xffe2b8, coveAlpha: 0.4, niche: 0.2, mirror: 0.28, mirrorColor: 0xfff2e2 },
     furn:   { cab: 0x35373a, counter: 0xeceae7, bowl: 0xfbfaf9, mixer: 0x1b1b1d, mixerRough: 0.42,
-              wc: 0xfbfaf8, mirrorFrame: 0x2a2c2f, rail: 0x1b1b1d, towel: 0xe1dfdb, mat: 0x8e8d8a, drain: 0x6c6e71,
+              wc: 0xfbfaf8, mirrorFrame: 0x2a2c2f, rail: 0x1b1b1d, towel: 0xe1dfdb, mat: 0x8e8d8a, drain: 0x6c6e71, wet: 0x8d8a86,
               pelmet: 0xd9d7d4 },
     ao: 0.64, diffEnv: 0.38,
   },
@@ -871,14 +870,32 @@ function buildBathroomDetails(t) {
   towel.rotation.y = Math.PI / 2;              // width runs along the rail, faces the room
   grp.add(towel);
 
+  /* ---- the shower zone: fittings used to float on an undefined wall over an
+     undefined floor. A shallow recessed tray in a wetter, darker tile — with
+     the linear drain sitting IN it — tells you where the shower is. ---- */
+  const zoneW = 1.30, zoneD = 1.05, zoneZ = -HZ + zoneD / 2 + 0.02;
+  const wetTile = new THREE.MeshStandardMaterial({
+    color: F.wet || F.mat, roughness: 0.22, metalness: 0.1, envMapIntensity: 1.25,
+  });
+  const tray = new THREE.Mesh(new THREE.BoxGeometry(zoneW, 0.018, zoneD), wetTile);
+  tray.position.set(0, 0.009, zoneZ); tray.receiveShadow = true; grp.add(tray);
+  // a thin metal edge where the tray meets the room floor
+  const edgeMat = new THREE.MeshStandardMaterial({ color: F.drain, metalness: 0.85, roughness: 0.35, envMapIntensity: 1.2 });
+  const eF = new THREE.Mesh(new THREE.BoxGeometry(zoneW, 0.02, 0.012), edgeMat);
+  eF.position.set(0, 0.01, zoneZ + zoneD / 2); grp.add(eF);
+  [-1, 1].forEach(sx => {
+    const e = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.02, zoneD), edgeMat);
+    e.position.set(sx * zoneW / 2, 0.01, zoneZ); grp.add(e);
+  });
+
   /* linear floor drain in the shower zone */
   const drain = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.008, 0.07),
     new THREE.MeshStandardMaterial({ color: F.drain, metalness: 0.85, roughness: 0.3, envMapIntensity: 1.2 }));
-  drain.position.set(0, 0.005, -1.02); grp.add(drain);   // under the shower centre-line
+  drain.position.set(0, 0.021, -1.05); grp.add(drain);   // in the tray, under the shower centre-line
   for (let i = -3; i <= 3; i++) {
     const slot = new THREE.Mesh(new THREE.BoxGeometry(0.008, 0.004, 0.05),
       new THREE.MeshStandardMaterial({ color: 0x1d1c1a, roughness: 0.7 }));
-    slot.position.set(i * 0.06, 0.011, -1.02); grp.add(slot);
+    slot.position.set(i * 0.06, 0.027, -1.05); grp.add(slot);
   }
 
   /* ---- the small stuff that makes a render read as a lived-in room ----
@@ -980,6 +997,20 @@ function shadowTexture() {
   _shadowTex = new THREE.CanvasTexture(c);
   return _shadowTex;
 }
+/* the metal tone for a finish id — every product's own artwork carries its
+   finish, but the parts we build (housings, arms, hoses, 3D models) need the hex */
+function finishHex(fid, product) {
+  const f = FINISHES[fid || (product && product.defaultFinish)];
+  return parseInt(((f && f.tone) || "#c6a15b").replace("#", ""), 16);
+}
+
+/* a mesh in the chosen metal, tagged so a finish change recolours it */
+function metalPart(geo, hex, rough) {
+  const m = new THREE.Mesh(geo, metalMat(hex, rough));
+  m.userData.metal = true;
+  return m;
+}
+
 /* attach (or refresh) a shadow plane as a CHILD of the product mesh, sitting
    just behind it toward the wall, so it follows every move / resize for free */
 function addContactShadow(mesh, w, h) {
@@ -995,73 +1026,6 @@ function addContactShadow(mesh, w, h) {
   mesh.add(s);
 }
 
-/* ---- REAL 3D FIXTURE MODELS (procedural geometry in the brand finish) -----
-   Each builder returns a Group modelled facing +Z (outward from the back wall).
-   placeProduct applies the per-wall rotation, so the same model works on any
-   wall / the ceiling. Parts flagged userData.metal recolour on finish change. */
-function finishHex(fid, product) {
-  const f = FINISHES[fid || (product && product.defaultFinish)];
-  return parseInt(((f && f.tone) || "#c6a15b").replace("#", ""), 16);
-}
-function metalPart(geo, hex, rough) {
-  const m = new THREE.Mesh(geo, metalMat(hex, rough));
-  m.userData.metal = true;
-  return m;
-}
-const FIXTURE3D = {
-  "rain-shower": (hex) => {
-    const g = new THREE.Group();
-    g.add(metalPart(new THREE.BoxGeometry(0.52, 0.36, 0.035), hex, 0.32));
-    const inner = metalPart(new THREE.BoxGeometry(0.46, 0.30, 0.02), hex, 0.14);
-    inner.position.z = 0.013; g.add(inner);
-    return g;
-  },
-  "thermostatic": (hex) => {
-    const g = new THREE.Group();
-    g.add(metalPart(new THREE.BoxGeometry(0.42, 0.13, 0.03), hex, 0.28));
-    for (let i = 0; i < 5; i++) {
-      const k = metalPart(new THREE.CylinderGeometry(0.019, 0.019, 0.03, 24), hex, 0.2);
-      k.rotation.x = Math.PI / 2; k.position.set(-0.16 + i * 0.08, 0, 0.026); g.add(k);
-    }
-    return g;
-  },
-  "diverter": (hex) => {
-    const g = new THREE.Group();
-    g.add(metalPart(new THREE.BoxGeometry(0.16, 0.34, 0.03), hex, 0.28));
-    const knob = metalPart(new THREE.BoxGeometry(0.055, 0.055, 0.035), hex, 0.2);
-    knob.position.set(0, 0.09, 0.022); g.add(knob);
-    const lever = metalPart(new THREE.BoxGeometry(0.05, 0.15, 0.045), hex, 0.2);
-    lever.position.set(0, -0.06, 0.055); lever.rotation.x = -0.32; g.add(lever);
-    return g;
-  },
-  "bath-spout": (hex) => {
-    const g = new THREE.Group();
-    const base = metalPart(new THREE.BoxGeometry(0.11, 0.11, 0.04), hex, 0.24);
-    base.position.z = 0.02; g.add(base);
-    const arm = metalPart(new THREE.BoxGeometry(0.085, 0.06, 0.20), hex, 0.22);
-    arm.position.set(0, -0.01, 0.13); g.add(arm);
-    const tip = metalPart(new THREE.BoxGeometry(0.075, 0.05, 0.05), hex, 0.22);
-    tip.position.set(0, -0.03, 0.23); g.add(tip);
-    return g;
-  },
-  // tall single-lever basin mixer (real 3D — was the only flat-panel fitting left)
-  "basin-mixer": (hex) => {
-    const g = new THREE.Group();
-    const plate = metalPart(new THREE.BoxGeometry(0.08, 0.14, 0.02), hex, 0.3);
-    plate.position.set(0, -0.06, 0.01); g.add(plate);
-    const base = metalPart(new THREE.CylinderGeometry(0.035, 0.042, 0.03, 24), hex, 0.28);
-    base.position.set(0, -0.11, 0.03); g.add(base);
-    const body = metalPart(new THREE.BoxGeometry(0.05, 0.24, 0.05), hex, 0.16);
-    body.position.set(0, 0.03, 0.03); g.add(body);
-    const spout = metalPart(new THREE.BoxGeometry(0.045, 0.045, 0.14), hex, 0.16);
-    spout.position.set(0, 0.14, 0.09); g.add(spout);
-    const tip = metalPart(new THREE.BoxGeometry(0.042, 0.06, 0.042), hex, 0.16);
-    tip.position.set(0, 0.11, 0.15); g.add(tip);
-    const lever = metalPart(new THREE.BoxGeometry(0.10, 0.02, 0.028), hex, 0.16);
-    lever.position.set(0.055, 0.16, 0.03); lever.rotation.z = 0.2; g.add(lever);
-    return g;
-  },
-};
 function setEmissive(obj, hex) {
   obj.traverse(o => { if (o.material && o.material.emissive) o.material.emissive.setHex(hex); });
 }
@@ -1366,7 +1330,18 @@ function placeProduct(product, finishId, wall, frame) {
       if (wall === "counter") {
         mesh.geometry.translate(0, width * ar / 2, 0);   // stand it on the counter, don't bury it
         rim.position.z = -0.008;
+      } else if (cfg.panel && wall !== "ceiling") {
+        // a thermostatic panel / diverter trim / jet plate is a solid object on the
+        // wall, not a sticker: give it a body in the chosen finish behind the art
+        const d = Math.max(0.014, width * 0.05);
+        mesh.geometry.translate(0, 0, d);
+        rim.position.z = d - 0.006;
+        const body = new THREE.Mesh(new THREE.BoxGeometry(width * 0.96, width * ar * 0.96, d),
+          new THREE.MeshStandardMaterial({ color: finishHex(finishId, product), metalness: 0.85, roughness: 0.34, envMapIntensity: 1.15 }));
+        body.name = "housing"; body.position.z = d / 2; mesh.add(body);
       }
+      // grounding: without this every fitting reads as pasted onto the tile
+      if (wall !== "ceiling" && wall !== "counter") addContactShadow(mesh, width, width * ar);
       if (wall === "ceiling" && cfg.shape === "head") {
         // a round head screws onto a drop pipe — hang it below the ceiling so it
         // reads as a shower head rather than a decal stuck to the slab
@@ -1527,7 +1502,6 @@ function cutoutFallback(rec) {
 let selected = null;      // uid
 const raycaster = new THREE.Raycaster();
 const ndc = new THREE.Vector2();
-let dragging = null;      // { uid, wall }
 
 function setNDC(e) {
   const r = renderer.domElement.getBoundingClientRect();
@@ -1563,20 +1537,6 @@ renderer.domElement.addEventListener("pointerdown", e => {
     deselect();
   }
 });
-renderer.domElement.addEventListener("pointermove", e => {
-  if (!dragging) return;
-  const rec = placed.get(dragging.uid); if (!rec) return;
-  setNDC(e); raycaster.setFromCamera(ndc, camera);
-  const hit = new THREE.Vector3();
-  if (raycaster.ray.intersectPlane(WALLS[dragging.wall].plane, hit)) {
-    positionOnWall(rec.mesh, dragging.wall, hit);
-  }
-});
-const endDrag = e => {
-  if (dragging) { controls.enabled = true; try { renderer.domElement.releasePointerCapture(e.pointerId); } catch (_) {} dragging = null; }
-};
-renderer.domElement.addEventListener("pointerup", endDrag);
-renderer.domElement.addEventListener("pointercancel", endDrag);
 
 /* selected-product floating tool */
 function renderTool() {
@@ -1675,6 +1635,10 @@ function cardFinish(p) {
   return railFinish.get(p.id) || p.defaultFinish;
 }
 
+/* rail thumbnails: 220px copies of the product renders. The full-size art is
+   only fetched when a piece actually goes into the room. */
+const thumbOf = path => path ? path.replace("assets/products/", "assets/products/thumb/") : "";
+
 /* what the rail is currently filtered to */
 const railQuery = { text: "", finish: null };
 
@@ -1728,7 +1692,7 @@ function renderRail() {
       return `<div class="pcard ${isPlaced(p.id) ? "placed" : ""}" data-prod="${p.id}" data-cat="${p.catId}">
         <button type="button" class="pc-main" data-add
                 aria-label="Add ${p.name}, ${p.code}${isPlaced(p.id) ? ", already in the room" : ""}">
-          <span class="pic"><img src="${img}" loading="lazy" alt=""></span>
+          <span class="pic"><img src="${thumbOf(img)}" loading="lazy" decoding="async" alt=""></span>
           <span class="nm">${p.name}</span>
           <span class="sub">${p.code}${p.variant ? " · " + p.variant : ""}</span>
         </button>
@@ -1737,7 +1701,7 @@ function renderRail() {
     }).join("");
     return `<div class="cat-group ${openByDefault ? "open" : ""}" data-group="${g.id}">
       <button type="button" class="cat-title" data-toggle="${g.id}" aria-expanded="${openByDefault}">
-        <span class="ic"><img src="${(items[0].images && items[0].images[items[0].defaultFinish]) || ""}" alt=""></span>
+        <span class="ic"><img src="${thumbOf((items[0].images && items[0].images[items[0].defaultFinish]) || "")}" alt=""></span>
         <b>${g.name}</b><span class="n">${items.length}</span><span class="chev" aria-hidden="true">▶</span>
       </button>
       <div class="cat-items">${cards}</div>
@@ -1879,7 +1843,25 @@ function captureCanvas() {
   renderer.render(scene, camera);
   return renderer.domElement.toDataURL("image/jpeg", 0.92);
 }
-function downloadSpecSheet() {
+/* jsPDF needs pixels, and a transparent PNG would print on a black ground —
+   composite each product render onto white first. */
+function thumbDataURL(path, px) {
+  return new Promise(res => {
+    const img = new Image();
+    img.onload = () => {
+      const c = mkCanvas(px, px), x = c.getContext("2d");
+      x.fillStyle = "#ffffff"; x.fillRect(0, 0, px, px);
+      const r = Math.min(px / img.naturalWidth, px / img.naturalHeight) * 0.92;
+      const w = img.naturalWidth * r, h = img.naturalHeight * r;
+      x.drawImage(img, (px - w) / 2, (px - h) / 2, w, h);
+      res(c.toDataURL("image/jpeg", 0.88));
+    };
+    img.onerror = () => res(null);
+    img.src = path;
+  });
+}
+
+async function downloadSpecSheet() {
   if (!window.jspdf || !window.jspdf.jsPDF) { toast("PDF engine not loaded"); return; }
   const items = [...placed.values()];
   if (!items.length) { toast("Add a few products first, then download"); return; }
@@ -1887,6 +1869,11 @@ function downloadSpecSheet() {
   // Fly to the hero view and give the animation a moment before we snapshot.
   animateCam(new THREE.Vector3(1.32, 1.52, 2.05), new THREE.Vector3(-0.25, 1.18, -1.15));
   const prev = selected; deselect();
+  toast("Building your spec sheet…");
+  const thumbs = await Promise.all(items.map(rec => {
+    const path = (rec.product.images && (rec.product.images[rec.finishId] || rec.product.images[rec.product.defaultFinish])) || "";
+    return path ? thumbDataURL(thumbOf(path), 300) : Promise.resolve(null);
+  }));
   setTimeout(() => {
     let img = null;
     try { img = captureCanvas(); } catch (e) { console.warn("capture failed", e); }
@@ -1907,7 +1894,8 @@ function downloadSpecSheet() {
     doc.setTextColor(210, 210, 214); doc.setFontSize(11); doc.setFont("helvetica", "bold");
     doc.text("Bathroom Design Specification", PW - M, 12, { align: "right" });
     doc.setFont("helvetica", "normal"); doc.setFontSize(8.5); doc.setTextColor(150, 150, 154);
-    doc.text("Prepared by your Stout consultant", PW - M, 18, { align: "right" });
+    const when = new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
+    doc.text(`${THEME.label} bathroom  ·  ${when}`, PW - M, 18, { align: "right" });
     doc.setDrawColor(...GOLD); doc.setLineWidth(0.8); doc.line(0, 26, PW, 26);
 
     // ---- design snapshot ----
@@ -1931,26 +1919,34 @@ function downloadSpecSheet() {
     doc.text("Selected Products", M, y); y += 2;
     doc.setDrawColor(...LINE); doc.setLineWidth(0.3); doc.line(M, y + 1, PW - M, y + 1); y += 7;
 
-    const rowH = 13;
+    const rowH = 20, thumbMM = 15;
     items.forEach((rec, i) => {
-      if (y + rowH > PH - 22) { doc.addPage(); y = M + 4; }
+      if (y + rowH > PH - 22) { doc.addPage(); y = M + 8; }
       const fin = FINISHES[rec.finishId] || {};
-      // index bullet
-      doc.setTextColor(...GOLD); doc.setFont("helvetica", "bold"); doc.setFontSize(10);
-      doc.text(String(i + 1).padStart(2, "0"), M, y + 1);
-      // name
+      const top = y - 5;
+      // the product itself, so the sheet can be read without the app
+      if (thumbs[i]) {
+        doc.setFillColor(248, 246, 242); doc.roundedRect(M, top, thumbMM, thumbMM, 1.4, 1.4, "F");
+        doc.addImage(thumbs[i], "JPEG", M + 0.6, top + 0.6, thumbMM - 1.2, thumbMM - 1.2, undefined, "FAST");
+      }
+      const tx = M + thumbMM + 5;
+      doc.setTextColor(...GOLD); doc.setFont("helvetica", "bold"); doc.setFontSize(8);
+      doc.text(String(i + 1).padStart(2, "0"), tx, y - 1.5);
       doc.setTextColor(...INK); doc.setFont("helvetica", "bold"); doc.setFontSize(10.5);
-      doc.text(rec.product.name || "Product", M + 9, y);
-      // category + code
+      doc.text(rec.product.name || "Product", tx + 6, y - 1.5);
       doc.setTextColor(...MUTE); doc.setFont("helvetica", "normal"); doc.setFontSize(8.5);
-      doc.text(`${categoryName(rec.product.catId)}   ·   Code ${rec.product.code || "—"}`, M + 9, y + 5);
+      doc.text(`${categoryName(rec.product.catId)}   ·   Code ${rec.product.code || "—"}`, tx + 6, y + 3);
+      if (rec.product.variant) {
+        doc.setFontSize(7.8); doc.setTextColor(160, 158, 152);
+        doc.text(rec.product.variant, tx + 6, y + 7.2);
+      }
       // finish swatch + label (right aligned)
       const sw = hex2rgb(fin.tone || "#c9ced3");
       doc.setFillColor(...sw); doc.setDrawColor(200, 196, 186); doc.setLineWidth(0.2);
-      doc.roundedRect(PW - M - 40, y - 3.2, 5, 5, 0.8, 0.8, "FD");
+      doc.roundedRect(PW - M - 40, y - 4.4, 5.4, 5.4, 0.9, 0.9, "FD");
       doc.setTextColor(...INK); doc.setFont("helvetica", "normal"); doc.setFontSize(9.5);
-      doc.text(fin.name || "—", PW - M - 33, y + 0.6);
-      doc.setDrawColor(...LINE); doc.setLineWidth(0.2); doc.line(M, y + 7, PW - M, y + 7);
+      doc.text(fin.name || "—", PW - M - 32.5, y - 0.6);
+      doc.setDrawColor(...LINE); doc.setLineWidth(0.2); doc.line(M, top + thumbMM + 2.5, PW - M, top + thumbMM + 2.5);
       y += rowH;
     });
 
@@ -1973,21 +1969,36 @@ $("#downloadPdf").onclick = downloadSpecSheet;
 
 /* one of each of the four core categories, as a tidy shower column on the back wall */
 function autoArrange() {
-  // A cohesive SHOWER WALL, all in one warm-gold family — the clean hero set for
-  // a demo. Basin mixer / wall tap / waste live in the menu (they'd float wrongly
-  // on the wall, and the vanity already shows a gold basin mixer).
-  const order = RAIL_CATS.slice();   // exactly what the rail offers: showers, diverters, spouts, body jets
-  const PREF = ["brushedGold", "gold", "chrome", "matteBlack"];   // one finish family, gold-first
-  [...placed.values()].forEach(r => removeProduct(r.uid));        // clear everything for a tidy set
-  order.forEach(cid => {
-    const list = PRODUCTS[cid]; if (!list || !list.length) return;
+  // A cohesive shower wall for the demo. Picking "the first product in each
+  // category, in the closest finish" used to land rose-gold panels beside a
+  // chrome jet, because some SKUs only exist in one finish. So: choose the
+  // FINISH FAMILY first, then take the best product in each category that can
+  // actually wear it. A smaller matched set beats a complete mismatched one.
+  const PREF = ["brushedGold", "gold", "chrome", "matteBlack", "roseGold"];
+  const canWear = (cid, fin) => (PRODUCTS[cid] || []).some(p => (p.finishes || []).includes(fin));
+  let best = null;
+  PREF.forEach(fin => {
+    const covered = RAIL_CATS.filter(cid => canWear(cid, fin)).length;
+    if (!best || covered > best.covered) best = { fin, covered };
+  });
+  const fin = best ? best.fin : "chrome";
+
+  const undo = snapshot();
+  [...placed.values()].forEach(r => removeProduct(r.uid));
+  const skipped = [];
+  RAIL_CATS.forEach(cid => {
+    const list = (PRODUCTS[cid] || []).filter(p => (p.finishes || []).includes(fin));
+    if (!list.length) { if ((PRODUCTS[cid] || []).length) skipped.push(categoryName(cid)); return; }
     const p = list[0];
-    const fin = PREF.find(f => p.finishes.includes(f)) || p.defaultFinish;   // match finishes across the set
     placeProduct(p, fin, skuCfg(p).mount || "back");
   });
   deselect();
+  renderRail();
   saveDesign();
   animateCam(new THREE.Vector3(1.32, 1.52, 2.05), new THREE.Vector3(-0.25, 1.18, -1.15));
+  const name = (FINISHES[fin] || {}).name || fin;
+  toast(skipped.length ? `A ${name} shower wall — no ${skipped.join(" / ")} in ${name}`
+                       : `A ${name} shower wall`, { label: "Undo", run: () => restore(undo) });
 }
 
 /* ---- persistence (survives refresh) + clear-all + removable vanity ------- */
@@ -2220,7 +2231,7 @@ function renderEmptyState() {
   el.innerHTML =
     '<p class="e-kicker">Start your bathroom</p>' +
     '<h2>Choose an overhead shower</h2>' +
-    '<p class="e-body">Pick anything from the left and it locks into its correct place, ' +
+    '<p class="e-body">Pick anything from the products list and it locks into its correct place, ' +
     'in the finish you choose. Nothing is priced here — your Stout consultant does that.</p>' +
     '<div class="e-row">' +
       '<button type="button" data-e="first">Add a rain shower</button>' +
