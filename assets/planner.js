@@ -25,14 +25,14 @@ const CAT3D = {
   //   body jet (1.61-2.03) → wall spout (1.28-1.56) → diverter (0.62-1.19)
   //   → wall bib TAP at the bottom (0.31-0.53). Even ~9cm gaps.
   "body-jet":     { mount: "back", width: 0.17, x: 0, y: 1.35, panel: true },   // CENTRE of the 4-jet flanking set
-  "bath-spout":   { mount: "back", width: 0.44, y: 1.42 },
+  "bath-spout":   { mount: "back", width: 0.44, y: 1.42, billboard: true },
   "diverter":     { mount: "back", width: 0.18, y: 0.90, panel: true },   // its render is a TALL trim panel — keep it slim so it doesn't read as a plank
-  "wall-tap":     { mount: "back", width: 0.34, y: 0.42 },   // bucket tap sits LAST, near the floor
+  "wall-tap":     { mount: "back", width: 0.34, y: 0.42, billboard: true },   // bucket tap sits LAST, near the floor
   // Off-column pieces — each has its OWN clear patch of wall:
   "thermostatic": { mount: "back", width: 0.50, y: 1.60, x:  1.16, panel: true },  // button panel — clear wall right of the niche (left side is all vanity+mirror)
-  "basin-mixer":  { mount: "back", width: 0.34, y: 0.98, x:  1.18 },  // open wall to the right of the niche
-  "hand-shower":  { mount: "back", width: 0.17, y: 0.72, x:  0.72 },  // handset on a bracket, right of the shower column (like the reference)
-  "health-faucet":{ mount: "right", width: 0.20, y: 0.72, z: 0.52 },  // shattaf on the wall beside the WC (wcZ 0.95)
+  "basin-mixer":  { mount: "back", width: 0.34, y: 0.98, x:  1.18, billboard: true },  // open wall to the right of the niche
+  "hand-shower":  { mount: "back", width: 0.17, y: 0.72, x:  0.72, billboard: true },  // handset on a bracket, right of the shower column (like the reference)
+  "health-faucet":{ mount: "right", width: 0.20, y: 0.72, z: 0.52, billboard: true },  // shattaf on the wall beside the WC (wcZ 0.95)
   "waste":        { mount: "back", width: 0.16, y: 0.40, x:  0.42 },  // small accessory, beside the tap
 };
 const catCfg = id => CAT3D[id] || { mount: "back", width: 0.34, y: 1.30 };
@@ -1417,6 +1417,27 @@ function setBaseScale(mesh, v) {
   const p = pops.find(x => x.mesh === mesh);
   if (p) p.base = v; else mesh.scale.setScalar(v);
 }
+/* A spout, tap or handset is a SHAPE, and its render was shot from three
+   quarters. Pinned flat to the tiles it turns into a sliver the moment you move
+   off dead-on — which is what made every fitting read as a sticker. These pieces
+   now pivot at their wall connection to keep facing you, within a swing small
+   enough that they still read as mounted on that wall. Flat plates (rain heads,
+   thermostatic panels, diverter trims, jet plates) stay flush: they really are
+   flush, and they now have depth of their own. */
+const BILLBOARD_SWING = 0.62;             // ±35°
+function stepBillboards() {
+  placed.forEach(rec => {
+    if (rec.is3D || !rec.cfg || !rec.cfg.billboard) return;
+    const w = WALLS[rec.wall]; if (!w) return;
+    const base = w.rot.y || 0;
+    let d = Math.atan2(camera.position.x - rec.mesh.position.x,
+                       camera.position.z - rec.mesh.position.z) - base;
+    while (d > Math.PI) d -= Math.PI * 2;
+    while (d < -Math.PI) d += Math.PI * 2;
+    rec.mesh.rotation.y = base + clamp(d, -BILLBOARD_SWING, BILLBOARD_SWING);
+  });
+}
+
 function stepPops() {
   for (let i = pops.length - 1; i >= 0; i--) {
     const p = pops[i];
@@ -1564,6 +1585,7 @@ $("#tool").querySelectorAll("[data-a]").forEach(b => b.onclick = () => {
 function changeFinish(uid, fid) {
   const rec = placed.get(uid); if (!rec) return;
   rec.finishId = fid;
+  sessionFinish = fid;
   if (rec.is3D) {
     const hex = finishHex(fid, rec.product);
     rec.mesh.traverse(o => { if (o.userData.metal && o.material) o.material.color.setHex(hex); });
@@ -1626,13 +1648,21 @@ const RAIL_GROUPS = [
 ];
 const RAIL_CATS = RAIL_GROUPS.reduce((a, g) => a.concat(g.cats), []);
 
+/* The finish the visitor is designing in. Picking any swatch sets it, and every
+   piece added afterwards arrives in that finish when it is available — a set of
+   fittings that half-matches is the fastest way to make a room look cheap. */
+let sessionFinish = null;
+
 /* the finish a rail card is currently showing — follows the piece once it is in
    the room, otherwise whatever swatch was last clicked on the card */
 const railFinish = new Map();
 function cardFinish(p) {
   const rec = [...placed.values()].find(r => r.product.id === p.id);
   if (rec) return rec.finishId;
-  return railFinish.get(p.id) || p.defaultFinish;
+  const picked = railFinish.get(p.id);
+  if (picked) return picked;
+  if (sessionFinish && (p.finishes || []).includes(sessionFinish)) return sessionFinish;
+  return p.defaultFinish;
 }
 
 /* rail thumbnails: 220px copies of the product renders. The full-size art is
@@ -1739,7 +1769,7 @@ function renderRail() {
     e.stopPropagation();
     const card = sw.closest(".pcard"), p = productFor(card); if (!p) return;
     const fin = sw.dataset.fin;
-    railFinish.set(p.id, fin);
+    railFinish.set(p.id, fin); sessionFinish = fin;
     const rec = [...placed.values()].find(r => r.product.id === p.id);
     if (rec) { changeFinish(rec.uid, fin); toast(`${p.name} · ${(FINISHES[fin] || {}).name || ""}`); }
     else add(p, fin);
@@ -2011,6 +2041,7 @@ function autoArrange() {
     if (!best || covered > best.covered) best = { fin, covered };
   });
   const fin = best ? best.fin : "chrome";
+  sessionFinish = fin;
 
   const undo = snapshot();
   [...placed.values()].forEach(r => removeProduct(r.uid));
@@ -2240,6 +2271,7 @@ function loop() {
     updateLook();
   }
   stepPops();
+  stepBillboards();
   controls.update();
   renderer.render(scene, camera);
   if (!started) { started = true; $("#loading").classList.add("hide"); }
