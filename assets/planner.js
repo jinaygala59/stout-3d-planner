@@ -15,6 +15,11 @@ if (!window.THREE) { $("#loading").textContent = "3D engine failed to load."; re
 const RW = 3.0, RH = 2.65, RD = 3.0;                 // width, height, depth
 const HX = RW / 2, HZ = RD / 2;                       // half extents
 const OFF = 0.025;                                    // how far a panel sits off its wall
+/* Ceiling fittings are flush-mounted, so they get their own two numbers instead:
+   CEIL_RIM is the plate edge you actually see below the slab, and CEIL_EMBED is
+   how far the housing is buried up into it. The embed is what keeps a plate
+   welded to the ceiling however it is scaled or dragged. */
+const CEIL_RIM = 0.026, CEIL_EMBED = 0.030;
 
 /* per-category 3D defaults: where a fresh product lands + its real-world width */
 const CAT3D = {
@@ -75,7 +80,10 @@ const SKU3D = {
   //     shower column); the small single jets still come as a flanking set of 4 ---
   "ST-BJ-01": { width: 0.22, single: true, x: 0.62, y: 1.35 },
   "ST-J06":   { width: 0.16, single: true, x: 0.62, y: 1.35 },
-  "ST-BJ-02": { width: 0.12 }, "ST-1030": { width: 0.12 },
+  // BJ-02 renders from its own 3D model, so it lands as ONE jet — it needs the
+  // off-column spot too, or it sits inside the bath spout at x 0
+  "ST-BJ-02": { width: 0.12, x: 0.62, y: 1.35 },
+  "ST-1030":  { width: 0.12 },                      // a set of four, flanking the column
   // --- 2026-09 Drive range ---
   "ST-FDP":   { width: 0.60 },                                   // wide overhead plate
   "ST-CP25":  { width: 0.26 }, "ST-MB2": { width: 0.26 }, "ST-CJ1": { width: 0.28 },   // digital control panels
@@ -978,7 +986,12 @@ const WALLS = {
   back:    { plane: new THREE.Plane(new THREE.Vector3(0, 0, 1), HZ), fix: "z", val: -HZ + OFF, rot: { x: 0, y: 0 } },
   left:    { plane: new THREE.Plane(new THREE.Vector3(1, 0, 0), HX), fix: "x", val: -HX + OFF, rot: { x: 0, y: Math.PI / 2 } },
   right:   { plane: new THREE.Plane(new THREE.Vector3(-1, 0, 0), HX), fix: "x", val: HX - OFF, rot: { x: 0, y: -Math.PI / 2 } },
-  ceiling: { plane: new THREE.Plane(new THREE.Vector3(0, -1, 0), RH), fix: "y", val: RH - OFF, rot: { x: Math.PI / 2, y: 0 } },
+  // A ceiling fitting is FLUSH: its mount plane is the slab itself, not OFF below
+  // it. The 2.5 cm standoff every wall gets to avoid z-fighting left overhead
+  // plates hanging under the ceiling with daylight above them — from any eye-level
+  // angle you saw the gap and the piece read as floating. Ceiling pieces instead
+  // sit AT y = RH and bury their housing up into the slab (see placeProduct).
+  ceiling: { plane: new THREE.Plane(new THREE.Vector3(0, -1, 0), RH), fix: "y", val: RH, rot: { x: Math.PI / 2, y: 0 } },
   // not a wall: deck-mounted mixers STAND on the vanity counter, facing the room
   counter: { plane: new THREE.Plane(new THREE.Vector3(0, 1, 0), 0), fix: "y", val: 0, rot: { x: 0, y: 0 } },
 };
@@ -1063,6 +1076,74 @@ function addContactShadow(mesh, w, h) {
 function setEmissive(obj, hex) {
   obj.traverse(o => { if (o.material && o.material.emissive) o.material.emissive.setHex(hex); });
 }
+
+/* Product artwork is UNLIT MeshBasicMaterial (see placeProduct), which has no
+   .emissive — so the emissive tint above highlighted nothing at all and you
+   could not tell what you had just added or which piece was selected. This puts
+   a soft glow behind the selected piece instead, which works for a cutout, a
+   procedural rig and an OBJ alike. */
+let _haloTex = null;
+function haloTexture() {
+  if (_haloTex) return _haloTex;
+  const S = 256, c = mkCanvas(S, S), x = c.getContext("2d");
+  const g = x.createRadialGradient(S / 2, S / 2, S * 0.14, S / 2, S / 2, S * 0.5);
+  g.addColorStop(0.00, "rgba(255,208,126,0.62)");
+  g.addColorStop(0.42, "rgba(255,196,110,0.26)");
+  g.addColorStop(1.00, "rgba(255,190,105,0)");
+  x.fillStyle = g; x.fillRect(0, 0, S, S);
+  _haloTex = new THREE.CanvasTexture(c);
+  return _haloTex;
+}
+/* bounding box of a placed piece in its OWN frame, ignoring the halo */
+function localBox(root) {
+  root.updateMatrixWorld(true);
+  const inv = new THREE.Matrix4().copy(root.matrixWorld).invert();
+  const box = new THREE.Box3(), tmp = new THREE.Matrix4();
+  root.traverse(o => {
+    if (!o.isMesh || !o.geometry || o.name === "selHalo") return;
+    o.geometry.computeBoundingBox();
+    box.union(o.geometry.boundingBox.clone().applyMatrix4(tmp.multiplyMatrices(inv, o.matrixWorld)));
+  });
+  return box;
+}
+function setHalo(rec, on) {
+  if (!rec || !rec.mesh) return;
+  const root = rec.mesh;
+  const olds = [];
+  root.traverse(o => { if (o.name === "selHalo") olds.push(o); });
+  olds.forEach(o => { if (o.parent) o.parent.remove(o); o.geometry.dispose(); });
+  if (!on) return;
+
+  // A halo per PART, parented to that part: the body-jet set is four separate
+  // planes around an empty centre, so one halo on the group put a lone glow in
+  // the middle of nothing. An OBJ model is dozens of meshes — one halo on the
+  // root is right for that, sized from its overall box.
+  const parts = [];
+  root.traverse(o => { if (o.isMesh && o.geometry && o.name !== "selHalo" && o.name !== "rim") parts.push(o); });
+  const mk = (parent, w, h, cx, cy, z) => {
+    const halo = new THREE.Mesh(
+      new THREE.PlaneGeometry(Math.max(w, 0.05) * 1.9 + 0.10, Math.max(h, 0.05) * 1.9 + 0.10),
+      new THREE.MeshBasicMaterial({ map: haloTexture(), transparent: true, depthWrite: false,
+        blending: THREE.AdditiveBlending, toneMapped: false }));
+    halo.name = "selHalo";
+    halo.position.set(cx, cy, z);
+    halo.renderOrder = -2;
+    parent.add(halo);
+  };
+  if (parts.length && parts.length <= 6) {
+    parts.forEach(o => {
+      o.geometry.computeBoundingBox();
+      const b = o.geometry.boundingBox, sz = b.getSize(new THREE.Vector3()), c = b.getCenter(new THREE.Vector3());
+      mk(o, sz.x, sz.y, c.x, c.y, b.min.z - 0.004);
+    });
+  } else {
+    const b = localBox(root);
+    if (b.isEmpty()) return;
+    const sz = b.getSize(new THREE.Vector3()), c = b.getCenter(new THREE.Vector3());
+    mk(root, sz.x, sz.y, c.x, c.y, b.min.z - 0.004);
+  }
+}
+
 
 /* Coiled stainless-steel look for the flexible hose: one repeating rib "pitch"
    drawn as a rounded metallic highlight, tiled along the tube length. Used as
@@ -1224,7 +1305,7 @@ function seatOnWall(holder, wall, spot, sz) {
   if (wall === "counter") { p.y = COUNTER.y + sz.y / 2; holder.position.copy(p); return; }
   if (wall === "ceiling") {
     p.x = clamp(p.x, -HX + m, HX - m); p.z = clamp(p.z, -HZ + m, HZ - m);
-    p.y = WALLS.ceiling.val - sz.y / 2 - 0.02;              // hang from the ceiling
+    p.y = WALLS.ceiling.val - sz.y / 2 + 0.012;             // flush: bite into the slab, no gap above
   } else if (wall === "left") {
     p.z = clamp(p.z, -HZ + m, HZ - m); p.y = clamp(p.y, 0.3, RH - 0.15);
     p.x = WALLS.left.val + sz.x / 2;
@@ -1329,7 +1410,15 @@ function placeProduct(product, finishId, wall, frame) {
     const img = new Image();
     img.onload = () => {
       const ar = img.naturalHeight / img.naturalWidth || 1;
-      mesh.children.forEach(jm => { jm.geometry.dispose(); jm.geometry = new THREE.PlaneGeometry(jetW, jetW * ar); });
+      const d = 0.014, hex = finishHex(finishId, product);
+      mesh.children.slice().forEach(jm => {
+        jm.geometry.dispose();
+        jm.geometry = new THREE.PlaneGeometry(jetW, jetW * ar);
+        // the set used to be four flat decals — each jet is a body on the wall
+        jm.geometry.translate(0, 0, d);
+        extrudeCutout(jm, mat.map, jetW, jetW * ar, d, hex, d);
+        addContactShadow(jm, jetW, jetW * ar);
+      });
       positionOnWall(mesh, wall, defaultSpot(wall, cfg));
       reveal();
     };
@@ -1372,24 +1461,43 @@ function placeProduct(product, finishId, wall, frame) {
         mesh.remove(rim);                                   // the extrusion IS the rim now
         extrudeCutout(mesh, mesh.material.map, width, width * ar, d, finishHex(finishId, product), d);
       }
+      if (cfg.billboard) {
+        // a spout or tap is a solid object seen from the side: without a body it
+        // is a piece of foil the moment the room turns
+        const d = 0.018;
+        mesh.geometry.translate(0, 0, d);
+        mesh.remove(rim);
+        extrudeCutout(mesh, mesh.material.map, width, width * ar, d, finishHex(finishId, product), d);
+        const rec0 = placed.get(uid); if (rec0) rec0.halfW = width / 2;
+      }
       // grounding: without this every fitting reads as pasted onto the tile
       if (wall !== "ceiling" && wall !== "counter") addContactShadow(mesh, width, width * ar);
       if (wall === "ceiling" && cfg.shape === "head") {
         // a round head screws onto a drop pipe — hang it below the ceiling so it
-        // reads as a shower head rather than a decal stuck to the slab
+        // reads as a shower head rather than a decal stuck to the slab. The pipe
+        // runs UP THROUGH the slab and wears a canopy where it passes through, so
+        // the drop is visibly fixed to the ceiling instead of stopping short of it.
         const drop = 0.20;
         mesh.geometry.translate(0, 0, drop);
         rim.position.z = drop - 0.008;
-        const pipe = new THREE.Mesh(new THREE.CylinderGeometry(0.017, 0.017, drop, 16), metalMat(finishHex(finishId, product), 0.3));
-        pipe.rotation.x = Math.PI / 2; pipe.position.z = drop / 2;
+        const metal = metalMat(finishHex(finishId, product), 0.3);
+        const pipe = new THREE.Mesh(new THREE.CylinderGeometry(0.017, 0.017, drop + CEIL_EMBED, 16), metal);
+        pipe.rotation.x = Math.PI / 2; pipe.position.z = (drop - CEIL_EMBED) / 2;
         pipe.name = "arm"; pipe.userData.metal = true; mesh.add(pipe);
+        const canopy = new THREE.Mesh(new THREE.CylinderGeometry(Math.max(0.042, width * 0.17), Math.max(0.046, width * 0.19), 0.026 + CEIL_EMBED, 24), metal);
+        canopy.rotation.x = Math.PI / 2; canopy.position.z = (0.026 - CEIL_EMBED) / 2;
+        canopy.name = "canopy"; canopy.userData.metal = true; mesh.add(canopy);
       } else if (wall === "ceiling") {
-        // a ceiling plate has a housing above it, and it has to follow the plate's
-        // shape — half the range is hexagonal, and a rectangular slab showed
-        const d = 0.05;
-        mesh.geometry.translate(0, 0, d);         // product face sits at the housing underside
+        // A flush overhead plate is cast INTO the ceiling: you see its underside
+        // and a slim edge, never a gap above it. So the housing runs from the
+        // plate face UP THROUGH the slab — the buried part (CEIL_EMBED) is what
+        // guarantees contact at every size and camera angle, and the visible part
+        // is only as deep as a real plate rim. It still follows the plate's own
+        // outline (half the range is hexagonal, so a rectangular slab showed).
+        const vis = Math.min(CEIL_RIM, width * 0.06);
+        mesh.geometry.translate(0, 0, vis);       // product face sits at the rim underside
         mesh.remove(rim);
-        extrudeCutout(mesh, mesh.material.map, width, width * ar, d, finishHex(finishId, product), d);
+        extrudeCutout(mesh, mesh.material.map, width, width * ar, vis + CEIL_EMBED, finishHex(finishId, product), vis);
       }
       positionOnWall(mesh, wall, defaultSpot(wall, cfg));
       reveal();
@@ -1465,7 +1573,15 @@ function stepBillboards() {
                        camera.position.z - rec.mesh.position.z) - base;
     while (d > Math.PI) d -= Math.PI * 2;
     while (d < -Math.PI) d += Math.PI * 2;
-    rec.mesh.rotation.y = base + clamp(d, -BILLBOARD_SWING, BILLBOARD_SWING);
+    d = clamp(d, -BILLBOARD_SWING, BILLBOARD_SWING);
+    rec.mesh.rotation.y = base + d;
+    // A yawed plane pivots about its centre, so one half would swing back THROUGH
+    // the tiles — which is what made a turned spout look half-buried and
+    // half-floating. Stand it off by exactly the depth the swing needs.
+    const off = (rec.halfW || 0) * Math.abs(Math.sin(d));
+    if (rec.wall === "back") rec.mesh.position.z = w.val + off;
+    else if (rec.wall === "left") rec.mesh.position.x = w.val + off;
+    else if (rec.wall === "right") rec.mesh.position.x = w.val - off;
   });
 }
 
@@ -1487,21 +1603,27 @@ function stepPops() {
    always inside the walls) rather than by dollying blindly along a fixed vector. */
 function frameProduct(rec) {
   rec.mesh.updateMatrixWorld(true);
-  const box = new THREE.Box3().setFromObject(rec.mesh);
+  const box = localBox(rec.mesh).applyMatrix4(rec.mesh.matrixWorld);   // halo excluded
   if (box.isEmpty()) return;
   const c = box.getCenter(new THREE.Vector3());
   const r = Math.max(0.13, box.getBoundingSphere(new THREE.Sphere()).radius);
   // stand back far enough that every fitting reads at a similar on-screen size —
   // a 15 cm waste gets a close look, a 55 cm rain plate is seen with its wall
   const half = Math.tan(camera.fov * Math.PI / 360);
-  const dist = clamp(r / (half * 0.30), 0.75, 2.45);
+  // Scaling the standoff to the FITTING was the bug: a 22 cm valve pulled the
+  // camera up against the tiles, so you got 1.7 m of blank wall with no floor,
+  // ceiling or corner to place it against — you could not tell what you were
+  // looking at. Take whichever is further: enough distance to read the piece, or
+  // enough to keep most of the wall height in shot. The halo finds the piece.
+  const MIN_FRAME_H = 2.25;                                  // metres of wall always in view
+  const dist = clamp(Math.max(r / (half * 0.26), MIN_FRAME_H / (2 * half)), 1.8, 3.2);
   const tgt = c.clone();
   let pos;
   if (rec.wall === "ceiling") {
     // aim just under the head and drop the eye, so it reads against the ceiling
     // instead of being cropped off the top of the frame
     tgt.y = clamp(c.y - 0.35, 1.55, 2.20);
-    pos = new THREE.Vector3(c.x + 0.30, 1.45, c.z + Math.max(1.55, dist));
+    pos = new THREE.Vector3(c.x + 0.30, 1.42, c.z + Math.max(2.0, dist));
   } else {
     tgt.y = c.y;
     const dir = { back:  new THREE.Vector3(0.24, 0.05, 0.97),
@@ -1513,8 +1635,8 @@ function frameProduct(rec) {
   }
   // aim a touch BELOW the piece so it sits above centre, clear of the floating
   // finish/size tool that docks over the bottom of the canvas
-  tgt.y = Math.max(0.15, tgt.y - dist * half * 0.24);
-  pos.y -= dist * half * 0.24;
+  tgt.y = Math.max(0.15, tgt.y - dist * half * 0.15);
+  pos.y -= dist * half * 0.15;
   // keep the eye inside the room (the target — i.e. the framing — is unaffected)
   pos.x = clamp(pos.x, -HX + 0.30, HX - 0.30);
   pos.z = clamp(pos.z, -HZ + 0.30, HZ - 0.30);
@@ -1572,11 +1694,16 @@ function pickProduct(e) {
 function selectProduct(uid) {
   selected = uid;
   meshes.forEach(m => setEmissive(m, 0x000000));
+  placed.forEach(r => setHalo(r, false));
   const rec = placed.get(uid);
-  if (rec) setEmissive(rec.mesh, 0x2a2013);
+  if (rec) { setEmissive(rec.mesh, 0x2a2013); setHalo(rec, true); }
   renderTool();
 }
-function deselect() { selected = null; renderTool(); meshes.forEach(m => setEmissive(m, 0x000000)); }
+function deselect() {
+  selected = null; renderTool();
+  meshes.forEach(m => setEmissive(m, 0x000000));
+  placed.forEach(r => setHalo(r, false));
+}
 
 renderer.domElement.addEventListener("pointerdown", e => {
   const uid = pickProduct(e);
