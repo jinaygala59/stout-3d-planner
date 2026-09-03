@@ -73,6 +73,15 @@ input{font-family:inherit}
 .menu button:hover{background:var(--panel2)}
 .menu button.danger{color:#e88}
 .menu button.danger:hover{background:rgba(220,60,90,.16)}
+/* controls that move into the menu on a phone keep their own handlers and state,
+   so they only need to be re-dressed as menu rows */
+.menu .in-menu{width:100%;padding:10px 12px;border:none;border-radius:8px;background:none;
+  text-align:left;font-size:var(--t-body);color:var(--ink);letter-spacing:0}
+.menu .in-menu:hover{background:var(--panel2)}
+.menu .in-menu[aria-pressed="true"]::after{content:"✓";float:right;color:var(--gold)}
+.menu .wall-tabs.in-menu{display:flex;justify-content:space-between;gap:4px;padding:4px;
+  background:var(--panel2);border:1px solid var(--line-soft);border-radius:24px;margin-bottom:2px}
+.menu .wall-tabs.in-menu button{flex:1;text-align:center;padding:7px 0}
 
 /* ── rail ────────────────────────────────────────────────────────────────── */
 .rail{background:linear-gradient(180deg,var(--panel),#101115);border-right:1px solid var(--line-soft);
@@ -208,10 +217,15 @@ input{font-family:inherit}
    The room is the product, so it keeps the screen. Products live in a sheet
    that slides up over it, and the toolbar is one scrolling row.            */
 @media (max-width:860px){
+  body{--sheet-h:min(62vh,520px)}
   #app{grid-template-columns:minmax(0,1fr);grid-template-rows:52px minmax(0,1fr)}
-  .topbar{gap:6px;padding:0 12px;overflow-x:auto;overflow-y:hidden;scrollbar-width:none}
-  .topbar::-webkit-scrollbar{display:none}
-  .brand .mark{font-size:19px;letter-spacing:.18em}
+  /* the secondary controls move into the ... menu on a phone, so the bar fits
+     and can stay overflow:visible — with overflow:auto the backdrop-filter on
+     this bar clipped the open menu to a sliver */
+  .topbar{gap:6px;overflow:visible;
+    padding:0 max(11px,env(safe-area-inset-right)) 0 max(11px,env(safe-area-inset-left))}
+  .menu{right:0;min-width:min(84vw,260px)}
+  .brand .mark{font-size:18px;letter-spacing:.14em}
   .brand .sub,.glabel{display:none}
   .group{padding-left:10px;gap:5px}
   .group + .group::before{height:18px}
@@ -228,13 +242,17 @@ input{font-family:inherit}
     border-top:1px solid var(--line);border-radius:16px 16px 0 0;
     background:rgba(18,19,22,.97);backdrop-filter:blur(14px);
     box-shadow:0 -18px 44px -22px rgba(0,0,0,.9);
-    transform:translateY(calc(100% - 54px));transition:transform .3s cubic-bezier(.4,0,.2,1);
-    max-height:min(62vh,520px)}
+    /* keep the grip clear of the home indicator on a notched phone */
+    padding-bottom:env(safe-area-inset-bottom);
+    transform:translateY(calc(100% - 54px - env(safe-area-inset-bottom)));
+    transition:transform .3s cubic-bezier(.4,0,.2,1);
+    max-height:var(--sheet-h)}
   .rail.open{transform:translateY(0)}
   .sheet-grip{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;height:54px;
+    padding-bottom:0;
     flex:none;color:var(--ink);font-size:var(--t-body);letter-spacing:.16em;text-transform:uppercase}
   .sheet-grip i{width:34px;height:3px;border-radius:2px;background:var(--muted2);flex:none}
-  .rail-body{max-height:calc(min(62vh,520px) - 54px)}
+  .rail-body{max-height:calc(var(--sheet-h) - 54px)}
   .rail-head{padding:2px 16px 8px}
   .rail-foot{display:none}
   .cats{padding:0 10px 14px}
@@ -243,10 +261,24 @@ input{font-family:inherit}
   .pcard .nm{-webkit-line-clamp:2;font-size:var(--t-small)}
   .pcard .sub{display:none}          /* code+variant move into the tool panel on a phone */
 
-  .tool{right:12px;left:12px;bottom:66px;width:auto}
-  .toast{bottom:70px;width:max-content;max-width:calc(100vw - 32px)}
+  .tool{right:12px;left:12px;width:auto;bottom:calc(66px + env(safe-area-inset-bottom))}
+  .toast{width:max-content;max-width:calc(100vw - 32px);
+    bottom:calc(70px + env(safe-area-inset-bottom))}
+  body.has-tool .toast{bottom:calc(78px + var(--tool-h,0px) + env(safe-area-inset-bottom))}
   /* with the products sheet up, the toast has to clear it */
-  body.sheet-open .toast{bottom:calc(min(62vh,520px) + 14px)}
+  body.sheet-open .toast{bottom:calc(var(--sheet-h) + 14px)}
+}
+
+/* phone in landscape: short viewport, so the sheet and the opening card have to
+   give the room back its height */
+@media (max-width:900px) and (max-height:520px){
+  body{--sheet-h:82vh}
+  /* nothing is left between the sheet and the bar, so the toast hangs under it */
+  body.sheet-open .toast{top:58px;bottom:auto}
+  .cat-items{grid-template-columns:repeat(4,1fr)}
+  .empty{width:min(70vw,420px);left:16px;transform:none;bottom:64px;padding:12px 14px}
+  .empty h2{font-size:17px;margin-bottom:5px}
+  .empty .e-body{display:none}
 }
 
 @media (prefers-reduced-motion:reduce){

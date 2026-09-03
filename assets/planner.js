@@ -1725,7 +1725,11 @@ renderer.domElement.addEventListener("pointerdown", e => {
 function renderTool() {
   const tool = $("#tool");
   const rec = selected && placed.get(selected);
-  if (!rec) { tool.hidden = true; return; }
+  if (!rec) {
+    tool.hidden = true;
+    document.body.classList.remove("has-tool");
+    return;
+  }
   tool.hidden = false;
   $("#toolName").innerHTML = `${rec.product.name}<em>${rec.product.code}` +
     `${rec.product.variant ? " · " + rec.product.variant : ""}</em>`;
@@ -1733,6 +1737,10 @@ function renderTool() {
     `<span class="fin ${fid === rec.finishId ? "on" : ""}" style="background:${FINISHES[fid].swatch}" data-fin="${fid}" title="${FINISHES[fid].name}"></span>`
   ).join("");
   $("#toolFins").querySelectorAll(".fin").forEach(el => el.onclick = () => changeFinish(rec.uid, el.dataset.fin));
+  // on a phone the tool is docked across the bottom, so the toast has to clear it
+  document.body.classList.add("has-tool");
+  // read it now, not in a rAF — a backgrounded tab never runs the callback
+  document.body.style.setProperty("--tool-h", tool.offsetHeight + "px");
 }
 $("#tool").querySelectorAll("[data-a]").forEach(b => b.onclick = () => {
   const rec = selected && placed.get(selected); if (!rec) return;
@@ -2298,7 +2306,9 @@ if ($("#confirm")) $("#confirm").addEventListener("click", e => { if (e.target =
     menu.hidden = !open;
     btn.setAttribute("aria-expanded", String(open));
   };
-  menu.querySelectorAll("button").forEach(b => b.addEventListener("click", close));
+  // delegated: controls MOVE into this menu on a phone, so per-button listeners
+  // wired at boot would miss them
+  menu.addEventListener("click", e => { if (e.target.closest("button")) close(); });
   document.addEventListener("click", e => { if (!menu.hidden && !menu.contains(e.target)) close(); });
   document.addEventListener("keydown", e => {
     if (e.key !== "Escape") return;
@@ -2317,6 +2327,46 @@ if ($("#confirm")) $("#confirm").addEventListener("click", e => { if (e.target =
     t = setTimeout(() => { railQuery.text = inp.value; renderRail(); }, 110);
   });
 })();
+
+/* ---- phone toolbar -----------------------------------------------------
+   The bar measured 743px on a 375px screen, so Spec sheet — and the ··· menu
+   itself — scrolled off the right edge with nothing to say they were there. On a
+   phone the secondary controls MOVE into the menu (the same buttons, with the
+   same handlers and state) and move back when there is room.               */
+const TO_MENU = ["#wallTabs", "#resetView", "#lookToggle", "#toggleBasin", "#downloadPdf"];
+const MENU_LABEL = { resetView: "Reset the view", lookToggle: "Cursor turn",
+                     toggleBasin: "Show or hide the vanity", downloadPdf: "Download the spec sheet" };
+let toolbarHome = null;
+function syncToolbar() {
+  const menu = $("#moreMenu"); if (!menu) return;
+  if (!toolbarHome) {
+    toolbarHome = new Map();
+    TO_MENU.forEach(sel => {
+      const el = $(sel); if (!el) return;
+      toolbarHome.set(el, { parent: el.parentNode, next: el.nextSibling, text: el.textContent });   // text only used for the leaf buttons
+    });
+  }
+  const narrow = window.matchMedia("(max-width:860px)").matches;
+  // insert in reverse so the declared order survives
+  TO_MENU.slice().reverse().forEach(sel => {
+    const el = $(sel); if (!el) return;
+    const home = toolbarHome.get(el);
+    if (narrow && el.parentNode !== menu) {
+      if (MENU_LABEL[el.id]) el.textContent = MENU_LABEL[el.id];
+      if (el.tagName === "BUTTON") el.setAttribute("role", "menuitem");
+      el.classList.add("in-menu");
+      menu.insertBefore(el, menu.firstChild);
+    } else if (!narrow && el.parentNode === menu) {
+      // ONLY the leaf buttons get relabelled — #wallTabs is a container, and
+      // setting its textContent would delete the three buttons inside it
+      if (MENU_LABEL[el.id]) el.textContent = home.text;
+      el.removeAttribute("role");
+      el.classList.remove("in-menu");
+      home.parent.insertBefore(el, home.next);
+    }
+  });
+}
+window.addEventListener("resize", syncToolbar);
 
 /* ---- products sheet on a phone ----------------------------------------- */
 (function initSheet() {
@@ -2566,6 +2616,7 @@ function renderEmptyState() {
 
 /* boot */
 resize();
+syncToolbar();
 renderFinFilter();
 renderRail();
 setBasin(true);   // vanity is part of the furnished room — shown by default
