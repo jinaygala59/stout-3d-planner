@@ -21,11 +21,16 @@ const FINISHES = {
   brushedBronze: { id: "brushedBronze", name: "Brushed Bronze",  swatch: "linear-gradient(135deg,#b79877,#8c6a4a 55%,#5f4630)",             tone: "#8c6a4a" },
   brushedSteel:  { id: "brushedSteel",  name: "Brushed Steel",   swatch: "linear-gradient(135deg,#eaeef1,#b9c0c6 50%,#8b9298,#e2e6e9)",     tone: "#b9c0c6" },
   white:         { id: "white",         name: "White",           swatch: "linear-gradient(135deg,#ffffff,#eef1f2 55%,#d9dde0)",             tone: "#f2f4f5" },
+  // added with the 2026-09 Drive range — these are real finishes in the
+  // photography (filename codes BRG / BV / GG) that had no entry here
+  brushedRoseGold:{id: "brushedRoseGold",name: "Brushed Rose Gold",swatch: "linear-gradient(135deg,#f0cfc2,#d7a291 55%,#b87d6c)",            tone: "#d9a794" },
+  champagne:     { id: "champagne",     name: "Champagne",       swatch: "linear-gradient(135deg,#eee0c2,#d8c69c 55%,#b8a377)",             tone: "#d8c69c" },
+  gunGrey:       { id: "gunGrey",       name: "Gun Grey",        swatch: "linear-gradient(135deg,#d5d6d2,#a9aaa5 52%,#7d7e7a)",             tone: "#a9aaa5" },
 };
 const ALL_FINISHES = Object.keys(FINISHES);
 const CORE_FINISHES = ["chrome", "brushedGold", "gold", "matteBlack"];
 // preferred display order (also decides each product's default finish)
-const FINISH_ORDER = ["chrome", "brushedSteel", "brushedGold", "gold", "roseGold", "matteBlack", "antiqueGold", "brushedBronze", "white"];
+const FINISH_ORDER = ["chrome", "brushedSteel", "gunGrey", "brushedGold", "champagne", "gold", "roseGold", "brushedRoseGold", "matteBlack", "antiqueGold", "brushedBronze", "white"];
 
 /* ---- CATEGORIES ----------------------------------------------------------
    `anchor` = where a selected product composites onto the scene photo.
@@ -77,24 +82,24 @@ const RAW_PRODUCTS = [
   { code: "ST-C1016", cat: "rain-shower", name: "Lumina Rain Shower",          finishes: ["chrome"], variant: "square plate · plain" },
   { code: "ST-C1017", cat: "rain-shower", name: "Lumina Edge Rain Shower",     finishes: ["chrome"], variant: "square plate · centre slot" },
   { code: "ST-C1018", cat: "rain-shower", name: "Lumina Matrix Rain Shower",   finishes: ["chrome"], variant: "square plate · 4 jets" },
-  { code: "ST-C1019", cat: "rain-shower", name: "Aeon Rain Shower",            finishes: ["chrome","brushedGold","gold","roseGold","matteBlack","antiqueGold"], badge: "Bestseller", variant: "wide plate · plain, slim edge" },
+  { code: "ST-C1019", cat: "rain-shower", name: "Aeon Rain Shower",            finishes: ["chrome","brushedGold","gold","roseGold","matteBlack","antiqueGold","brushedRoseGold","gunGrey"], badge: "Bestseller", variant: "wide plate · plain, slim edge" },
   // Added from the Stout asset library (2026-07-10) — descriptive names, rename to real SKU names anytime
-  { code: "ST-C1001", cat: "rain-shower", name: "Cascada Rainfall Panel",      finishes: ["brushedGold","gold"], variant: "wide plate · LED strip" },
-  { code: "ST-C1002", cat: "rain-shower", name: "Cascada Slimline Panel",      finishes: ["brushedGold","gold"], variant: "wide plate · 4 jets" },
-  { code: "ST-C1003", cat: "rain-shower", name: "Cascada Waterfall Panel",     finishes: ["chrome","brushedGold","gold","roseGold","matteBlack","antiqueGold"], variant: "slim plate · LED strip" },
-  { code: "ST-C1004", cat: "rain-shower", name: "Cascada Duo Rainfall Panel",  finishes: ["chrome","brushedGold","gold","roseGold","matteBlack","antiqueGold"], variant: "slim plate · 2 jets" },
+  { code: "ST-C1001", cat: "rain-shower", name: "Cascada Rainfall Panel",      finishes: ["brushedGold","gold","matteBlack","roseGold"], variant: "wide plate · LED strip" },
+  { code: "ST-C1002", cat: "rain-shower", name: "Cascada Slimline Panel",      finishes: ["brushedGold","gold","matteBlack","roseGold"], variant: "wide plate · 4 jets" },
+  { code: "ST-C1003", cat: "rain-shower", name: "Cascada Waterfall Panel",     finishes: ["chrome","brushedGold","gold","roseGold","matteBlack","antiqueGold","brushedRoseGold","gunGrey"], variant: "slim plate · LED strip" },
+  { code: "ST-C1004", cat: "rain-shower", name: "Cascada Duo Rainfall Panel",  finishes: ["chrome","brushedGold","gold","roseGold","matteBlack","antiqueGold","brushedRoseGold","gunGrey"], variant: "slim plate · 2 jets" },
   { code: "ST-C1007", cat: "rain-shower", name: "Lumina Slim Panel",           finishes: ["chrome"], variant: "slim plate · LED strip + 4 jets" },
-  { code: "ST-C1008", cat: "rain-shower", name: "Cascada Compact Panel",       finishes: ["brushedGold"], variant: "wide plate · LED strip + 4 jets" },
-  { code: "ST-C1010", cat: "rain-shower", name: "Cascada Grande Panel",        finishes: ["brushedGold","gold"], variant: "wide plate · plain" },
+  { code: "ST-C1008", cat: "rain-shower", name: "Cascada Compact Panel",       finishes: ["brushedGold","gold","matteBlack","roseGold"], variant: "wide plate · LED strip + 4 jets" },
+  { code: "ST-C1010", cat: "rain-shower", name: "Cascada Grande Panel",        finishes: ["brushedGold","gold","matteBlack","roseGold"], variant: "wide plate · plain" },
   { code: "ST-C1011", cat: "rain-shower", name: "Cascada Maxima Panel",        finishes: ["brushedGold","gold"], variant: "waterfall blades + LED + centre jet" },
 
   // ---- Concealed Diverter (single-lever) ----
   { code: "ST-D5017", cat: "diverter",    name: "Regale Concealed Diverter",   finishes: ["brushedGold"],                                          badge: "Signature" },
 
   // ---- Thermostatic Diverter panels (D-series) ----
-  { code: "ST-D5018", cat: "thermostatic", name: "Regale Grande Thermostatic Panel", finishes: ["chrome","brushedGold","gold","roseGold","matteBlack","brushedBronze"], badge: "Bestseller" },
-  { code: "ST-D5019", cat: "thermostatic", name: "Regale Thermostatic Panel",        finishes: ["chrome","brushedGold","gold","roseGold","matteBlack","brushedBronze"] },
-  { code: "ST-D5020", cat: "thermostatic", name: "Regale Compact Thermostatic Panel",finishes: ["chrome","brushedGold","gold","roseGold","matteBlack","brushedBronze"] },
+  { code: "ST-D5018", cat: "thermostatic", name: "Regale Grande Thermostatic Panel", finishes: ["chrome","brushedGold","gold","roseGold","matteBlack","brushedBronze","brushedRoseGold","champagne","gunGrey"], badge: "Bestseller" },
+  { code: "ST-D5019", cat: "thermostatic", name: "Regale Thermostatic Panel",        finishes: ["chrome","brushedGold","gold","roseGold","matteBlack","brushedBronze","brushedRoseGold","champagne","gunGrey"] },
+  { code: "ST-D5020", cat: "thermostatic", name: "Regale Compact Thermostatic Panel",finishes: ["chrome","brushedGold","gold","roseGold","matteBlack","brushedBronze","brushedRoseGold","champagne","gunGrey"] },
 
   // ---- Bath Spouts (wall-mounted) ----
   { code: "ST-WM-001", cat: "bath-spout", name: "Axis Wall Spout",             finishes: ["brushedGold","brushedBronze"],                          badge: "Signature" },
@@ -130,7 +135,7 @@ const RAW_PRODUCTS = [
 
   // ============ Added from the Stout asset library (2026-07-10) — descriptive placeholder names ============
   // fixed shower heads / arms
-  { code: "ST-1017",  cat: "rain-shower",  name: "Regale Wall Shower Head",     finishes: ["antiqueGold","matteBlack","roseGold"] },
+  { code: "ST-1017",  cat: "rain-shower",  name: "Regale Wall Shower Head",     finishes: ["antiqueGold","matteBlack","roseGold","gold"] },
   { code: "ST-1027",  cat: "rain-shower",  name: "Aeon Round Shower Head",      finishes: ["chrome"] },
   { code: "ST-1033",  cat: "rain-shower",  name: "Aeon Slim Round Head",        finishes: ["chrome"] },
   { code: "ST-OP1",   cat: "health-faucet",name: "Cascada Jet Spray Health Faucet", finishes: ["chrome"] },   // artwork is chrome — the -brushedGold file was mislabelled
@@ -150,14 +155,29 @@ const RAW_PRODUCTS = [
   // REMOVED (not a washroom fitting): basin pop-up waste — same
   // { code: "ST-TSQ",   cat: "waste",        name: "Axis Pop-up Waste",      finishes: ["chrome","brushedGold","gold","roseGold","matteBlack","antiqueGold","brushedBronze"] },
   { code: "ST-J06",   cat: "body-jet",     name: "Axis Round Body Jet",          finishes: ["chrome"] },
-  { code: "ST-PLAIN", cat: "bath-spout",   name: "Axis Plain Wall Spout",       finishes: ["gold","brushedGold","brushedBronze"] },
+  { code: "ST-PLAIN", cat: "bath-spout",   name: "Axis Plain Wall Spout",       finishes: ["gold","brushedGold","brushedBronze","brushedRoseGold","champagne","gunGrey"] },
   // health faucet (new category)
-  { code: "ST-SS304", cat: "rain-shower",  name: "Aqua Square Rain Plate",          finishes: ["chrome"], badge: "New", variant: "square plate · square nozzles" },
+  { code: "ST-SS304", cat: "rain-shower",  name: "Aqua Square Rain Plate",          finishes: ["chrome","gold","matteBlack","roseGold"], badge: "New", variant: "square plate · square nozzles" },
   // waste
   { code: "ST-SZ1",   cat: "wall-tap",     name: "Senza Bib Tap",     finishes: ["chrome"] },
   // concealed thermostatic panels
   { code: "ST-TD3",   cat: "thermostatic", name: "Regale 3-Outlet Thermostat",  finishes: ["chrome"] },
   { code: "ST-TD4",   cat: "thermostatic", name: "Regale 4-Outlet Thermostat",  finishes: ["brushedBronze"] },
+
+  /* ---- 2026-09 Drive range: showers, diverters, spouts and body jets, each
+     with the full set of finishes from the factory photography ---- */
+  { code: "ST-FDP", cat: "rain-shower", name: "Cascada Flow Rain Panel", finishes: ["brushedRoseGold","champagne","chrome","gunGrey","matteBlack"], variant: "wide plate · centre waterfall slot" },
+  { code: "ST-CP25", cat: "thermostatic", name: "Regale Digital Thermostatic Panel", finishes: ["brushedRoseGold","champagne","chrome","gunGrey","matteBlack","roseGold"], variant: "digital · dial + 4 function keys" },
+  { code: "ST-MB2", cat: "thermostatic", name: "Regale Smart Control Panel", finishes: ["brushedRoseGold","champagne","chrome","gunGrey","matteBlack","roseGold"], variant: "digital · dial + 6 function keys" },
+  { code: "ST-CJ1", cat: "thermostatic", name: "Regale Touch Control Panel", finishes: ["champagne","chrome","gunGrey","matteBlack","roseGold"], variant: "digital · touch keys + temp dial" },
+  { code: "ST-D5001", cat: "diverter", name: "Regale Round Concealed Diverter", finishes: ["chrome"], variant: "round plate · single lever" },
+  { code: "ST-D5002", cat: "diverter", name: "Regale Square Lever Diverter", finishes: ["chrome"], variant: "square plate · single lever" },
+  { code: "ST-D5003", cat: "diverter", name: "Regale 3-Way Concealed Diverter", finishes: ["chrome"], variant: "square plate · 3 buttons" },
+  { code: "ST-D5004", cat: "diverter", name: "Regale 5-Button Diverter Plate", finishes: ["chrome","matteBlack","roseGold"], variant: "tall plate · dial + 5 buttons" },
+  { code: "ST-D5009", cat: "diverter", name: "Regale 2-Way Concealed Thermostat", finishes: ["chrome","matteBlack","roseGold"], variant: "tall plate · 2 outlets" },
+  { code: "ST-D5010", cat: "diverter", name: "Regale 3-Way Concealed Thermostat", finishes: ["chrome","gold","matteBlack"], variant: "tall plate · 3 outlets" },
+  { code: "ST-BJ21F", cat: "body-jet", name: "Aqua Square Concealed Body Jet", finishes: ["brushedRoseGold","champagne","chrome","gunGrey","matteBlack","roseGold"], variant: "square escutcheon · single jet" },
+  { code: "ST-2FBJ", cat: "body-jet", name: "Aqua Micro-Jet Body Spray", finishes: ["chrome","matteBlack","roseGold"], variant: "square plate · multi micro-jet" },
 ];
 
 /* ---- build PRODUCTS map keyed by category -------------------------------- */

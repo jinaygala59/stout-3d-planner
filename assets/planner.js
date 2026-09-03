@@ -76,6 +76,13 @@ const SKU3D = {
   "ST-BJ-01": { width: 0.22, single: true, x: 0.62, y: 1.35 },
   "ST-J06":   { width: 0.16, single: true, x: 0.62, y: 1.35 },
   "ST-BJ-02": { width: 0.12 }, "ST-1030": { width: 0.12 },
+  // --- 2026-09 Drive range ---
+  "ST-FDP":   { width: 0.60 },                                   // wide overhead plate
+  "ST-CP25":  { width: 0.26 }, "ST-MB2": { width: 0.26 }, "ST-CJ1": { width: 0.28 },   // digital control panels
+  "ST-D5001": { width: 0.15 }, "ST-D5002": { width: 0.14 }, "ST-D5003": { width: 0.17 },
+  "ST-D5004": { width: 0.14 }, "ST-D5009": { width: 0.13 }, "ST-D5010": { width: 0.13 },
+  "ST-BJ21F": { width: 0.12, single: true, x: 0.62, y: 1.35 },   // one concealed jet on its own patch of wall
+  "ST-2FBJ":  { width: 0.12 },                                   // small jets — the flanking set of 4
   // --- wastes + the re-filed square rain plate ---
   "ST-TXSQ-01": { width: 0.09 }, "ST-TSQ": { width: 0.09 }, "ST-SS304": { width: 0.50 },
   // --- concealed diverter: a tall trim plate (232x735 artwork) ---
@@ -1011,6 +1018,33 @@ function metalPart(geo, hex, rough) {
   return m;
 }
 
+/* Give a cutout real thickness WITHOUT a box.
+   The old approach put a rectangular slab behind the artwork, which broke two
+   ways: its front face landed exactly on the artwork plane (z-fighting — the
+   speckled checkerboard you could see across a diverter), and the slab filled
+   the transparent parts of the image, so a hexagonal plate or a trim-plus-lever
+   sat on a visible rectangle. Stacking alpha-tested copies of the artwork
+   instead makes the body follow the product's OWN silhouette, and no two
+   surfaces are ever coplanar. */
+function extrudeCutout(mesh, map, w, h, depth, hex, faceZ) {
+  const old = mesh.getObjectByName("extrude");
+  if (old) { old.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) o.material.dispose(); }); mesh.remove(old); }
+  const g = new THREE.Group(); g.name = "extrude";
+  const layers = 8, step = depth / layers;
+  for (let i = 1; i <= layers; i++) {
+    const shade = 1 - 0.55 * (i / layers);                 // deeper layers go darker
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshStandardMaterial({
+      map, alphaTest: 0.45, side: THREE.DoubleSide,
+      color: new THREE.Color(hex).multiplyScalar(shade),
+      metalness: 0.8, roughness: 0.38, envMapIntensity: 1.05,
+    }));
+    m.position.z = faceZ - i * step;
+    m.userData.metal = true; m.userData.shade = shade;      // recolours with the finish
+    g.add(m);
+  }
+  mesh.add(g);
+}
+
 /* attach (or refresh) a shadow plane as a CHILD of the product mesh, sitting
    just behind it toward the wall, so it follows every move / resize for free */
 function addContactShadow(mesh, w, h) {
@@ -1331,14 +1365,12 @@ function placeProduct(product, finishId, wall, frame) {
         mesh.geometry.translate(0, width * ar / 2, 0);   // stand it on the counter, don't bury it
         rim.position.z = -0.008;
       } else if (cfg.panel && wall !== "ceiling") {
-        // a thermostatic panel / diverter trim / jet plate is a solid object on the
-        // wall, not a sticker: give it a body in the chosen finish behind the art
-        const d = Math.max(0.014, width * 0.05);
+        // a thermostatic panel / diverter trim / jet plate is a solid object on
+        // the wall, not a sticker — give it a body that follows its own outline
+        const d = Math.max(0.016, width * 0.05);
         mesh.geometry.translate(0, 0, d);
-        rim.position.z = d - 0.006;
-        const body = new THREE.Mesh(new THREE.BoxGeometry(width * 0.96, width * ar * 0.96, d),
-          new THREE.MeshStandardMaterial({ color: finishHex(finishId, product), metalness: 0.85, roughness: 0.34, envMapIntensity: 1.15 }));
-        body.name = "housing"; body.position.z = d / 2; mesh.add(body);
+        mesh.remove(rim);                                   // the extrusion IS the rim now
+        extrudeCutout(mesh, mesh.material.map, width, width * ar, d, finishHex(finishId, product), d);
       }
       // grounding: without this every fitting reads as pasted onto the tile
       if (wall !== "ceiling" && wall !== "counter") addContactShadow(mesh, width, width * ar);
@@ -1352,13 +1384,12 @@ function placeProduct(product, finishId, wall, frame) {
         pipe.rotation.x = Math.PI / 2; pipe.position.z = drop / 2;
         pipe.name = "arm"; pipe.userData.metal = true; mesh.add(pipe);
       } else if (wall === "ceiling") {
-        // real ceiling plates have a visible housing: give it a slim metal slab so
-        // it reads from eye level instead of vanishing edge-on
-        mesh.geometry.translate(0, 0, 0.055);     // product face sits at the housing underside
-        rim.position.z = 0.047;
-        const housing = new THREE.Mesh(new THREE.BoxGeometry(width * 0.98, width * ar * 0.98, 0.05),
-          new THREE.MeshStandardMaterial({ color: finishHex(finishId, product), metalness: 0.85, roughness: 0.35, envMapIntensity: 1.15 }));
-        housing.name = "housing"; housing.position.z = 0.026; mesh.add(housing);
+        // a ceiling plate has a housing above it, and it has to follow the plate's
+        // shape — half the range is hexagonal, and a rectangular slab showed
+        const d = 0.05;
+        mesh.geometry.translate(0, 0, d);         // product face sits at the housing underside
+        mesh.remove(rim);
+        extrudeCutout(mesh, mesh.material.map, width, width * ar, d, finishHex(finishId, product), d);
       }
       positionOnWall(mesh, wall, defaultSpot(wall, cfg));
       reveal();
@@ -1598,14 +1629,23 @@ function changeFinish(uid, fid) {
     const old = targetMat.map;
     targetMat.map = finishTexture(path);
     targetMat.needsUpdate = true;
-    if (old) old.dispose();
-    // keep the backing rim + ceiling housing in step with the new finish
+    // everything that shares the artwork has to move to the new texture BEFORE
+    // the old one is disposed, or it renders with a dead map
     const rim = rec.mesh.getObjectByName("rim");
     if (rim) { rim.material.map = targetMat.map; rim.material.needsUpdate = true; }
+    const extrude = rec.mesh.getObjectByName("extrude");
+    if (extrude) extrude.children.forEach(l => { l.material.map = targetMat.map; l.material.needsUpdate = true; });
+    if (old) old.dispose();
+    const hex = finishHex(fid, rec.product);
     const housing = rec.mesh.getObjectByName("housing");
-    if (housing) housing.material.color.setHex(finishHex(fid, rec.product));
-    // recolour procedural metal parts (e.g. the hand-shower hose/elbow)
-    rec.mesh.traverse(o => { if (o.userData.metal && o.material) o.material.color.setHex(finishHex(fid, rec.product)); });
+    if (housing) housing.material.color.setHex(hex);
+    // recolour procedural metal parts (hose, arm, extrusion layers), keeping the
+    // extrusion's depth shading
+    rec.mesh.traverse(o => {
+      if (!o.userData.metal || !o.material) return;
+      o.material.color.setHex(hex);
+      if (o.userData.shade) o.material.color.multiplyScalar(o.userData.shade);
+    });
   }
   renderTool(); renderRail();
   saveDesign();
@@ -1641,10 +1681,11 @@ function isPlaced(pid) { for (const r of placed.values()) if (r.product.id === p
    diverter families read as one "Diverters" list while each product keeps its own
    catId — and therefore its own wall anchor. */
 const RAIL_GROUPS = [
-  { id: "showers",   name: "Showers",   cats: ["rain-shower"] },
+  // client-specified running order for the product list
   { id: "diverters", name: "Diverters", cats: ["thermostatic", "diverter"] },
-  { id: "spouts",    name: "Spouts",    cats: ["bath-spout"] },
   { id: "bodyjets",  name: "Body Jets", cats: ["body-jet"] },
+  { id: "showers",   name: "Showers",   cats: ["rain-shower"] },
+  { id: "spouts",    name: "Spouts",    cats: ["bath-spout"] },
 ];
 const RAIL_CATS = RAIL_GROUPS.reduce((a, g) => a.concat(g.cats), []);
 
