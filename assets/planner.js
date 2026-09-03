@@ -1121,6 +1121,10 @@ function setHalo(rec, on) {
   const parts = [];
   root.traverse(o => { if (o.isMesh && o.geometry && o.name !== "selHalo" && o.name !== "rim") parts.push(o); });
   const mk = (parent, w, h, cx, cy, z) => {
+    // A flush ceiling piece's "behind" is UP INSIDE the slab, where the ceiling
+    // occludes the glow entirely — a root-level halo there hangs the selection
+    // feedback inside the concrete. Keep it just under the slab instead.
+    if (rec.wall === "ceiling" && parent === root) z = Math.max(z, 0.004);
     const halo = new THREE.Mesh(
       new THREE.PlaneGeometry(Math.max(w, 0.05) * 1.9 + 0.10, Math.max(h, 0.05) * 1.9 + 0.10),
       new THREE.MeshBasicMaterial({ map: haloTexture(), transparent: true, depthWrite: false,
@@ -2320,6 +2324,7 @@ if ($("#confirm")) $("#confirm").addEventListener("click", e => { if (e.target =
   grip.onclick = () => {
     const open = !rail.classList.contains("open");
     rail.classList.toggle("open", open);
+    document.body.classList.toggle("sheet-open", open);   // lifts the toast clear
     grip.setAttribute("aria-expanded", String(open));
     grip.querySelector("span").textContent = open ? "Close" : "Products";
   };

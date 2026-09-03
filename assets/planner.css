@@ -245,6 +245,8 @@ input{font-family:inherit}
 
   .tool{right:12px;left:12px;bottom:66px;width:auto}
   .toast{bottom:70px;width:max-content;max-width:calc(100vw - 32px)}
+  /* with the products sheet up, the toast has to clear it */
+  body.sheet-open .toast{bottom:calc(min(62vh,520px) + 14px)}
 }
 
 @media (prefers-reduced-motion:reduce){
