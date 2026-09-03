@@ -2290,6 +2290,89 @@ if ($("#lookToggle")) $("#lookToggle").onclick = () => setLook(!look.on);
 })();
 
 /* =========================================================================
+   ROTATOR DOCK — turn / tilt / zoom from a fixed handle on the right.
+   Dragging across the room works but competes with picking a fitting, and a
+   touchpad gives you nothing to grab. Everything here drives the SAME orbit the
+   mouse does, so the two never disagree: it reads the live camera, changes one
+   spherical coordinate, and re-bases cursor-turn afterwards.
+   ========================================================================= */
+const _rotSph = new THREE.Spherical(), _rotOff = new THREE.Vector3();
+function readOrbit() {
+  _rotOff.subVectors(camera.position, controls.target);
+  _rotSph.setFromVector3(_rotOff);
+  return _rotSph;
+}
+function writeOrbit(sph) {
+  sph.theta = clamp(sph.theta, controls.minAzimuthAngle, controls.maxAzimuthAngle);
+  sph.phi = clamp(sph.phi, controls.minPolarAngle, controls.maxPolarAngle);
+  sph.radius = clamp(sph.radius, controls.minDistance, controls.maxDistance);
+  camera.position.copy(controls.target).add(_rotOff.setFromSpherical(sph));
+  camAnim = null;                 // a manual nudge wins over any fly-in still running
+  look.hold = 12;                 // let cursor-turn re-base around the new view
+  paintDial(sph.theta);
+}
+/* the dial is a plan view: the dot is where you are standing, the square is the
+   room. theta 0 = square on, +90° = hard right, -90° = hard left. */
+function paintDial(theta) {
+  const mark = document.getElementById("rotMark"), dial = $("#rotDial");
+  if (!mark) return;
+  const deg = THREE.MathUtils.radToDeg(theta);
+  mark.setAttribute("transform", "rotate(" + (-deg) + " 50 50)");
+  if (dial) dial.setAttribute("aria-valuenow", Math.round(deg));
+}
+(function wireRotator() {
+  const dial = $("#rotDial");
+  if (!dial) return;
+  const STEP = THREE.MathUtils.degToRad(15);
+
+  const angleFromEvent = e => {
+    const r = dial.getBoundingClientRect();
+    const dx = e.clientX - (r.left + r.width / 2);
+    const dy = e.clientY - (r.top + r.height / 2);
+    if (Math.hypot(dx, dy) < 6) return null;        // dead zone at the centre
+    return Math.atan2(dx, dy);                       // 0 = straight down = front on
+  };
+  let dragging = false;
+  const drag = e => {
+    const a = angleFromEvent(e); if (a == null) return;
+    const sph = readOrbit(); sph.theta = a; writeOrbit(sph);
+  };
+  dial.addEventListener("pointerdown", e => {
+    dragging = true; lookSuspended = true;
+    dial.setPointerCapture(e.pointerId); drag(e); e.preventDefault();
+  });
+  dial.addEventListener("pointermove", e => { if (dragging) drag(e); });
+  const stop = e => {
+    if (!dragging) return;
+    dragging = false; lookSuspended = false; look.hold = 12;
+    try { dial.releasePointerCapture(e.pointerId); } catch (_) {}
+  };
+  dial.addEventListener("pointerup", stop);
+  dial.addEventListener("pointercancel", stop);
+  dial.addEventListener("keydown", e => {
+    const d = e.key === "ArrowLeft" ? -1 : e.key === "ArrowRight" ? 1 : 0;
+    if (!d) return;
+    e.preventDefault();
+    const sph = readOrbit(); sph.theta += d * STEP; writeOrbit(sph);
+  });
+
+  $("#rotator").querySelectorAll("[data-rot],[data-tilt],[data-zoom]").forEach(b => {
+    b.onclick = () => {
+      const sph = readOrbit();
+      if (b.dataset.rot)  sph.theta += THREE.MathUtils.degToRad(+b.dataset.rot);
+      if (b.dataset.tilt) sph.phi += (+b.dataset.tilt) * 0.06;
+      if (b.dataset.zoom) sph.radius *= (+b.dataset.zoom > 0 ? 1.18 : 1 / 1.18);
+      writeOrbit(sph);
+    };
+  });
+  const centre = $("#rotCentre");
+  if (centre) centre.onclick = () => {
+    animateCam(new THREE.Vector3(1.32, 1.52, 2.05), new THREE.Vector3(-0.25, 1.18, -1.15));
+  };
+  paintDial(readOrbit().theta);
+})();
+
+/* =========================================================================
    RENDER LOOP + RESIZE
    ========================================================================= */
 function resize() {
@@ -2314,6 +2397,7 @@ function loop() {
   stepPops();
   stepBillboards();
   controls.update();
+  paintDial(readOrbit().theta);   // dial follows drags, wall tabs and cursor-turn too
   renderer.render(scene, camera);
   if (!started) { started = true; $("#loading").classList.add("hide"); }
 }
