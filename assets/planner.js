@@ -1113,6 +1113,11 @@ function setHalo(rec, on) {
   root.traverse(o => { if (o.name === "selHalo") olds.push(o); });
   olds.forEach(o => { if (o.parent) o.parent.remove(o); o.geometry.dispose(); });
   if (!on) return;
+  // A ceiling piece gets NO halo. Additive warm glow on the slab doesn't read as
+  // "selected" up there — it reads as a light fitting shining down out of the
+  // ceiling, which is exactly what an overhead shower must not look like. The
+  // tool card and the highlighted rail tile already say what is selected.
+  if (rec.wall === "ceiling") return;
 
   // A halo per PART, parented to that part: the body-jet set is four separate
   // planes around an empty centre, so one halo on the group put a lone glow in
@@ -1121,10 +1126,6 @@ function setHalo(rec, on) {
   const parts = [];
   root.traverse(o => { if (o.isMesh && o.geometry && o.name !== "selHalo" && o.name !== "rim") parts.push(o); });
   const mk = (parent, w, h, cx, cy, z) => {
-    // A flush ceiling piece's "behind" is UP INSIDE the slab, where the ceiling
-    // occludes the glow entirely — a root-level halo there hangs the selection
-    // feedback inside the concrete. Keep it just under the slab instead.
-    if (rec.wall === "ceiling" && parent === root) z = Math.max(z, 0.004);
     const halo = new THREE.Mesh(
       new THREE.PlaneGeometry(Math.max(w, 0.05) * 1.9 + 0.10, Math.max(h, 0.05) * 1.9 + 0.10),
       new THREE.MeshBasicMaterial({ map: haloTexture(), transparent: true, depthWrite: false,
