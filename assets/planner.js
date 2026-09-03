@@ -280,12 +280,16 @@ function buildSurface(spec, aspect, seed) {
     b.fillStyle = "#8a8a8a"; b.fillRect(0, 0, W, H);
     r.fillStyle = "#ffffff"; r.fillRect(0, 0, W, H);
 
-    /* soft clouding — stone/plaster is never one flat tone */
+    /* soft clouding — stone/plaster is never one flat tone. cloudAlpha exists
+       because on a pale wall this is the difference between "hand-finished" and
+       "out of focus": big soft blotches at full strength are exactly what an
+       unsharp photo looks like. */
     const clouds = spec.clouds == null ? 30 : spec.clouds;
+    const cA = spec.cloudAlpha == null ? 1 : spec.cloudAlpha;
     for (let i = 0; i < clouds; i++) {
       const x = R() * W, y = R() * H, rad = Math.max(W, H) * (0.05 + R() * (spec.cloudSize == null ? 0.26 : spec.cloudSize)), up = R() < 0.5;
       const g = c.createRadialGradient(x, y, 0, x, y, rad);
-      g.addColorStop(0, up ? `rgba(255,255,255,${(0.05 + R() * 0.10).toFixed(3)})` : `rgba(0,0,0,${(0.05 + R() * 0.09).toFixed(3)})`);
+      g.addColorStop(0, up ? `rgba(255,255,255,${((0.05 + R() * 0.10) * cA).toFixed(3)})` : `rgba(0,0,0,${((0.05 + R() * 0.09) * cA).toFixed(3)})`);
       g.addColorStop(1, "rgba(0,0,0,0)");
       c.fillStyle = g; c.fillRect(x - rad, y - rad, rad * 2, rad * 2);
       const gr = r.createRadialGradient(x, y, 0, x, y, rad);      // patchy sheen
@@ -296,13 +300,14 @@ function buildSurface(spec, aspect, seed) {
 
     /* trowel sweeps — the giveaway of real microcement / plaster */
     if (spec.trowel) {
+      const tA = spec.trowelAlpha == null ? 1 : spec.trowelAlpha;
       for (let i = 0; i < spec.trowel; i++) {
         const x = R() * W, y = R() * H, w = W * (0.10 + R() * 0.30), h = H * (0.02 + R() * 0.05);
         c.save(); c.translate(x, y); c.rotate((R() - 0.5) * 0.9);
         const g = c.createLinearGradient(-w / 2, 0, w / 2, 0);
         const up = R() < 0.5;
         g.addColorStop(0, "rgba(0,0,0,0)");
-        g.addColorStop(0.5, up ? "rgba(255,255,255,0.09)" : "rgba(0,0,0,0.075)");
+        g.addColorStop(0.5, up ? `rgba(255,255,255,${(0.09 * tA).toFixed(3)})` : `rgba(0,0,0,${(0.075 * tA).toFixed(3)})`);
         g.addColorStop(1, "rgba(0,0,0,0)");
         c.fillStyle = g; c.fillRect(-w / 2, -h / 2, w, h); c.restore();
       }
@@ -333,7 +338,10 @@ function buildSurface(spec, aspect, seed) {
     }
 
     grainOver(c, W, H, spec.grain == null ? 0.16 : spec.grain);
-    grainOver(b, W, H, 0.22, "overlay");
+    // bumpGrain is the TOOTH of the surface. White noise in a bump map is
+    // sandpaper if you let it get loud — a polished plaster has a tooth you can
+    // only see in raking light, so this stays low and the bump scale carries it.
+    grainOver(b, W, H, spec.bumpGrain == null ? 0.22 : spec.bumpGrain, "overlay");
 
     /* slab joints last, so nothing draws over them */
     if (spec.joints) {
@@ -359,7 +367,18 @@ function buildSurface(spec, aspect, seed) {
   }
   return { map: canvasTex(col, true), bump: canvasTex(bmp, false), rough: canvasTex(rgh, false) };
 }
+/* bumpRepeat: tile the RELIEF finer than the colour. A 1024px map stretched over
+   a 3 m wall is ~3 px/cm — fine for a soft mottle, but far too coarse to read as
+   a surface, which is what made the white room look like an unsharp photograph.
+   Repeating the bump 4× puts the grain back at plaster scale (~0.7 mm a pixel)
+   at no memory cost. Only safe where the bump carries nothing but grain — a
+   slab's bump also holds its joints and veins, which must not repeat. */
 function matFrom(spec, surf) {
+  // MULTIPLY, never set: the four back-wall panels arrive here already cropped
+  // to their slice of one shared texture set, and overwriting repeat would throw
+  // that crop away. Each material owns its own bump texture, so this is in place.
+  const br = spec.bumpRepeat == null ? 1 : spec.bumpRepeat;
+  if (br !== 1) { surf.bump.repeat.multiplyScalar(br); surf.bump.needsUpdate = true; }
   return new THREE.MeshStandardMaterial({
     map: surf.map,
     bumpMap: surf.bump, bumpScale: spec.bumpScale == null ? 0.018 : spec.bumpScale,
@@ -428,43 +447,69 @@ const THEMES = {
     bg: 0x121214, exposure: 0.94,
     env: ["#e9e1d3", "#a89f8e", "#4c473e"],
     surfaces: {
-      side:    { kind: "plaster", base: "#f0ece5", clouds: 80, cloudSize: 0.1, trowel: 44, grain: 0.2, rough: 0.82, bumpScale: 0.009, envI: 0.45 },
-      feature: { kind: "plaster", base: "#e8e3d9", clouds: 80, cloudSize: 0.1, trowel: 48, grain: 0.2, rough: 0.8, bumpScale: 0.01, envI: 0.5 },
-      floor:   { kind: "slab", base: "#e4dfd4", vein: "#c9c0ae", veins: 10, veinAlpha: 0.28, clouds: 22, grain: 0.09,
-                 joints: { cols: 3, rows: 3, color: "#bcb2a0", width: 3.0 }, rough: 0.44, metal: 0.06, bumpScale: 0.016, envI: 1.05 },
+      /* This room read as an out-of-focus photograph, and the reason was that it
+         had no sharp detail in it anywhere: 80 big soft blotches per wall, 44
+         wide trowel smears over them, and a bump map so shallow (0.009) that
+         nothing caught the light. Fewer, tighter, weaker blotches now — and the
+         detail comes instead from real plaster grit, tiled 4× finer than the
+         colour so it lands at ~0.7 mm a pixel and the eye finally has an edge to
+         focus on. Note the grain goes DOWN in colour (0.2 → 0.12) while going up
+         in relief: speckled paint is sandpaper, not plaster — the crispness has
+         to come from light catching the surface, not from noise in the pigment. */
+      side:    { kind: "plaster", base: "#f1ede6", clouds: 26, cloudSize: 0.05, cloudAlpha: 0.5, trowel: 24, trowelAlpha: 0.62,
+                 grain: 0.1, rough: 0.66, bumpScale: 0.011, bumpRepeat: 3, bumpGrain: 0.1, envI: 0.7 },
+      feature: { kind: "plaster", base: "#eae5db", clouds: 26, cloudSize: 0.05, cloudAlpha: 0.5, trowel: 26, trowelAlpha: 0.62,
+                 grain: 0.1, rough: 0.64, bumpScale: 0.012, bumpRepeat: 3, bumpGrain: 0.1, envI: 0.74 },
+      // the floor is the one crisp thing in a plaster room, so its joints and
+      // veins do the work of telling you the room is in focus
+      floor:   { kind: "slab", base: "#e4dfd4", vein: "#c6bcaa", veins: 12, veinAlpha: 0.36, clouds: 22, grain: 0.11,
+                 joints: { cols: 3, rows: 3, color: "#b3a894", width: 3.2 }, rough: 0.4, metal: 0.06, bumpScale: 0.02, envI: 1.1 },
       ceiling: { color: 0xf8f5ee, rough: 0.95 },
     },
     niche:  { lining: 0xd2ccbe, shelf: 0xf6f3ec, trim: 0xaaa496 },
-    light:  { hemiSky: 0xfff4e2, hemiGround: 0xa79e8c, hemi: 0.24, amb: 0.05, ambColor: 0xffefdd,
-              key: 0.26, keyColor: 0xffeed6, fill: 0.1, fillColor: 0xdfe8f6,
-              spot: 0.42, spotColor: 0xffe9c9, trim: 0xa9a294, bulb: 0xfff6e6,
-              cove: 0.2, coveColor: 0xffe6c4, coveAlpha: 0.3, niche: 0.16, mirror: 0.22, mirrorColor: 0xfff2e0 },
+    // and it was lit as flatly as it was textured: hemisphere everywhere, a
+    // 0.26 key, nothing to cast a shadow or strike a highlight. The key and the
+    // ceiling spots now carry the room, so surfaces have a light side and a dark
+    // side; the cove haze that washed the top of the feature wall is pulled back.
+    light:  { hemiSky: 0xfff4e2, hemiGround: 0xa79e8c, hemi: 0.18, amb: 0.04, ambColor: 0xffefdd,
+              key: 0.38, keyColor: 0xffeed6, fill: 0.09, fillColor: 0xdfe8f6,
+              spot: 0.58, spotColor: 0xffe9c9, trim: 0xa9a294, bulb: 0xfff6e6,
+              cove: 0.2, coveColor: 0xffe6c4, coveAlpha: 0.22, niche: 0.16, mirror: 0.22, mirrorColor: 0xfff2e0 },
     furn:   { cab: 0xefebe3, counter: 0xf9f7f2, bowl: 0xfdfcfa, mixer: 0x4a4540, mixerRough: 0.34,
               wc: 0xfbfaf7, mirrorFrame: 0xd6d0c5, rail: 0x4a4540, towel: 0xf1ede4, mat: 0xded7c8, drain: 0xb2aca1, wet: 0xd8d2c4,
               pelmet: 0xf1eee7 },
-    ao: 0.5, diffEnv: 0.34,
+    ao: 0.62, diffEnv: 0.32,
   },
   black: {
     id: "black", label: "Black", swatch: "#232326",
-    bg: 0x08080a, exposure: 1.06,
-    env: ["#55555b", "#1e1e22", "#08080a"],
+    bg: 0x08080a, exposure: 1.0,
+    env: ["#63636a", "#26262b", "#0d0d10"],
+    /* This room was BLACK, not dark: every surface sat between 0x0b and 0x2b, so
+       the stone, the joints and the fittings all fell into the same hole and you
+       could not read the room at all. The whole palette moves up into charcoal
+       and graphite — still unmistakably the dark room, but now the split-face
+       cladding, the slab veining and the grout lines are all legible, and a matt
+       black fitting has something to sit against. */
     surfaces: {
-      side:    { kind: "slab", base: "#2b2b2f", vein: "#63646b", veins: 9, veinAlpha: 0.3, clouds: 20, cloudSize: 0.16, grain: 0.045,
-                 joints: { cols: 2, rows: 3, color: "#141416", width: 2.6 }, rough: 0.42, metal: 0.06, bumpScale: 0.02, envI: 1.15 },
-      feature: { kind: "splitface", base: "#26262a", mortar: "#0b0b0c", rows: 26, rough: 0.72, metal: 0.03, bumpScale: 0.05, envI: 0.8 },
-      floor:   { kind: "slab", base: "#2b2b30", vein: "#54545b", veins: 9, veinAlpha: 0.34, clouds: 20, cloudSize: 0.16, grain: 0.05,
-                 joints: { cols: 3, rows: 3, color: "#1d1d21", width: 2.4 }, rough: 0.32, metal: 0.08, bumpScale: 0.012, envI: 0.7 },
-      ceiling: { color: 0x232326, rough: 0.9 },
+      side:    { kind: "slab", base: "#3c3c42", vein: "#85878f", veins: 12, veinAlpha: 0.34, clouds: 20, cloudSize: 0.16, grain: 0.03,
+                 joints: { cols: 2, rows: 3, color: "#1f1f23", width: 2.6 }, rough: 0.4, metal: 0.06, bumpScale: 0.022, envI: 1.2 },
+      feature: { kind: "splitface", base: "#38383e", mortar: "#181820", rows: 26, rough: 0.7, metal: 0.03, bumpScale: 0.055, envI: 0.9 },
+      floor:   { kind: "slab", base: "#35353b", vein: "#767780", veins: 11, veinAlpha: 0.36, clouds: 20, cloudSize: 0.16, grain: 0.035,
+                 joints: { cols: 3, rows: 3, color: "#26262b", width: 2.4 }, rough: 0.3, metal: 0.08, bumpScale: 0.014, envI: 0.85 },
+      ceiling: { color: 0x2b2b2f, rough: 0.9 },
     },
-    niche:  { lining: 0x1a1a1d, shelf: 0x2f2f33, trim: 0x8e8a82 },
-    light:  { hemiSky: 0xc4cdd9, hemiGround: 0x0b0b0d, hemi: 0.17, amb: 0.035, ambColor: 0xdfe6f2,
-              key: 0.17, keyColor: 0xfff1de, fill: 0.07, fillColor: 0xc9d6ea,
-              spot: 0.55, spotColor: 0xffeed4, trim: 0x1d1d1f, bulb: 0xfff3e2,
-              cove: 0.34, coveColor: 0xffd8a4, coveAlpha: 0.55, niche: 0.26, mirror: 0.4, mirrorColor: 0xfff0d8 },
-    furn:   { cab: 0x3a2b20, counter: 0xefece6, bowl: 0x17171a, mixer: 0x1b1b1d, mixerRough: 0.42,
-              wc: 0xf7f6f3, mirrorFrame: 0x161619, rail: 0x1b1b1d, towel: 0xd6d3cd, mat: 0x1c1c1f, drain: 0x1e1e21, wet: 0x232327,
-              pelmet: 0x232326 },
-    ao: 0.7, diffEnv: 0.46,
+    niche:  { lining: 0x232327, shelf: 0x3a3a3f, trim: 0x9a958c },
+    // a dark room still needs a light SIDE. The key and the fill were doing
+    // almost nothing (0.17 / 0.07), which left the ceiling spots as the only
+    // source and everything outside their cones unlit.
+    light:  { hemiSky: 0xc4cdd9, hemiGround: 0x1b1b20, hemi: 0.26, amb: 0.075, ambColor: 0xdfe6f2,
+              key: 0.3, keyColor: 0xfff1de, fill: 0.13, fillColor: 0xc9d6ea,
+              spot: 0.6, spotColor: 0xffeed4, trim: 0x242427, bulb: 0xfff3e2,
+              cove: 0.34, coveColor: 0xffd8a4, coveAlpha: 0.5, niche: 0.3, mirror: 0.4, mirrorColor: 0xfff0d8 },
+    furn:   { cab: 0x3d2c20, counter: 0xefece6, bowl: 0x24242a, mixer: 0x242427, mixerRough: 0.42,
+              wc: 0xf7f6f3, mirrorFrame: 0x1e1e22, rail: 0x242427, towel: 0xd6d3cd, mat: 0x26262b, drain: 0x2a2a2e, wet: 0x2f2f35,
+              pelmet: 0x2b2b2f },
+    ao: 0.58, diffEnv: 0.46,
   },
   grey: {
     id: "grey", label: "Grey", swatch: "#93969a",
