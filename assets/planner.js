@@ -493,6 +493,42 @@ const THEMES = {
 const THEME_ORDER = ["white", "black", "grey"];
 const THEME_KEY = "stout.3d.theme";
 
+/* -----------------------------------------------------------------------------
+   CEILING COLOUR
+   Each room theme paints its own ceiling, but the ceiling is the one surface a
+   client most often wants to take somewhere else — a dark slab over pale walls
+   is a signature of the range. So it is choosable on its own, and the choice
+   OUTLIVES a room change: pick Ink, switch White → Grey, the ceiling stays Ink.
+   "auto" hands it back to whatever the room theme says.
+   Darker paints are a little sheenier than chalk emulsion, hence the roughness
+   walking down with the tone.                                              */
+const CEILINGS = [
+  { id: "auto",     name: "Match the room" },
+  { id: "chalk",    name: "Chalk White",  color: 0xf8f5ee, rough: 0.95 },
+  { id: "sand",     name: "Warm Sand",    color: 0xe7ddca, rough: 0.93 },
+  { id: "dove",     name: "Dove Grey",    color: 0xcfcdc8, rough: 0.90 },
+  { id: "graphite", name: "Graphite",     color: 0x3c3c40, rough: 0.86 },
+  { id: "ink",      name: "Ink Black",    color: 0x1a1a1c, rough: 0.82 },
+];
+const CEILING_KEY = "stout.3d.ceiling";
+const ceilingById = id => CEILINGS.find(c => c.id === id) || CEILINGS[0];
+let ceilingChoice = "auto";
+try {
+  const savedCeil = localStorage.getItem(CEILING_KEY);
+  if (savedCeil && CEILINGS.some(c => c.id === savedCeil)) ceilingChoice = savedCeil;
+} catch (_) { /* storage blocked — stay on auto */ }
+/* what the ceiling should actually be built from, for a given theme */
+function ceilingSurface(t) {
+  const c = ceilingById(ceilingChoice);
+  return c.color == null ? t.surfaces.ceiling : { color: c.color, rough: c.rough };
+}
+/* the room, named for the spec sheet — with the ceiling only when it is a
+   deliberate departure from the theme */
+function roomLabel() {
+  const c = ceilingById(ceilingChoice);
+  return c.color == null ? THEME.label : `${THEME.label} · ${c.name} ceiling`;
+}
+
 /* =============================================================================
    SCENE GRAPH
      shell    — walls / floor / ceiling / furniture   (rebuilt on theme change)
@@ -505,6 +541,7 @@ const room = new THREE.Group(); scene.add(room);
 const NICHE = { x: 0.64, y: 2.12, w: 0.40, h: 0.34, d: 0.13 };  // off-centre: the shower centre-line (x=0) is kept clear for the head + its arm
 let THEME = THEMES.white;
 let cornerBasinUnit = null, bathroomDetails = null;
+let ceilMesh = null, pelmetMesh = null;        // repainted in place by setCeiling()
 let basinVisible = true;
 
 function metalMat(hex, rough) {
@@ -579,9 +616,14 @@ function buildLights(t) {
   });
 
   /* LED cove washing down the feature wall */
+  // the pelmet is a strip of the ceiling turned down over the LED, so it takes
+  // the ceiling's colour — left theme-white under an Ink ceiling it read as a
+  // random white plank stuck to the wall
+  const pelC = ceilingById(ceilingChoice).color;
   const pelmet = new THREE.Mesh(new THREE.BoxGeometry(RW - 0.18, 0.085, 0.1),
-    new THREE.MeshStandardMaterial({ color: t.furn.pelmet, roughness: 0.85, metalness: 0.03 }));
+    new THREE.MeshStandardMaterial({ color: pelC == null ? t.furn.pelmet : pelC, roughness: 0.85, metalness: 0.03 }));
   pelmet.position.set(0, RH - 0.043, -HZ + 0.05); pelmet.castShadow = true; lightRig.add(pelmet);
+  pelmetMesh = pelmet;
   const gc = mkCanvas(32, 256), gx = gc.getContext("2d");
   const gg = gx.createLinearGradient(0, 0, 0, 256);
   gg.addColorStop(0, `rgba(255,214,152,${L.coveAlpha})`);
@@ -613,10 +655,12 @@ function buildShell(t) {
   floor.material.userData.keepEnv = true;   // polished stone keeps its sheen
   shell.add(floor);
 
-  /* CEILING */
+  /* CEILING — the client's own colour when they have chosen one */
+  const CS = ceilingSurface(t);
   const ceil = new THREE.Mesh(new THREE.PlaneGeometry(RW, RD),
-    new THREE.MeshStandardMaterial({ color: S.ceiling.color, roughness: S.ceiling.rough, metalness: 0.0, envMapIntensity: 0.5 }));
+    new THREE.MeshStandardMaterial({ color: CS.color, roughness: CS.rough, metalness: 0.0, envMapIntensity: 0.5 }));
   ceil.rotation.x = Math.PI / 2; ceil.position.y = RH; shell.add(ceil);
+  ceilMesh = ceil;
 
   /* SIDE WALLS */
   const leftWall = new THREE.Mesh(new THREE.PlaneGeometry(RD, RH), surfaceMat(S.side, RD / RH, 202));
@@ -962,11 +1006,43 @@ function applyTheme(id, silent) {
     const on = b.dataset.theme === t.id;
     b.classList.toggle("on", on); b.setAttribute("aria-pressed", String(on));
   });
+  syncCeilTabs();
   try { localStorage.setItem(THEME_KEY, t.id); } catch (_) { /* storage blocked */ }
   if (!silent && typeof toast === "function") toast(t.label + " bathroom");
 }
 document.querySelectorAll("#themeTabs [data-theme]").forEach(b => {
   b.onclick = () => applyTheme(b.dataset.theme);
+});
+
+/* ---- ceiling colour ----------------------------------------------------- */
+/* Repaint in place rather than rebuilding the shell: a rebuild re-generates
+   every procedural wall texture, which stalls for a beat and throws away the
+   env map — for a change of paint you should just see the paint change. */
+function setCeiling(id, silent) {
+  const c = ceilingById(id);
+  ceilingChoice = c.id;
+  try { localStorage.setItem(CEILING_KEY, c.id); } catch (_) { /* storage blocked */ }
+  const CS = ceilingSurface(THEME);
+  if (ceilMesh) { ceilMesh.material.color.setHex(CS.color); ceilMesh.material.roughness = CS.rough; }
+  if (pelmetMesh) pelmetMesh.material.color.setHex(c.color == null ? THEME.furn.pelmet : c.color);
+  syncCeilTabs();
+  if (!silent && typeof toast === "function") {
+    toast(c.color == null ? "Ceiling follows the room" : "Ceiling · " + c.name);
+  }
+}
+/* the "Match the room" dot shows the colour it would actually give you */
+function syncCeilTabs() {
+  document.querySelectorAll("#ceilTabs [data-ceil]").forEach(b => {
+    const on = b.dataset.ceil === ceilingChoice;
+    b.classList.toggle("on", on); b.setAttribute("aria-pressed", String(on));
+    if (b.dataset.ceil === "auto" && THEME) {
+      const dot = b.querySelector("i");
+      if (dot) dot.style.setProperty("--c", "#" + THEME.surfaces.ceiling.color.toString(16).padStart(6, "0"));
+    }
+  });
+}
+document.querySelectorAll("#ceilTabs [data-ceil]").forEach(b => {
+  b.onclick = () => setCeiling(b.dataset.ceil);
 });
 (function initTheme() {
   let saved = null;
@@ -1989,7 +2065,7 @@ function designAsText() {
     `${(FINISHES[r.finishId] || {}).name || r.finishId}`);
   return [
     `My Stout bathroom design`,
-    `Room finish: ${THEME.label}`,
+    `Room finish: ${roomLabel()}`,
     ``,
     ...lines,
     ``,
@@ -2102,7 +2178,7 @@ async function downloadSpecSheet() {
     doc.text("Bathroom Design Specification", PW - M, 12, { align: "right" });
     doc.setFont("helvetica", "normal"); doc.setFontSize(8.5); doc.setTextColor(150, 150, 154);
     const when = new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
-    doc.text(`${THEME.label} bathroom  ·  ${when}`, PW - M, 18, { align: "right" });
+    doc.text(`${roomLabel()} bathroom  ·  ${when}`, PW - M, 18, { align: "right" });
     doc.setDrawColor(...GOLD); doc.setLineWidth(0.8); doc.line(0, 26, PW, 26);
 
     // ---- design snapshot ----
@@ -2301,7 +2377,13 @@ if ($("#confirm")) $("#confirm").addEventListener("click", e => { if (e.target =
    itself — scrolled off the right edge with nothing to say they were there. On a
    phone the secondary controls MOVE into the menu (the same buttons, with the
    same handlers and state) and move back when there is room.               */
-const TO_MENU = ["#wallTabs", "#resetView", "#lookToggle", "#toggleBasin", "#downloadPdf"];
+const TO_MENU = ["#wallTabs", "#ceilTabs", "#resetView", "#lookToggle", "#toggleBasin", "#downloadPdf"];
+/* The ceiling swatches move at their OWN width, not the phone one: the bar is
+   already ~1185px of controls, so a sixth item only fits on a genuinely wide
+   window. Below this it rides in the ··· menu, where it is labelled and has all
+   the room it needs. Keep in step with the #ceilGroup media query in the CSS. */
+const CEIL_MQ = "(max-width:1420px)";
+const menuMQ = sel => (sel === "#ceilTabs" ? CEIL_MQ : "(max-width:860px)");
 const MENU_LABEL = { resetView: "Reset the view", lookToggle: "Cursor turn",
                      toggleBasin: "Show or hide the vanity", downloadPdf: "Download the spec sheet" };
 let toolbarHome = null;
@@ -2314,10 +2396,10 @@ function syncToolbar() {
       toolbarHome.set(el, { parent: el.parentNode, next: el.nextSibling, text: el.textContent });   // text only used for the leaf buttons
     });
   }
-  const narrow = window.matchMedia("(max-width:860px)").matches;
   // insert in reverse so the declared order survives
   TO_MENU.slice().reverse().forEach(sel => {
     const el = $(sel); if (!el) return;
+    const narrow = window.matchMedia(menuMQ(sel)).matches;
     const home = toolbarHome.get(el);
     if (narrow && el.parentNode !== menu) {
       if (MENU_LABEL[el.id]) el.textContent = MENU_LABEL[el.id];

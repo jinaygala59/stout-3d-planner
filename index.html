@@ -37,6 +37,25 @@
         <button type="button" id="toggleBasin" class="btn ghost" aria-pressed="true">Vanity</button>
       </div>
 
+      <div class="group" id="ceilGroup" role="group" aria-label="Ceiling">
+        <span class="glabel">Ceiling</span>
+        <div class="ceil" id="ceilTabs">
+          <span class="ct-lbl">Ceiling</span>
+          <button type="button" data-ceil="auto" class="on" aria-pressed="true"
+                  title="Ceiling: match the room" aria-label="Ceiling: match the room"><i style="--c:#f8f5ee"></i></button>
+          <button type="button" data-ceil="chalk" aria-pressed="false"
+                  title="Ceiling: Chalk White" aria-label="Ceiling: Chalk White"><i style="--c:linear-gradient(135deg,#fdfbf6,#ece7dc)"></i></button>
+          <button type="button" data-ceil="sand" aria-pressed="false"
+                  title="Ceiling: Warm Sand" aria-label="Ceiling: Warm Sand"><i style="--c:linear-gradient(135deg,#efe7d6,#ddd0b8)"></i></button>
+          <button type="button" data-ceil="dove" aria-pressed="false"
+                  title="Ceiling: Dove Grey" aria-label="Ceiling: Dove Grey"><i style="--c:linear-gradient(135deg,#dcdad6,#c0beb9)"></i></button>
+          <button type="button" data-ceil="graphite" aria-pressed="false"
+                  title="Ceiling: Graphite" aria-label="Ceiling: Graphite"><i style="--c:linear-gradient(135deg,#4b4b52,#2b2b2f)"></i></button>
+          <button type="button" data-ceil="ink" aria-pressed="false"
+                  title="Ceiling: Ink Black" aria-label="Ceiling: Ink Black"><i style="--c:linear-gradient(135deg,#28282c,#0f0f11)"></i></button>
+        </div>
+      </div>
+
       <div class="group" role="group" aria-label="View">
         <span class="glabel">View</span>
         <div class="wall-tabs" id="wallTabs">
