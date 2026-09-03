@@ -328,14 +328,29 @@ function buildSurface(spec, aspect, seed) {
     const vn = spec.veins || 0;
     const va = spec.veinAlpha == null ? 0.5 : spec.veinAlpha;
     const flow = (spec.flow == null ? -0.72 : spec.flow) + (R() - 0.5) * 0.4;
+    /* veinSoft: a vein needs a BODY, not a line. Stroked straight onto the slab,
+       even three passes deep, a vein is a wire — it reads as a scratch or a
+       crack, which is what made the first marble attempt look like scribble on
+       white paint. So every wide pass goes onto its own layer, that whole layer
+       is blurred once, and only the hairline core is drawn crisp on top. That is
+       what a real vein is: a diffuse bed of colour with a sharp seam in it. */
+    const soft = spec.veinSoft ? spec.veinSoft * W / 1024 : 0;
+    const hc = soft ? mkCanvas(W, H) : null;
+    const hx = hc ? hc.getContext("2d") : null;
     for (let i = 0; i < vn; i++) {
       const paths = veinPath(R, W, H, flow), w = (W / 1400) * (0.55 + R() * 1.7);
-      strokePaths(c, paths, spec.vein || "#ffffff", va * 0.09, w * 4.5);
-      strokePaths(c, paths, spec.vein || "#ffffff", va * 0.2, w * 2.0);
-      strokePaths(c, paths, spec.vein || "#ffffff", va * (0.55 + R() * 0.45), w);
+      const halo = soft ? hx : c;
+      // vein2: real marble is never one colour. A Calacatta vein is a warm bed
+      // with a cooler grey seam running through it, so the widest pass is the
+      // second tone and the core is the first.
+      if (spec.vein2) strokePaths(halo, paths, spec.vein2, va * (soft ? 0.3 : 0.16), w * (soft ? 11 : 6.5));
+      strokePaths(halo, paths, spec.vein || "#ffffff", va * (soft ? 0.34 : 0.09), w * (soft ? 6.5 : 4.5));
+      strokePaths(halo, paths, spec.vein || "#ffffff", va * (soft ? 0.4 : 0.2), w * (soft ? 3.2 : 2.0));
+      strokePaths(c, paths, spec.vein || "#ffffff", va * (soft ? 0.8 : 1) * (0.55 + R() * 0.45), w * (soft ? 1.35 : 1));
       strokePaths(r, paths, "#6e6e6e", 0.26, w * 1.8);     // veins polish glossier
       strokePaths(b, paths, "#a2a2a2", 0.2, w * 1.4);      // …and sit a hair proud
     }
+    if (soft) { c.save(); c.filter = `blur(${soft.toFixed(2)}px)`; c.drawImage(hc, 0, 0); c.restore(); }
 
     grainOver(c, W, H, spec.grain == null ? 0.16 : spec.grain);
     // bumpGrain is the TOOTH of the surface. White noise in a bump map is
@@ -379,13 +394,17 @@ function matFrom(spec, surf) {
   // that crop away. Each material owns its own bump texture, so this is in place.
   const br = spec.bumpRepeat == null ? 1 : spec.bumpRepeat;
   if (br !== 1) { surf.bump.repeat.multiplyScalar(br); surf.bump.needsUpdate = true; }
-  return new THREE.MeshStandardMaterial({
+  const m = new THREE.MeshStandardMaterial({
     map: surf.map,
     bumpMap: surf.bump, bumpScale: spec.bumpScale == null ? 0.018 : spec.bumpScale,
     roughnessMap: surf.rough, roughness: spec.rough == null ? 0.6 : spec.rough,
     metalness: spec.metal == null ? 0.02 : spec.metal,
     envMapIntensity: spec.envI == null ? 1 : spec.envI,
   });
+  // Polished stone lives or dies on its reflections, so it opts out of the
+  // diffuse-env cap that stops matte surfaces bleaching out (tameDiffuseEnv).
+  if (spec.keepEnv) m.userData.keepEnv = true;
+  return m;
 }
 function surfaceMat(spec, aspect, seed) { return matFrom(spec, buildSurface(spec, aspect, seed)); }
 
@@ -446,24 +465,30 @@ const THEMES = {
     id: "white", label: "White", swatch: "#f1ede6",
     bg: 0x121214, exposure: 0.94,
     env: ["#e9e1d3", "#a89f8e", "#4c473e"],
+    /* WHITE = MARBLE. Flat plaster was the problem: however finely you grain a
+       plain wall, a room of four featureless surfaces has nothing in it for the
+       eye to focus on, so it reads as an unsharp photograph rather than as a
+       real room. Marble fixes that on its own terms — veins are detail with
+       DIRECTION, panel joints are genuine hard edges, and a polished face
+       carries a reflection gradient that tells you where the light is. So the
+       walls are now book-matched large-format slabs: a warm Calacatta bed with
+       cooler grey veining over it, in 1.5 x 1.3 m panels, polished (roughness
+       0.2 — the floor's own polish for reference is 0.3). The feature wall gets
+       the bolder run and a steeper flow, the side walls a quieter, flatter one,
+       which is how a real stone bathroom is actually specified. */
     surfaces: {
-      /* This room read as an out-of-focus photograph, and the reason was that it
-         had no sharp detail in it anywhere: 80 big soft blotches per wall, 44
-         wide trowel smears over them, and a bump map so shallow (0.009) that
-         nothing caught the light. Fewer, tighter, weaker blotches now — and the
-         detail comes instead from real plaster grit, tiled 4× finer than the
-         colour so it lands at ~0.7 mm a pixel and the eye finally has an edge to
-         focus on. Note the grain goes DOWN in colour (0.2 → 0.12) while going up
-         in relief: speckled paint is sandpaper, not plaster — the crispness has
-         to come from light catching the surface, not from noise in the pigment. */
-      side:    { kind: "plaster", base: "#f1ede6", clouds: 26, cloudSize: 0.05, cloudAlpha: 0.5, trowel: 24, trowelAlpha: 0.62,
-                 grain: 0.1, rough: 0.66, bumpScale: 0.011, bumpRepeat: 3, bumpGrain: 0.1, envI: 0.7 },
-      feature: { kind: "plaster", base: "#eae5db", clouds: 26, cloudSize: 0.05, cloudAlpha: 0.5, trowel: 26, trowelAlpha: 0.62,
-                 grain: 0.1, rough: 0.64, bumpScale: 0.012, bumpRepeat: 3, bumpGrain: 0.1, envI: 0.74 },
-      // the floor is the one crisp thing in a plaster room, so its joints and
-      // veins do the work of telling you the room is in focus
-      floor:   { kind: "slab", base: "#e4dfd4", vein: "#c6bcaa", veins: 12, veinAlpha: 0.36, clouds: 22, grain: 0.11,
-                 joints: { cols: 3, rows: 3, color: "#b3a894", width: 3.2 }, rough: 0.4, metal: 0.06, bumpScale: 0.02, envI: 1.1 },
+      side:    { kind: "slab", base: "#eeebe3", vein: "#9a9181", vein2: "#c9b794", veins: 10, veinAlpha: 0.7, veinSoft: 7, flow: -0.55,
+                 clouds: 16, cloudSize: 0.14, cloudAlpha: 0.7, grain: 0.05,
+                 joints: { cols: 2, rows: 2, color: "#cfc8ba", width: 2.2 },
+                 rough: 0.3, metal: 0.05, bumpScale: 0.01, envI: 0.72, keepEnv: true },
+      feature: { kind: "slab", base: "#ebe7de", vein: "#8d8474", vein2: "#c0ac85", veins: 12, veinAlpha: 0.78, veinSoft: 8, flow: -0.88,
+                 clouds: 16, cloudSize: 0.14, cloudAlpha: 0.7, grain: 0.05,
+                 joints: { cols: 2, rows: 2, color: "#c9c2b4", width: 2.2 },
+                 rough: 0.28, metal: 0.05, bumpScale: 0.011, envI: 0.78, keepEnv: true },
+      // the floor is the same stone in a smaller format, so the room is one
+      // material rather than three that happen to be pale
+      floor:   { kind: "slab", base: "#ebe8e0", vein: "#b0a797", vein2: "#cdbf9f", veins: 9, veinAlpha: 0.44, veinSoft: 6, clouds: 20, grain: 0.06,
+                 joints: { cols: 3, rows: 3, color: "#c2b9a7", width: 3.0 }, rough: 0.3, metal: 0.06, bumpScale: 0.018, envI: 1.05 },
       ceiling: { color: 0xf8f5ee, rough: 0.95 },
     },
     niche:  { lining: 0xd2ccbe, shelf: 0xf6f3ec, trim: 0xaaa496 },
