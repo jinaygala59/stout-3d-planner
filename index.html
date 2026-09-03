@@ -81,16 +81,14 @@
             <input id="search" type="search" autocomplete="off" spellcheck="false"
                    placeholder="Search name or code" aria-label="Search products by name or code">
           </label>
-          <div class="fin-filter" id="finFilter" role="group" aria-label="Filter by finish"></div>
         </div>
 
         <div id="catAccordion" class="cats"></div>
 
         <div class="rail-foot">
-          <p class="hint">Tap a product to add it, or tap one of its finish dots to add it in that
-            finish — each piece locks into its correct spot. Tap a piece in the room to change its
-            finish, resize or remove it. Move the cursor over the room to turn it; drag or pinch for
-            full control, scroll to zoom.</p>
+          <p class="hint">Tap a product to add it — each piece locks into its correct spot. Tap a
+            piece in the room to choose its finish, resize or remove it. Move the cursor over the
+            room to turn it; drag, pinch or use the rotator on the right for full control.</p>
         </div>
       </div>
     </aside>
@@ -103,6 +101,7 @@
       <!-- controls for the selected product -->
       <div id="tool" class="tool" role="group" aria-label="Selected product" hidden>
         <div class="tool-name" id="toolName">Product</div>
+        <div class="tool-finrow" id="toolFinRow"></div>
         <div class="tool-fins" id="toolFins"></div>
         <div class="tool-row">
           <button type="button" data-a="bigger" aria-label="Make bigger" title="Bigger">＋</button>

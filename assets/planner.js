@@ -1734,6 +1734,9 @@ function renderTool() {
   tool.hidden = false;
   $("#toolName").innerHTML = `${rec.product.name}<em>${rec.product.code}` +
     `${rec.product.variant ? " · " + rec.product.variant : ""}</em>`;
+  const fname = (FINISHES[rec.finishId] || {}).name || "";
+  const row = $("#toolFinRow");
+  if (row) row.innerHTML = `<span class="lbl">Finish</span><span class="val">${fname}</span>`;
   $("#toolFins").innerHTML = rec.product.finishes.map(fid =>
     `<span class="fin ${fid === rec.finishId ? "on" : ""}" style="background:${FINISHES[fid].swatch}" data-fin="${fid}" title="${FINISHES[fid].name}"></span>`
   ).join("");
@@ -1851,36 +1854,20 @@ function cardFinish(p) {
 const thumbOf = path => path ? path.replace("assets/products/", "assets/products/thumb/") : "";
 
 /* what the rail is currently filtered to */
-const railQuery = { text: "", finish: null };
+const railQuery = { text: "" };
 
 function railItems(group) {
   const items = group.cats.reduce((a, c) => a.concat(PRODUCTS[c] || []), []);
   const q = railQuery.text.trim().toLowerCase();
   return items.filter(p => {
-    if (railQuery.finish && !(p.finishes || []).includes(railQuery.finish)) return false;
     if (!q) return true;
     return (p.name + " " + p.code + " " + (p.variant || "")).toLowerCase().includes(q);
   });
 }
 
-/* finish filter chips — only the finishes that actually exist on the rail */
-function renderFinFilter() {
-  const el = $("#finFilter"); if (!el) return;
-  const present = new Set();
-  RAIL_GROUPS.forEach(g => g.cats.forEach(c => (PRODUCTS[c] || [])
-    .forEach(p => (p.finishes || []).forEach(f => present.add(f)))));
-  const order = FINISH_ORDER.filter(f => present.has(f));
-  el.innerHTML = order.map(fid => {
-    const f = FINISHES[fid];
-    return `<button type="button" data-finfilter="${fid}" aria-pressed="${railQuery.finish === fid}"
-      class="${railQuery.finish === fid ? "on" : ""}" style="--c:${f.swatch}"><i></i>${f.name}</button>`;
-  }).join("");
-  el.querySelectorAll("[data-finfilter]").forEach(b => b.onclick = () => {
-    railQuery.finish = railQuery.finish === b.dataset.finfilter ? null : b.dataset.finfilter;
-    renderFinFilter(); renderRail();
-  });
-}
-
+/* The rail carries NO colour UI any more — no filter chips and no swatches on
+   the cards. Colour is chosen on the piece itself, from the tool that appears
+   when you select it, so the list stays about picking a design. */
 function renderRail() {
   const acc = $("#catAccordion");
   let shown = 0, total = 0;
@@ -1890,16 +1877,10 @@ function renderRail() {
     const items = railItems(g);
     shown += items.length;
     if (!items.length) return "";
-    const openByDefault = railQuery.text || railQuery.finish ? true : i === 0;
+    const openByDefault = railQuery.text ? true : i === 0;
     const cards = items.map(p => {
       const fin = cardFinish(p);
       const img = (p.images && (p.images[fin] || p.images[p.defaultFinish])) || "";
-      const fins = (p.finishes || []).map(fid => {
-        const f = FINISHES[fid]; if (!f) return "";
-        return `<button type="button" class="fin ${fid === fin ? "on" : ""}" data-fin="${fid}"
-                 style="--c:${f.swatch}" title="${f.name}"
-                 aria-label="${p.name} in ${f.name}"></button>`;
-      }).join("");
       return `<div class="pcard ${isPlaced(p.id) ? "placed" : ""}" data-prod="${p.id}" data-cat="${p.catId}">
         <button type="button" class="pc-main" data-add
                 aria-label="Add ${p.name}, ${p.code}${isPlaced(p.id) ? ", already in the room" : ""}">
@@ -1907,7 +1888,6 @@ function renderRail() {
           <span class="nm">${p.name}</span>
           <span class="sub">${p.code}${p.variant ? " · " + p.variant : ""}</span>
         </button>
-        ${fins ? `<div class="fins">${fins}</div>` : ""}
       </div>`;
     }).join("");
     return `<div class="cat-group ${openByDefault ? "open" : ""}" data-group="${g.id}">
@@ -1943,19 +1923,6 @@ function renderRail() {
     toast(replaced ? `${p.name} replaced ${replaced.product.name}` : `${p.name} added`,
           { label: "Undo", run: () => restore(undo) });
   };
-
-  // a swatch picks the colour: recolour it if it is already in the room, else add
-  // it in that colour.
-  acc.querySelectorAll(".fin[data-fin]").forEach(sw => sw.onclick = e => {
-    e.stopPropagation();
-    const card = sw.closest(".pcard"), p = productFor(card); if (!p) return;
-    const fin = sw.dataset.fin;
-    railFinish.set(p.id, fin); sessionFinish = fin;
-    const rec = [...placed.values()].find(r => r.product.id === p.id);
-    if (rec) { changeFinish(rec.uid, fin); toast(`${p.name} · ${(FINISHES[fin] || {}).name || ""}`); }
-    else add(p, fin);
-    renderRail();
-  });
 
   acc.querySelectorAll("[data-add]").forEach(btn => btn.onclick = () => {
     const card = btn.closest(".pcard"), p = productFor(card); if (!p) return;
@@ -2618,7 +2585,6 @@ function renderEmptyState() {
 /* boot */
 resize();
 syncToolbar();
-renderFinFilter();
 renderRail();
 setBasin(true);   // vanity is part of the furnished room — shown by default
 // ALWAYS open on a CLEAN furnished room: no demo auto-arrange AND no restore of a
