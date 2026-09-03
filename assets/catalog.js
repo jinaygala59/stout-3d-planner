@@ -82,24 +82,24 @@ const RAW_PRODUCTS = [
   { code: "ST-C1016", cat: "rain-shower", name: "Lumina Rain Shower",          finishes: ["chrome"], variant: "square plate · plain" },
   { code: "ST-C1017", cat: "rain-shower", name: "Lumina Edge Rain Shower",     finishes: ["chrome"], variant: "square plate · centre slot" },
   { code: "ST-C1018", cat: "rain-shower", name: "Lumina Matrix Rain Shower",   finishes: ["chrome"], variant: "square plate · 4 jets" },
-  { code: "ST-C1019", cat: "rain-shower", name: "Aeon Rain Shower",            finishes: ["chrome","brushedGold","gold","roseGold","matteBlack","antiqueGold","brushedRoseGold","gunGrey"], badge: "Bestseller", variant: "wide plate · plain, slim edge" },
+  { code: "ST-C1019", cat: "rain-shower", name: "Aeon Rain Shower",            finishes: ["brushedRoseGold","chrome","gold","gunGrey","matteBlack","roseGold"], badge: "Bestseller", variant: "wide plate · plain, slim edge" },
   // Added from the Stout asset library (2026-07-10) — descriptive names, rename to real SKU names anytime
-  { code: "ST-C1001", cat: "rain-shower", name: "Cascada Rainfall Panel",      finishes: ["brushedGold","gold","matteBlack","roseGold"], variant: "wide plate · LED strip" },
-  { code: "ST-C1002", cat: "rain-shower", name: "Cascada Slimline Panel",      finishes: ["brushedGold","gold","matteBlack","roseGold"], variant: "wide plate · 4 jets" },
-  { code: "ST-C1003", cat: "rain-shower", name: "Cascada Waterfall Panel",     finishes: ["chrome","brushedGold","gold","roseGold","matteBlack","antiqueGold","brushedRoseGold","gunGrey"], variant: "slim plate · LED strip" },
-  { code: "ST-C1004", cat: "rain-shower", name: "Cascada Duo Rainfall Panel",  finishes: ["chrome","brushedGold","gold","roseGold","matteBlack","antiqueGold","brushedRoseGold","gunGrey"], variant: "slim plate · 2 jets" },
+  { code: "ST-C1001", cat: "rain-shower", name: "Cascada Rainfall Panel",      finishes: ["gold","matteBlack","roseGold"], variant: "wide plate · LED strip" },
+  { code: "ST-C1002", cat: "rain-shower", name: "Cascada Slimline Panel",      finishes: ["gold","matteBlack","roseGold"], variant: "wide plate · 4 jets" },
+  { code: "ST-C1003", cat: "rain-shower", name: "Cascada Waterfall Panel",     finishes: ["brushedRoseGold","chrome","gold","gunGrey","matteBlack","roseGold"], variant: "slim plate · LED strip" },
+  { code: "ST-C1004", cat: "rain-shower", name: "Cascada Duo Rainfall Panel",  finishes: ["brushedRoseGold","chrome","gold","gunGrey","matteBlack","roseGold"], variant: "slim plate · 2 jets" },
   { code: "ST-C1007", cat: "rain-shower", name: "Lumina Slim Panel",           finishes: ["chrome"], variant: "slim plate · LED strip + 4 jets" },
-  { code: "ST-C1008", cat: "rain-shower", name: "Cascada Compact Panel",       finishes: ["brushedGold","gold","matteBlack","roseGold"], variant: "wide plate · LED strip + 4 jets" },
-  { code: "ST-C1010", cat: "rain-shower", name: "Cascada Grande Panel",        finishes: ["brushedGold","gold","matteBlack","roseGold"], variant: "wide plate · plain" },
+  { code: "ST-C1008", cat: "rain-shower", name: "Cascada Compact Panel",       finishes: ["gold","matteBlack","roseGold"], variant: "wide plate · LED strip + 4 jets" },
+  { code: "ST-C1010", cat: "rain-shower", name: "Cascada Grande Panel",        finishes: ["gold","matteBlack","roseGold"], variant: "wide plate · plain" },
   { code: "ST-C1011", cat: "rain-shower", name: "Cascada Maxima Panel",        finishes: ["brushedGold","gold"], variant: "waterfall blades + LED + centre jet" },
 
   // ---- Concealed Diverter (single-lever) ----
   { code: "ST-D5017", cat: "diverter",    name: "Regale Concealed Diverter",   finishes: ["brushedGold"],                                          badge: "Signature" },
 
   // ---- Thermostatic Diverter panels (D-series) ----
-  { code: "ST-D5018", cat: "thermostatic", name: "Regale Grande Thermostatic Panel", finishes: ["chrome","brushedGold","gold","roseGold","matteBlack","brushedBronze","brushedRoseGold","champagne","gunGrey"], badge: "Bestseller" },
-  { code: "ST-D5019", cat: "thermostatic", name: "Regale Thermostatic Panel",        finishes: ["chrome","brushedGold","gold","roseGold","matteBlack","brushedBronze","brushedRoseGold","champagne","gunGrey"] },
-  { code: "ST-D5020", cat: "thermostatic", name: "Regale Compact Thermostatic Panel",finishes: ["chrome","brushedGold","gold","roseGold","matteBlack","brushedBronze","brushedRoseGold","champagne","gunGrey"] },
+  { code: "ST-D5018", cat: "thermostatic", name: "Regale Grande Thermostatic Panel", finishes: ["brushedRoseGold","champagne","chrome","gunGrey","matteBlack","roseGold"], badge: "Bestseller" },
+  { code: "ST-D5019", cat: "thermostatic", name: "Regale Thermostatic Panel",        finishes: ["brushedRoseGold","champagne","chrome","gunGrey","matteBlack","roseGold"] },
+  { code: "ST-D5020", cat: "thermostatic", name: "Regale Compact Thermostatic Panel",finishes: ["brushedRoseGold","champagne","chrome","gunGrey","matteBlack","roseGold"] },
 
   // ---- Bath Spouts (wall-mounted) ----
   { code: "ST-WM-001", cat: "bath-spout", name: "Axis Wall Spout",             finishes: ["brushedGold","brushedBronze"],                          badge: "Signature" },
@@ -135,7 +135,7 @@ const RAW_PRODUCTS = [
 
   // ============ Added from the Stout asset library (2026-07-10) — descriptive placeholder names ============
   // fixed shower heads / arms
-  { code: "ST-1017",  cat: "rain-shower",  name: "Regale Wall Shower Head",     finishes: ["antiqueGold","matteBlack","roseGold","gold"] },
+  { code: "ST-1017",  cat: "rain-shower",  name: "Regale Wall Shower Head",     finishes: ["gold","matteBlack","roseGold"] },
   { code: "ST-1027",  cat: "rain-shower",  name: "Aeon Round Shower Head",      finishes: ["chrome"] },
   { code: "ST-1033",  cat: "rain-shower",  name: "Aeon Slim Round Head",        finishes: ["chrome"] },
   { code: "ST-OP1",   cat: "health-faucet",name: "Cascada Jet Spray Health Faucet", finishes: ["chrome"] },   // artwork is chrome — the -brushedGold file was mislabelled
@@ -155,9 +155,9 @@ const RAW_PRODUCTS = [
   // REMOVED (not a washroom fitting): basin pop-up waste — same
   // { code: "ST-TSQ",   cat: "waste",        name: "Axis Pop-up Waste",      finishes: ["chrome","brushedGold","gold","roseGold","matteBlack","antiqueGold","brushedBronze"] },
   { code: "ST-J06",   cat: "body-jet",     name: "Axis Round Body Jet",          finishes: ["chrome"] },
-  { code: "ST-PLAIN", cat: "bath-spout",   name: "Axis Plain Wall Spout",       finishes: ["gold","brushedGold","brushedBronze","brushedRoseGold","champagne","gunGrey"] },
+  { code: "ST-PLAIN", cat: "bath-spout",   name: "Axis Plain Wall Spout",       finishes: ["brushedRoseGold","champagne","gunGrey"] },
   // health faucet (new category)
-  { code: "ST-SS304", cat: "rain-shower",  name: "Aqua Square Rain Plate",          finishes: ["chrome","gold","matteBlack","roseGold"], badge: "New", variant: "square plate · square nozzles" },
+  { code: "ST-SS304", cat: "rain-shower",  name: "Aqua Square Rain Plate",          finishes: ["gold","matteBlack","roseGold"], badge: "New", variant: "square plate · square nozzles" },
   // waste
   { code: "ST-SZ1",   cat: "wall-tap",     name: "Senza Bib Tap",     finishes: ["chrome"] },
   // concealed thermostatic panels
