@@ -326,3 +326,12 @@ input{font-family:inherit}
 .tool-finrow{display:flex;align-items:center;justify-content:center;gap:8px;margin:2px 0 8px}
 .tool-finrow .lbl{font-size:var(--t-micro);letter-spacing:.18em;text-transform:uppercase;color:var(--muted2)}
 .tool-finrow .val{font-size:var(--t-small);color:var(--ink)}
+
+/* selected-piece preview: shows the product in the finish you are pointing at */
+.tool-head{display:flex;align-items:center;gap:11px;margin-bottom:9px}
+.tool-head .tool-name{margin-bottom:0;min-width:0}
+.tool-prev{width:58px;height:58px;flex:none;border-radius:10px;overflow:hidden;
+  border:1px solid var(--line-soft);background:var(--panel2);display:grid;place-items:center}
+.tool-prev img{max-width:86%;max-height:86%;object-fit:contain}
+.tool-fins .fin{padding:0}
+@media (max-width:820px){ .tool-prev{width:46px;height:46px} .tool-head{gap:9px} }

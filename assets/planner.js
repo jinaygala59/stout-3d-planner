@@ -110,7 +110,13 @@ const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x0c0d0f);
 
 const camera = new THREE.PerspectiveCamera(52, 1, 0.05, 100);
-camera.position.set(1.32, 1.52, 2.05);  // eye-level 3/4 hero — close enough that fittings read clearly
+/* The opening / reset view. From the front-left corner looking into the back-right
+   one, so the back wall AND the right wall are both in frame — body jets and
+   spouts live on the right wall, and the old straight-on hero hid them. */
+const HERO = { pos: [-1.25, 1.62, 1.35], tgt: [0.45, 1.22, -0.95] };
+const heroPos = () => new THREE.Vector3(...HERO.pos);
+const heroTgt = () => new THREE.Vector3(...HERO.tgt);
+camera.position.set(...HERO.pos);
 
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, preserveDrawingBuffer: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -123,7 +129,7 @@ holder.appendChild(renderer.domElement);
 
 const controls = new THREE.OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true; controls.dampingFactor = 0.08;
-controls.target.set(-0.25, 1.18, -1.15);
+controls.target.set(...HERO.tgt);
 controls.minDistance = 0.45; controls.maxDistance = 6.5;   // close-up inspection ↔ full-room
 controls.maxPolarAngle = Math.PI * 0.62;             // low enough to look UP at ceiling heads, never under the floor
 controls.minPolarAngle = Math.PI * 0.30;             // don't swing to a disorienting bird's-eye
@@ -2167,8 +2173,8 @@ $("#wallTabs").querySelectorAll("[data-wall]").forEach(b => b.onclick = () => {
 function faceWall(wall) {
   const targets = {
     back:  { pos: [0, 1.55, 2.3], tgt: [0, 1.35, -HZ] },
-    left:  { pos: [2.0, 1.55, 0], tgt: [-HX, 1.35, 0] },
-    right: { pos: [-2.0, 1.55, 0], tgt: [HX, 1.35, 0] },
+    left:  { pos: [0.55, 1.52, 0.30], tgt: [-HX, 1.34, -0.55] },
+    right: { pos: [-0.55, 1.52, 0.30], tgt: [HX, 1.34, -0.55] },
   }[wall] || null;
   if (!targets) return;
   animateCam(new THREE.Vector3(...targets.pos), new THREE.Vector3(...targets.tgt));
@@ -2202,7 +2208,7 @@ if ($("#emailDesign")) $("#emailDesign").onclick = () => {
   toast(`Copied — email us at ${CONSULT_EMAIL}`);
 };
 
-$("#resetView").onclick = () => animateCam(new THREE.Vector3(1.32, 1.52, 2.05), new THREE.Vector3(-0.25, 1.18, -1.15));
+$("#resetView").onclick = () => animateCam(heroPos(), heroTgt());
 $("#snapCol").onclick = () => autoArrange();
 
 /* =========================================================================
@@ -2270,7 +2276,7 @@ async function downloadSpecSheet() {
   if (!items.length) { toast("Add a few products first, then download"); return; }
 
   // Fly to the hero view and give the animation a moment before we snapshot.
-  animateCam(new THREE.Vector3(1.32, 1.52, 2.05), new THREE.Vector3(-0.25, 1.18, -1.15));
+  animateCam(heroPos(), heroTgt());
   const prev = selected; deselect();
   toast("Building your spec sheet…");
   const thumbs = await Promise.all(items.map(rec => {
@@ -2399,7 +2405,7 @@ function autoArrange() {
   deselect();
   renderRail();
   saveDesign();
-  animateCam(new THREE.Vector3(1.32, 1.52, 2.05), new THREE.Vector3(-0.25, 1.18, -1.15));
+  animateCam(heroPos(), heroTgt());
   const name = (FINISHES[fin] || {}).name || fin;
   toast(skipped.length ? `A ${name} shower wall — no ${skipped.join(" / ")} in ${name}`
                        : `A ${name} shower wall`, { label: "Undo", run: () => restore(undo) });
@@ -2428,7 +2434,7 @@ function loadDesign() {
   });
   restoring = false;
   deselect();
-  animateCam(new THREE.Vector3(1.32, 1.52, 2.05), new THREE.Vector3(-0.25, 1.18, -1.15));
+  animateCam(heroPos(), heroTgt());
   return true;
 }
 function setBasin(show) {
@@ -2719,7 +2725,7 @@ function paintDial(theta) {
   });
   const centre = $("#rotCentre");
   if (centre) centre.onclick = () => {
-    animateCam(new THREE.Vector3(1.32, 1.52, 2.05), new THREE.Vector3(-0.25, 1.18, -1.15));
+    animateCam(heroPos(), heroTgt());
   };
   paintDial(readOrbit().theta);
 })();
