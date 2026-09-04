@@ -164,7 +164,10 @@ const RAW_PRODUCTS = [
   // the one genuine spout in the range: a spout and a flange, no handle on it
   { code: "ST-PLAIN", cat: "bath-spout",   name: "Axis Plain Wall Spout",       finishes: ["brushedRoseGold","champagne","gunGrey"] },
   // health faucet (new category)
-  { code: "ST-SS304", cat: "rain-shower",  name: "Aqua Square Rain Plate",          finishes: ["gold","matteBlack","roseGold"], badge: "New", variant: "square plate · square nozzles" },
+  /* "gold" is dropped: ST-SS304-gold.png is a flat neon yellow (hue 56), not a
+     finish the factory makes — every real gold in the range sits at hue 30-44.
+     It was the only artwork in the whole set like it. */
+  { code: "ST-SS304", cat: "rain-shower",  name: "Aqua Square Rain Plate",          finishes: ["matteBlack","roseGold"], badge: "New", variant: "square plate · square nozzles" },
   // waste
   { code: "ST-SZ1",   cat: "wall-tap",     name: "Senza Bib Tap",     finishes: ["chrome"] },
   // concealed thermostatic panels

@@ -43,17 +43,26 @@ const CAT3D = {
   // the RIGHT WALL is the shower wall — so the whole valve set lives on it, read
   // back-to-front by z (depth), not by x:
   //
-  //    z -1.08   body jets, deep inside the enclosure
-  //    z -0.25   ONE plumbed stack where your hand lands at the entry, top to
-  //              bottom: thermostatic panel (1.48), diverter (1.06), spout
-  //              (0.75). That is the order a shower wall is piped, and these are
-  //              REACH heights — you set the temperature standing, without
-  //              lifting your arm above your head. They were 1.72 / 1.30 / 0.95,
-  //              which read fine only while the trims were rendering half a
-  //              metre tall; at their real size a valve up there is unusable.
-  //              The 0.36 m of a tall trim eats the wall fast, so the gaps are
-  //              deliberate: 5 cm spout→diverter, 7 cm diverter→panel, measured
-  //              with the tallest SKU in each category.
+  //    z -0.96   body jets, centred in the wet zone (its tray runs z -1.48 to
+  //              -0.43). The lane was -1.08 with the columns ±0.32 off it, which
+  //              put the back column at z -1.40 — 10 cm off the back wall, in the
+  //              corner. Centred with a tighter straddle they sit in the shower,
+  //              not in the join.
+  //    z -0.50   the spout, at filling height. It was stacked under the valve at
+  //              0.75, which is bath-filler height — and this room has no bath,
+  //              so it read as pointing at bare floor. On its own lane it can
+  //              come up to 1.05 without fouling the tall diverter trim, which
+  //              reaches down to 0.89. The lane sits between the jets and the
+  //              valve: the jets' lower row is at this exact height (y 1.05), so
+  //              the clearance here is in DEPTH — 5.5 cm from the front jet
+  //              column, 8 cm from the diverter.
+  //    z -0.25   the valve, where your hand lands at the entry: thermostatic
+  //              panel (1.48) with the diverter (1.06) under it. These are REACH
+  //              heights — you set the temperature standing, without lifting your
+  //              arm above your head. They were 1.72 / 1.30, which read fine only
+  //              while the trims were rendering half a metre tall; at their real
+  //              size a valve up there is unusable. 7 cm clear between them,
+  //              measured with the tallest SKU in each category.
   //    z  0.52   the shattaf, up by the WC (wcZ 0.95)
   //
   // The diverters used to sit in a column on the right END of the BACK wall
@@ -65,8 +74,17 @@ const CAT3D = {
   // wall centre-line, both over the drain at x=0.
   "rain-shower":  { mount: "ceiling", width: 0.62, z: -0.55 },
   // --- the right wall, back → front ---
-  "body-jet":     { mount: "right", width: 0.17, z: -1.08, y: 1.52, panel: true },   // CENTRE of the 4-jet set (they flank it ±0.32)
-  "bath-spout":   { mount: "right", width: 0.44, z: -0.25, y: 0.75, billboard: true },  // a spout belongs low — it was level with the jets
+  /* A body jet is a SHAPE that stands proud of the tiles, and every jet render in
+     the range bar the 16-jet panel is shot from three quarters — plate at one
+     edge of the frame, nozzle at the other. Pressed flat as a `panel` that reads
+     as a little box stuck on the wall at a diagonal, which is what these looked
+     like. So they swing to face you (the treatment spouts already get) and `flip`
+     mirrors the render whose nozzle would otherwise aim into the back corner.
+     y 1.25 is the CENTRE of the 4-jet set: the rows straddle it at 1.45 and 1.05
+     — shoulder blades and lumbar, where a body jet actually sprays. It was 1.52
+     with rows at 1.76 / 1.30, and 1.76 m is the back of your head. */
+  "body-jet":     { mount: "right", width: 0.15, z: -1.05, y: 1.25, billboard: true, flip: true },
+  "bath-spout":   { mount: "right", width: 0.44, z: -0.50, y: 1.05, billboard: true },  // its own lane, clear of the valve above and the jets behind
   "thermostatic": { mount: "right", width: 0.50, z: -0.25, y: 1.48, panel: true },
   "diverter":     { mount: "right", width: 0.18, z: -0.25, y: 1.06, panel: true },   // a TALL trim panel — keep it slim so it doesn't read as a plank
   "health-faucet":{ mount: "right", width: 0.20, y: 0.72, z: 0.52, billboard: true },  // shattaf beside the WC (wcZ 0.95)
@@ -130,9 +148,10 @@ const SKU3D = {
   // --- thermostatic trims / panels ---
   "ST-D5018": { width: 0.55 }, "ST-D5019": { width: 0.52 }, "ST-D5020": { width: 0.44 },
   "ST-TX-01": { width: 0.22 }, "ST-TD3": { width: 0.26 }, "ST-TD4": { width: 0.26 },
-  // --- spouts: ST-PLAIN is the only genuine one in the range. It renders from a
-  //     mesh, so it needs no `roll`. ---
-  "ST-PLAIN":  { width: 0.24 },
+  // --- spouts: ST-PLAIN is the only genuine one in the range. Now that it
+  //     renders from its photograph rather than the m15 proxy, it needs the same
+  //     `roll` the others do — its body is shot sloping ~19° downhill. ---
+  "ST-PLAIN":  { width: 0.24, roll: 0.33 },
   // --- basin mixers. WM-001 and WM-002 are the WALL-mounted pair: both were
   //     filed as spouts and neither is one — see catalog.js. They keep their
   //     `roll`, which levels a body photographed at an angle (see placeProduct);
@@ -144,19 +163,32 @@ const SKU3D = {
   "ST-SZ-01": { width: 0.20 }, "ST-SZ1": { width: 0.20 },
   "ST-MN-AC": { width: 0.12, y: 0.55 }, "ST-JF1": { width: 0.12, y: 0.55 },
   // --- body jets: BJ-01 is ONE 16-jet panel (its own patch of wall, clear of the
-  //     shower column); the small single jets still come as a flanking set of 4 ---
-  "ST-BJ-01": { width: 0.22, single: true },
-  "ST-J06":   { width: 0.16, single: true },
-  // BJ-02 renders its artwork, so it lands as the flanking set of four
-  "ST-BJ-02": { width: 0.16 },   // artwork, not the mesh — so give it enough width to read
+  //     shower column); the small single jets still come as a flanking set of 4.
+  //     `flip` is per SKU because the range is not shot from one side: see the
+  //     category note above and productTexture(). ---
+  // BJ-01 is the odd one out — a face-on panel, genuinely flush, so it keeps the
+  // flat body and takes no swing and no mirror.
+  // the ONE genuine single: a PANEL with 16 jets in it, not a jet
+  "ST-BJ-01": { width: 0.22, single: true, y: 1.32, panel: true, billboard: false, flip: false },
+  // bossX / bossY are read off each render: where the escutcheon actually sits
+  // in the frame, as a fraction of the piece, AFTER the mirror. See wallBoss().
+  "ST-J06":   { width: 0.20, y: 1.24, roll: -0.20, bossX: -0.15, bossY: 0.12 },   // round jet: the frame carries its body as well as its face.
+                                          // Plumbed as a flanking set of four, like every jet that is not a panel.
+  // BJ-02 is photographed from the OTHER side: its plate already sits on the wall
+  // side of the frame, so mirroring it would turn the nozzle back into the corner
+  // `roll` levels a jet in its own plane. These renders are 3/4 views with the
+  // escutcheon set back and up from the head, so flat on the wall the piece reads
+  // as if it were skewed. The sign is opposite a spout's because the plate sits on
+  // the other side of the body. Tuned on the RIGHT wall, which is where jets go.
+  "ST-BJ-02": { width: 0.15, flip: false, roll: -0.28, bossX: -0.22, bossY: 0.07 },
   "ST-1030":  { width: 0.50 },                      // re-filed: it is an overhead plate, not a jet
   // --- 2026-09 Drive range ---
   "ST-FDP":   { width: 0.60 },                                   // wide overhead plate
   "ST-CP25":  { width: 0.26 }, "ST-MB2": { width: 0.26 }, "ST-CJ1": { width: 0.28 },   // digital control panels
   "ST-D5001": { width: 0.15 }, "ST-D5002": { width: 0.14 }, "ST-D5003": { width: 0.17 },
   "ST-D5004": { width: 0.14 }, "ST-D5009": { width: 0.13 }, "ST-D5010": { width: 0.13 },
-  "ST-BJ21F": { width: 0.12, single: true },                     // one concealed jet, on the jet lane
-  "ST-2FBJ":  { width: 0.12 },                                   // small jets — the flanking set of 4
+  "ST-BJ21F": { width: 0.15, y: 1.24, roll: -0.24, bossX: -0.17, bossY: 0.09 },                          // a set of four, like the rest
+  "ST-2FBJ":  { width: 0.15, roll: -0.24, bossX: -0.23, bossY: 0.14 },                                   // small jets — the flanking set of 4
   // --- wastes + the re-filed square rain plate ---
   "ST-TXSQ-01": { width: 0.09 }, "ST-TSQ": { width: 0.09 }, "ST-SS304": { width: 0.50 },
   // --- concealed diverter: a tall trim plate (232x735 artwork), so it takes the
@@ -1223,6 +1255,22 @@ function finishTexture(path) {
   return t;
 }
 
+/* The artwork a piece is actually mapped with — mirrored when the SKU asks for it.
+   A three-quarter render has a handedness: the wall plate sits at one edge of the
+   frame and the nozzle projects out of the other. On the RIGHT wall the frame's
+   right edge is the room front (rot.y = -PI/2 sends local +x to world +z), so a
+   jet shot from the plate's left ends up aimed at the back corner — the piece
+   reads as spraying the tiles. Mirroring the MAP turns it round and leaves the
+   geometry, the extrusion layers and the contact shadow untouched; the extrusion
+   shares this same texture object, so the body follows the flip for free.
+   finishTexture() builds a fresh texture per call, so this is never someone
+   else's map being rewritten. */
+function productTexture(path, cfg) {
+  const t = finishTexture(path);
+  if (cfg && cfg.flip) { t.wrapS = THREE.RepeatWrapping; t.repeat.x = -1; t.offset.x = 1; }
+  return t;
+}
+
 /* soft radial "contact shadow" so a mounted product grounds onto the wall
    instead of floating. Built once as a canvas texture, reused for every piece. */
 let _shadowTex = null;
@@ -1259,11 +1307,19 @@ function metalPart(geo, hex, rough) {
    axis itself, which the rotation only turns about — so this is what bridges the
    2.5 cm standoff for them, sitting behind the fitting's own flange the way a
    real wall union does. */
-function wallBoss(hex, width) {
+function wallBoss(hex, width, cfg, height) {
   const r = Math.max(0.022, width * 0.11), h = WALL_SINK + 0.006;
   const b = metalPart(new THREE.CylinderGeometry(r, r * 1.05, h, 24), hex, 0.3);
   b.rotation.x = Math.PI / 2;
   b.position.z = (0.006 - WALL_SINK) / 2;
+  // A spout's union is at the middle of its artwork, so the default is the
+  // origin. A body jet's is not: its render sets the escutcheon off to one side
+  // with the nozzle projecting from the other, so a boss at the frame centre
+  // bridges thin air and leaves the plate itself floating on the standoff.
+  // bossX / bossY put it where the plate actually is, as a fraction of the
+  // piece's own width and height (measured off each SKU's artwork).
+  if (cfg && cfg.bossX) b.position.x = cfg.bossX * width;
+  if (cfg && cfg.bossY) b.position.y = cfg.bossY * (height || width);
   b.name = "wallBoss";
   return b;
 }
@@ -1464,7 +1520,13 @@ const MODELS_BASE = "assets/models/";
    cannot tie to a specific SKU, so they are deliberately unused.) */
 const MODEL_FOR_SKU = {
   "ST-BM-001": { url: "m02",  size: 0.34 },
-  "ST-PLAIN":  { url: "m15",  size: 0.26 },
+  // ST-PLAIN (Axis Plain Wall Spout) USED to render from m15. It is the only
+  // spout the range now offers, and the OBJ gave you a pale untextured block:
+  // the mesh carries no finish detail, so lit by the room it washes out to
+  // near-white whichever finish you pick, and a plain square spout has no
+  // silhouette left to read once the surface is gone. Its own photograph is
+  // exact in all three finishes. To go back to the mesh:
+  //   "ST-PLAIN":  { url: "m15",  size: 0.26 },
   // ST-D5017 (Regale Concealed Diverter) USED to render from mdiv. Two problems:
   // the model is authored face-DOWN, so rot +90x stood it up showing its blank
   // back — it read as a plain gold plank on the wall. Even flipped to -90x the OBJ
@@ -1596,29 +1658,50 @@ function placeProduct(product, finishId, wall, frame) {
   // them with scene lights + ACES tone mapping washed them out to pale ghosts.
   // Basic + toneMapped:false shows the artwork exactly as shot (crisp, saturated).
   const mat = new THREE.MeshBasicMaterial({
-    map: finishTexture(path), transparent: true, alphaTest: 0.45, side: THREE.DoubleSide, toneMapped: false,
+    map: productTexture(path, cfg), transparent: true, alphaTest: 0.45, side: THREE.DoubleSide, toneMapped: false,
   });
   let width = cfg.width;
   let mesh;
   if (product.catId === "body-jet" && !cfg.single) {
-    // REFERENCE-STYLE flanking SET: 4 body jets (2 left column + 2 right column)
-    // around the shower centre — one selectable/removable unit. Positioned by the
-    // CAT3D anchor; the 4 jets sit at fixed offsets from it.
+    // REFERENCE-STYLE flanking SET: 4 body jets in two columns of two, one
+    // selectable/removable unit. Positioned by the CAT3D anchor; the four
+    // straddle it. SPREAD is measured along the wall (local x, which is world z
+    // on the right wall) and RISE up it, so at the anchor (z -0.96, y 1.25) the
+    // columns land at z -1.17 / -0.75 and the rows at y 1.45 / 1.05: inside the
+    // wet zone, a third of a metre clear of the back wall, and at the two heights
+    // a body jet is plumbed to — shoulder blades and lumbar. The old ±0.32 / +0.24
+    // / -0.22 was both wider than the enclosure and lopsided.
     mesh = new THREE.Group();
     mesh.userData.uid = uid;
-    const jetW = 0.17;
-    const OFFS = [[-0.32, 0.24], [-0.32, -0.22], [0.32, 0.24], [0.32, -0.22]];
-    OFFS.forEach(([ox, oy]) => { const jm = new THREE.Mesh(new THREE.PlaneGeometry(jetW, jetW), mat); jm.position.set(ox, oy, 0); mesh.add(jm); });
+    const jetW = cfg.width;
+    // SPREAD/RISE also have to keep the front column off the bath spout, which
+    // owns the lane at z -0.50 and is 0.44 wide (so it reaches back to -0.72)
+    const SPREAD = 0.19, RISE = 0.20;
+    const OFFS = [[-SPREAD, RISE], [-SPREAD, -RISE], [SPREAD, RISE], [SPREAD, -RISE]];
+    OFFS.forEach(([ox, oy]) => {
+      const jm = new THREE.Mesh(new THREE.PlaneGeometry(jetW, jetW), mat);
+      jm.position.set(ox, oy, 0);
+      // roll each jet in its own plane, NOT the group — rolling the group would
+      // tilt the whole 2x2 grid instead of levelling the pieces in it
+      jm.rotation.z = cfg.roll || 0;
+      jm.userData.jet = true;
+      mesh.add(jm);
+    });
     const img = new Image();
     img.onload = () => {
       const ar = img.naturalHeight / img.naturalWidth || 1;
-      const d = 0.014, hex = finishHex(finishId, product);
+      const d = 0.016, hex = finishHex(finishId, product);
       mesh.children.slice().forEach(jm => {
         jm.geometry.dispose();
         jm.geometry = new THREE.PlaneGeometry(jetW, jetW * ar);
-        // the set used to be four flat decals — each jet is a body on the wall
+        // the set used to be four flat decals — each jet is a body on the wall.
+        // It carries its own thickness in FRONT only: each one swings to face the
+        // camera (see stepBillboards), and a body sunk back through the tiles
+        // would corner its way out of them on the turn. A boss on the pivot axis
+        // bridges the standoff instead, exactly as a spout's does.
         jm.geometry.translate(0, 0, d);
-        extrudeCutout(jm, mat.map, jetW, jetW * ar, d + sinkFor(wall), hex, d);
+        extrudeCutout(jm, mat.map, jetW, jetW * ar, d, hex, d);
+        if (sinkFor(wall)) jm.add(wallBoss(hex, jetW, cfg, jetW * ar));
         addContactShadow(jm, jetW, jetW * ar);
       });
       positionOnWall(mesh, wall, defaultSpot(wall, cfg));
@@ -1676,7 +1759,7 @@ function placeProduct(product, finishId, wall, frame) {
         mesh.geometry.translate(0, 0, d);
         mesh.remove(rim);
         extrudeCutout(mesh, mesh.material.map, width, width * ar, d, finishHex(finishId, product), d);
-        if (sinkFor(wall)) mesh.add(wallBoss(finishHex(finishId, product), width));
+        if (sinkFor(wall)) mesh.add(wallBoss(finishHex(finishId, product), width, cfg, width * ar));
         const rec0 = placed.get(uid); if (rec0) rec0.halfW = width / 2;
       }
       // grounding: without this every fitting reads as pasted onto the tile
@@ -1717,10 +1800,14 @@ function placeProduct(product, finishId, wall, frame) {
   // `roll` counter-rotates a cutout in its own plane. The spout renders are shot
   // from above at a 3/4 angle, so laid flat on a wall the body slopes downhill and
   // the piece reads as if it were stuck on crooked next to the square-on plates.
-  mesh.rotation.set(w.rot.x, w.rot.y, cfg.roll || 0);
+  mesh.rotation.set(w.rot.x, w.rot.y, mesh.isGroup ? 0 : (cfg.roll || 0));
   positionOnWall(mesh, wall, defaultSpot(wall, cfg));
   room.add(mesh); meshes.push(mesh);
-  placed.set(uid, { uid, mesh, product, finishId, wall, cfg, is3D });
+  // a jet SET is one record holding four separate fittings, so it swings per jet
+  // rather than as a slab — stepBillboards needs to be told which it is
+  const jetSet = product.catId === "body-jet" && !cfg.single;
+  placed.set(uid, { uid, mesh, product, finishId, wall, cfg, is3D, jetSet,
+                    halfW: jetSet ? cfg.width / 2 : undefined });
   if (wall === "counter") setStockMixer(false);
   selectProduct(uid);
   renderRail();
@@ -1776,11 +1863,36 @@ function setBaseScale(mesh, v) {
    thermostatic panels, diverter trims, jet plates) stay flush: they really are
    flush, and they now have depth of their own. */
 const BILLBOARD_SWING = 0.62;             // ±35°
+/* how far this piece has to turn, from its own spot, to face the camera */
+function swingFor(base, x, z) {
+  let d = Math.atan2(camera.position.x - x, camera.position.z - z) - base;
+  while (d > Math.PI) d -= Math.PI * 2;
+  while (d < -Math.PI) d += Math.PI * 2;
+  return clamp(d, -BILLBOARD_SWING, BILLBOARD_SWING);
+}
+const _jetWP = new THREE.Vector3();
 function stepBillboards() {
   placed.forEach(rec => {
     if (rec.is3D || !rec.cfg || !rec.cfg.billboard) return;
     const w = WALLS[rec.wall]; if (!w) return;
     const base = w.rot.y || 0;
+    if (rec.jetSet) {
+      // FOUR jets in one group. Swinging the group would rotate the whole grid
+      // about its centre and carry two of the jets off the wall, so each one
+      // pivots on its own union instead — the grid stays put, every nozzle turns.
+      // Child rotation is relative to the group, which already carries `base`.
+      rec.mesh.children.forEach(jm => {
+        if (!jm.userData.jet) return;
+        jm.getWorldPosition(_jetWP);
+        const d = swingFor(base, _jetWP.x, _jetWP.z);
+        jm.rotation.y = d;
+        // a yawed plane pivots about its centre: stand it off by what the swing
+        // needs so the back corner doesn't sink into the tiles (local +z is out
+        // of the wall, whichever wall the set is on)
+        jm.position.z = (rec.halfW || 0) * Math.abs(Math.sin(d));
+      });
+      return;
+    }
     let d = Math.atan2(camera.position.x - rec.mesh.position.x,
                        camera.position.z - rec.mesh.position.z) - base;
     while (d > Math.PI) d -= Math.PI * 2;
@@ -1871,7 +1983,7 @@ function cutoutFallback(rec) {
   clearGroup(rec.mesh);
   const width = rec.cfg.width || 0.34;
   const mat = new THREE.MeshBasicMaterial({
-    map: finishTexture(path), transparent: true, alphaTest: 0.45, side: THREE.DoubleSide, toneMapped: false,
+    map: productTexture(path, rec.cfg), transparent: true, alphaTest: 0.45, side: THREE.DoubleSide, toneMapped: false,
   });
   const plane = new THREE.Mesh(new THREE.PlaneGeometry(width, width * 1.2), mat);
   if (rec.wall === "ceiling") plane.rotation.x = -Math.PI / 2;
@@ -1997,14 +2109,17 @@ function changeFinish(uid, fid) {
     const targetMat = rec.mesh.material || (rec.mesh.children[0] && rec.mesh.children[0].material);
     if (!targetMat) return;
     const old = targetMat.map;
-    targetMat.map = finishTexture(path);
+    const next = productTexture(path, rec.cfg);   // a mirrored jet stays mirrored through a finish swap
+    targetMat.map = next;
     targetMat.needsUpdate = true;
     // everything that shares the artwork has to move to the new texture BEFORE
-    // the old one is disposed, or it renders with a dead map
-    const rim = rec.mesh.getObjectByName("rim");
-    if (rim) { rim.material.map = targetMat.map; rim.material.needsUpdate = true; }
-    const extrude = rec.mesh.getObjectByName("extrude");
-    if (extrude) extrude.children.forEach(l => { l.material.map = targetMat.map; l.material.needsUpdate = true; });
+    // the old one is disposed, or it renders with a dead map. Traverse rather
+    // than look up "rim"/"extrude" by name: getObjectByName returns the FIRST
+    // match, and a jet SET has four extrusions — the other three kept pointing
+    // at the texture we are about to dispose.
+    rec.mesh.traverse(o => {
+      if (o.material && o.material.map === old) { o.material.map = next; o.material.needsUpdate = true; }
+    });
     if (old) old.dispose();
     const hex = finishHex(fid, rec.product);
     const housing = rec.mesh.getObjectByName("housing");
