@@ -15,6 +15,19 @@ if (!window.THREE) { $("#loading").textContent = "3D engine failed to load."; re
 const RW = 3.0, RH = 2.65, RD = 3.0;                 // width, height, depth
 const HX = RW / 2, HZ = RD / 2;                       // half extents
 const OFF = 0.025;                                    // how far a panel sits off its wall
+/* How deep a fitting's BODY has to run to actually meet the wall. A piece is
+   anchored OFF (2.5 cm) clear of its wall — the standoff that stops artwork
+   z-fighting with the tiles — but the body we build for it only ran forward
+   from that anchor. So every panel, trim, spout and jet stood on a 2.5 cm
+   cushion of air: invisible in a room-wide shot, glaring the moment you look
+   along the wall. Bodies now run from their face back THROUGH the anchor and
+   into the wall, so the joint is a joint.
+   The depth has to clear OFF at the SMALLEST size the resize control allows
+   (0.6x — the body scales with the piece, so 2.5 cm of standoff needs 4.2 cm of
+   body to still bridge it), hence 5 cm rather than 3. Everything past the wall
+   face is occluded by the wall itself, so overshooting costs nothing. */
+const WALL_SINK = 0.05;
+const sinkFor = w => (w === "back" || w === "left" || w === "right") ? WALL_SINK : 0;
 /* Ceiling fittings are flush-mounted, so they get their own two numbers instead:
    CEIL_RIM is the plate edge you actually see below the slab, and CEIL_EMBED is
    how far the housing is buried up into it. The embed is what keeps a plate
@@ -115,7 +128,11 @@ const SKU3D = {
   "ST-D5018": { width: 0.55 }, "ST-D5019": { width: 0.52 }, "ST-D5020": { width: 0.44 },
   "ST-TX-01": { width: 0.22 }, "ST-TD3": { width: 0.26 }, "ST-TD4": { width: 0.26 },
   // --- spouts ---
-  "ST-WM-001": { width: 0.28 }, "ST-WM-002": { width: 0.26 }, "ST-PLAIN": { width: 0.24 },
+  // spouts: `roll` levels the body — see placeProduct. ST-PLAIN renders from a
+  // mesh, so it needs none.
+  "ST-WM-001": { width: 0.28, roll: 0.45 },
+  "ST-WM-002": { width: 0.26, roll: 0.22 },
+  "ST-PLAIN":  { width: 0.24 },
   // --- basin mixers + angle valves (the last two are small wall cocks) ---
   "ST-BM-001": { width: 0.16, mount: "counter" }, "ST-OB-D94": { width: 0.20, mount: "counter" },
   // wall taps + angle valves: low on the wall, where a bib tap actually goes
@@ -1230,6 +1247,22 @@ function metalPart(geo, hex, rough) {
   return m;
 }
 
+/* The escutcheon behind a SWINGING fitting — a spout, tap or handset.
+   Those pieces can't have a sunk body: stepBillboards pivots them at their
+   anchor to keep them facing you, and a body 5 cm deep would swing its back
+   corner clean out of the wall. What survives the swing is a boss on the pivot
+   axis itself, which the rotation only turns about — so this is what bridges the
+   2.5 cm standoff for them, sitting behind the fitting's own flange the way a
+   real wall union does. */
+function wallBoss(hex, width) {
+  const r = Math.max(0.022, width * 0.11), h = WALL_SINK + 0.006;
+  const b = metalPart(new THREE.CylinderGeometry(r, r * 1.05, h, 24), hex, 0.3);
+  b.rotation.x = Math.PI / 2;
+  b.position.z = (0.006 - WALL_SINK) / 2;
+  b.name = "wallBoss";
+  return b;
+}
+
 /* Give a cutout real thickness WITHOUT a box.
    The old approach put a rectangular slab behind the artwork, which broke two
    ways: its front face landed exactly on the artwork plane (z-fighting — the
@@ -1242,7 +1275,10 @@ function extrudeCutout(mesh, map, w, h, depth, hex, faceZ) {
   const old = mesh.getObjectByName("extrude");
   if (old) { old.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) o.material.dispose(); }); mesh.remove(old); }
   const g = new THREE.Group(); g.name = "extrude";
-  const layers = 8, step = depth / layers;
+  // The "solid" is a stack of alpha-tested copies, so what matters is the SPACING
+  // between them, not the count: 8 layers was fine over 2 cm and shows daylight
+  // stripes over 8. Keep them ~4 mm apart however deep the body runs.
+  const layers = Math.max(8, Math.ceil(depth / 0.004)), step = depth / layers;
   for (let i = 1; i <= layers; i++) {
     const shade = 1 - 0.55 * (i / layers);                 // deeper layers go darker
     const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshStandardMaterial({
@@ -1267,7 +1303,9 @@ function addContactShadow(mesh, w, h) {
     new THREE.MeshBasicMaterial({ map: shadowTexture(), transparent: true, opacity: 0.5, depthWrite: false })
   );
   s.name = "contactShadow";
-  s.position.set(0, -h * 0.025, -0.012);  // hug the fitting — a halo, not a detached blob
+  // ON the wall face (the anchor is OFF in front of it), or the body we now
+  // build down to the wall swallows the shadow whole
+  s.position.set(0, -h * 0.025, -(OFF - 0.002));
   s.renderOrder = -1;
   mesh.add(s);
 }
@@ -1328,8 +1366,9 @@ function handShowerRig(hex, width, hh) {
   const r = Math.max(0.007, width * 0.055);          // hose radius, scales with the handset
   // wall outlet elbow — sits up and to the side of the handset, flat to the wall
   const ex = width * 0.60, ey = hh * 0.34;
-  const flange = metalPart(new THREE.CylinderGeometry(r * 2.2, r * 2.5, r * 1.2, 22), hex, 0.28);
-  flange.rotation.x = Math.PI / 2; flange.position.set(ex, ey, r * 0.6); g.add(flange);
+  const fh = r * 1.2 + WALL_SINK;                    // reaches the wall, not the anchor
+  const flange = metalPart(new THREE.CylinderGeometry(r * 2.2, r * 2.5, fh, 22), hex, 0.28);
+  flange.rotation.x = Math.PI / 2; flange.position.set(ex, ey, r * 0.6 - WALL_SINK / 2); g.add(flange);
   const elbow = metalPart(new THREE.SphereGeometry(r * 1.5, 18, 14), hex, 0.2);
   elbow.position.set(ex, ey, r * 1.4); g.add(elbow);
   // flexible hose: curves from the elbow down and in to the base of the handle
@@ -1375,8 +1414,10 @@ function showerArmRig(hex, width, hh, reach) {
   g.name = "armRig";
   const r = Math.max(0.010, width * 0.07);
   const wallY = hh * 0.62, headY = hh * 0.40;      // arm leaves the wall above the head
-  const flange = metalPart(new THREE.CylinderGeometry(r * 2.5, r * 2.8, r * 1.2, 26), hex, 0.3);
-  flange.rotation.x = Math.PI / 2; flange.position.set(0, wallY, r * 0.6); g.add(flange);
+  // the flange has to reach the wall, not the anchor 2.5 cm in front of it
+  const fh = r * 1.2 + WALL_SINK;
+  const flange = metalPart(new THREE.CylinderGeometry(r * 2.5, r * 2.8, fh, 26), hex, 0.3);
+  flange.rotation.x = Math.PI / 2; flange.position.set(0, wallY, r * 0.6 - WALL_SINK / 2); g.add(flange);
   const curve = new THREE.CatmullRomCurve3([
     new THREE.Vector3(0, wallY, r * 0.4),
     new THREE.Vector3(0, wallY, reach * 0.44),
@@ -1572,7 +1613,7 @@ function placeProduct(product, finishId, wall, frame) {
         jm.geometry = new THREE.PlaneGeometry(jetW, jetW * ar);
         // the set used to be four flat decals — each jet is a body on the wall
         jm.geometry.translate(0, 0, d);
-        extrudeCutout(jm, mat.map, jetW, jetW * ar, d, hex, d);
+        extrudeCutout(jm, mat.map, jetW, jetW * ar, d + sinkFor(wall), hex, d);
         addContactShadow(jm, jetW, jetW * ar);
       });
       positionOnWall(mesh, wall, defaultSpot(wall, cfg));
@@ -1621,7 +1662,7 @@ function placeProduct(product, finishId, wall, frame) {
         const d = Math.max(0.016, width * 0.05);
         mesh.geometry.translate(0, 0, d);
         mesh.remove(rim);                                   // the extrusion IS the rim now
-        extrudeCutout(mesh, mesh.material.map, width, width * ar, d, finishHex(finishId, product), d);
+        extrudeCutout(mesh, mesh.material.map, width, width * ar, d + sinkFor(wall), finishHex(finishId, product), d);
       }
       if (cfg.billboard) {
         // a spout or tap is a solid object seen from the side: without a body it
@@ -1630,6 +1671,7 @@ function placeProduct(product, finishId, wall, frame) {
         mesh.geometry.translate(0, 0, d);
         mesh.remove(rim);
         extrudeCutout(mesh, mesh.material.map, width, width * ar, d, finishHex(finishId, product), d);
+        if (sinkFor(wall)) mesh.add(wallBoss(finishHex(finishId, product), width));
         const rec0 = placed.get(uid); if (rec0) rec0.halfW = width / 2;
       }
       // grounding: without this every fitting reads as pasted onto the tile
@@ -1667,7 +1709,10 @@ function placeProduct(product, finishId, wall, frame) {
     img.onerror = () => reveal();
     img.src = path;
   }
-  mesh.rotation.set(w.rot.x, w.rot.y, 0);
+  // `roll` counter-rotates a cutout in its own plane. The spout renders are shot
+  // from above at a 3/4 angle, so laid flat on a wall the body slopes downhill and
+  // the piece reads as if it were stuck on crooked next to the square-on plates.
+  mesh.rotation.set(w.rot.x, w.rot.y, cfg.roll || 0);
   positionOnWall(mesh, wall, defaultSpot(wall, cfg));
   room.add(mesh); meshes.push(mesh);
   placed.set(uid, { uid, mesh, product, finishId, wall, cfg, is3D });
