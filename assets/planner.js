@@ -98,8 +98,8 @@ const SKU3D = {
   //     shower column); the small single jets still come as a flanking set of 4 ---
   "ST-BJ-01": { width: 0.22, single: true },
   "ST-J06":   { width: 0.16, single: true },
-  // BJ-02 renders from its own 3D model, so it lands as ONE jet
-  "ST-BJ-02": { width: 0.12 },
+  // BJ-02 renders its artwork, so it lands as the flanking set of four
+  "ST-BJ-02": { width: 0.16 },   // artwork, not the mesh — so give it enough width to read
   "ST-1030":  { width: 0.12 },                      // a set of four, flanking the column
   // --- 2026-09 Drive range ---
   "ST-FDP":   { width: 0.60 },                                   // wide overhead plate
@@ -1399,7 +1399,12 @@ const MODEL_FOR_SKU = {
   // Its own photography shows the plate, square knob and lever exactly, so it now
   // renders its artwork like every other product. To go back to the mesh:
   //   "ST-D5017": { url: "mdiv", size: 0.36, rot: [-Math.PI / 2, 0, 0] },
-  "ST-BJ-02":  { url: "m13",  size: 0.14 },
+  // ST-BJ-02 (Aqua Single-Flow Body Jet) USED to render from m13. Seen at its
+  // real 14 cm on the wall it reads as a pale dumbbell — two square plates on a
+  // short tube — because seatOnWall aligns the model by its bounding box, with no
+  // idea which face is the mount, so the nozzle plate ends up half in the tiles
+  // and the boss sticks into the room. Its own photograph is exact. To go back:
+  //   "ST-BJ-02":  { url: "m13",  size: 0.14 },
 };
 const MODEL_WALL_YROT = { back: 0, left: Math.PI / 2, right: -Math.PI / 2, ceiling: 0, counter: 0 };
 
