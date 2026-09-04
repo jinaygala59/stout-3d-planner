@@ -1011,29 +1011,31 @@ function buildBathroomDetails(t) {
   /* ---- the shower zone: fittings used to float on an undefined wall over an
      undefined floor. A shallow recessed tray in a wetter, darker tile — with
      the linear drain sitting IN it — tells you where the shower is. ---- */
-  const zoneW = 1.30, zoneD = 1.05, zoneZ = -HZ + zoneD / 2 + 0.02;
+  // It runs from the shower column on the back wall to the RIGHT wall, because
+  // that is now where the body jets and spouts are — a corner enclosure. It has
+  // an open edge on two sides only, so those are the only two that get a trim.
+  const zoneX0 = -0.65, zoneD = 1.05, zoneZ = -HZ + zoneD / 2 + 0.02;
+  const zoneW = HX - zoneX0, zoneCx = zoneX0 + zoneW / 2;
   const wetTile = new THREE.MeshStandardMaterial({
     color: F.wet || F.mat, roughness: 0.22, metalness: 0.1, envMapIntensity: 1.25,
   });
   const tray = new THREE.Mesh(new THREE.BoxGeometry(zoneW, 0.018, zoneD), wetTile);
-  tray.position.set(0, 0.009, zoneZ); tray.receiveShadow = true; grp.add(tray);
+  tray.position.set(zoneCx, 0.009, zoneZ); tray.receiveShadow = true; grp.add(tray);
   // a thin metal edge where the tray meets the room floor
   const edgeMat = new THREE.MeshStandardMaterial({ color: F.drain, metalness: 0.85, roughness: 0.35, envMapIntensity: 1.2 });
   const eF = new THREE.Mesh(new THREE.BoxGeometry(zoneW, 0.02, 0.012), edgeMat);
-  eF.position.set(0, 0.01, zoneZ + zoneD / 2); grp.add(eF);
-  [-1, 1].forEach(sx => {
-    const e = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.02, zoneD), edgeMat);
-    e.position.set(sx * zoneW / 2, 0.01, zoneZ); grp.add(e);
-  });
+  eF.position.set(zoneCx, 0.01, zoneZ + zoneD / 2); grp.add(eF);
+  const eL = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.02, zoneD), edgeMat);
+  eL.position.set(zoneX0, 0.01, zoneZ); grp.add(eL);
 
   /* linear floor drain in the shower zone */
   const drain = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.008, 0.07),
     new THREE.MeshStandardMaterial({ color: F.drain, metalness: 0.85, roughness: 0.3, envMapIntensity: 1.2 }));
-  drain.position.set(0, 0.021, -1.05); grp.add(drain);   // in the tray, under the shower centre-line
+  drain.position.set(zoneCx, 0.021, -1.05); grp.add(drain);   // centred in the tray
   for (let i = -3; i <= 3; i++) {
     const slot = new THREE.Mesh(new THREE.BoxGeometry(0.008, 0.004, 0.05),
       new THREE.MeshStandardMaterial({ color: 0x1d1c1a, roughness: 0.7 }));
-    slot.position.set(i * 0.06, 0.027, -1.05); grp.add(slot);
+    slot.position.set(zoneCx + i * 0.06, 0.027, -1.05); grp.add(slot);
   }
 
   /* ---- the small stuff that makes a render read as a lived-in room ----
@@ -2173,7 +2175,7 @@ $("#wallTabs").querySelectorAll("[data-wall]").forEach(b => b.onclick = () => {
 function faceWall(wall) {
   const targets = {
     back:  { pos: [0, 1.55, 2.3], tgt: [0, 1.35, -HZ] },
-    left:  { pos: [0.55, 1.52, 0.30], tgt: [-HX, 1.34, -0.55] },
+    left:  { pos: [0.75, 1.52, 0.70], tgt: [-HX, 1.34, 0.15] },
     right: { pos: [-0.55, 1.52, 0.30], tgt: [HX, 1.34, -0.55] },
   }[wall] || null;
   if (!targets) return;
@@ -2208,7 +2210,13 @@ if ($("#emailDesign")) $("#emailDesign").onclick = () => {
   toast(`Copied — email us at ${CONSULT_EMAIL}`);
 };
 
-$("#resetView").onclick = () => animateCam(heroPos(), heroTgt());
+$("#resetView").onclick = () => {
+  animateCam(heroPos(), heroTgt());
+  // the hero view is not any one wall, so no wall tab should still read as active
+  $("#wallTabs").querySelectorAll("button").forEach(b => {
+    b.classList.remove("on"); b.setAttribute("aria-pressed", "false");
+  });
+};
 $("#snapCol").onclick = () => autoArrange();
 
 /* =========================================================================
