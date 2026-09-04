@@ -26,11 +26,14 @@ const CAT3D = {
   // widths are showroom-scale (a touch larger than life) so every fitting reads
   // clearly from the default camera instead of vanishing on the 3m wall
   "rain-shower":  { mount: "ceiling", width: 0.62, z: -0.55 },
-  // Shower column (x=0), user-specified order TOP→BOTTOM:
-  //   body jet (1.61-2.03) → wall spout (1.28-1.56) → diverter (0.62-1.19)
-  //   → wall bib TAP at the bottom (0.31-0.53). Even ~9cm gaps.
-  "body-jet":     { mount: "back", width: 0.17, x: 0, y: 1.35, panel: true },   // CENTRE of the 4-jet flanking set
-  "bath-spout":   { mount: "back", width: 0.44, y: 1.42, billboard: true },
+  // BACK wall column (x=0), top→bottom: diverter, then the wall bib tap near the
+  // floor. The thermostatic panel sits off to the right of the niche.
+  // Body jets and spouts live on the RIGHT wall. Its back half runs alongside the
+  // shower tray, so the jets flank the shower the way they would in a real corner
+  // enclosure, and the column on the back wall stops competing with them.
+  // Side walls are positioned by z (depth) rather than x.
+  "body-jet":     { mount: "right", width: 0.17, z: -0.95, y: 1.35, panel: true },   // CENTRE of the 4-jet set
+  "bath-spout":   { mount: "right", width: 0.44, z: -0.20, y: 1.42, billboard: true },
   "diverter":     { mount: "back", width: 0.18, y: 0.90, panel: true },   // its render is a TALL trim panel — keep it slim so it doesn't read as a plank
   "wall-tap":     { mount: "back", width: 0.34, y: 0.42, billboard: true },   // bucket tap sits LAST, near the floor
   // Off-column pieces — each has its OWN clear patch of wall:
@@ -78,11 +81,11 @@ const SKU3D = {
   "ST-MN-AC": { width: 0.12, y: 0.55 }, "ST-JF1": { width: 0.12, y: 0.55 },
   // --- body jets: BJ-01 is ONE 16-jet panel (its own patch of wall, clear of the
   //     shower column); the small single jets still come as a flanking set of 4 ---
-  "ST-BJ-01": { width: 0.22, single: true, x: 0.62, y: 1.35 },
-  "ST-J06":   { width: 0.16, single: true, x: 0.62, y: 1.35 },
+  "ST-BJ-01": { width: 0.22, single: true, z: -0.95, y: 1.35 },
+  "ST-J06":   { width: 0.16, single: true, z: -0.95, y: 1.35 },
   // BJ-02 renders from its own 3D model, so it lands as ONE jet — it needs the
   // off-column spot too, or it sits inside the bath spout at x 0
-  "ST-BJ-02": { width: 0.12, x: 0.62, y: 1.35 },
+  "ST-BJ-02": { width: 0.12, z: -0.95, y: 1.35 },
   "ST-1030":  { width: 0.12 },                      // a set of four, flanking the column
   // --- 2026-09 Drive range ---
   "ST-FDP":   { width: 0.60 },                                   // wide overhead plate
@@ -1880,13 +1883,35 @@ function renderTool() {
   tool.hidden = false;
   $("#toolName").innerHTML = `${rec.product.name}<em>${rec.product.code}` +
     `${rec.product.variant ? " · " + rec.product.variant : ""}</em>`;
-  const fname = (FINISHES[rec.finishId] || {}).name || "";
-  const row = $("#toolFinRow");
-  if (row) row.innerHTML = `<span class="lbl">Finish</span><span class="val">${fname}</span>`;
+
+  /* Preview the piece in the finish you are pointing at BEFORE you commit to it.
+     A row of dots tells you nothing about how a finish reads on this particular
+     product, and the piece itself is often small and far away in the room. */
+  const row = $("#toolFinRow"), prev = $("#toolPreview");
+  const showFinish = fid => {
+    const f = FINISHES[fid] || {};
+    const src = (rec.product.images && rec.product.images[fid]) || "";
+    if (prev && src) prev.src = thumbOf(src);
+    if (row) row.innerHTML = `<span class="lbl">Finish</span><span class="val">${f.name || ""}</span>`;
+  };
+  showFinish(rec.finishId);
+
   $("#toolFins").innerHTML = rec.product.finishes.map(fid =>
-    `<span class="fin ${fid === rec.finishId ? "on" : ""}" style="background:${FINISHES[fid].swatch}" data-fin="${fid}" title="${FINISHES[fid].name}"></span>`
+    `<button type="button" class="fin ${fid === rec.finishId ? "on" : ""}" style="background:${FINISHES[fid].swatch}"
+      data-fin="${fid}" title="${FINISHES[fid].name}" aria-label="${rec.product.name} in ${FINISHES[fid].name}"
+      aria-pressed="${fid === rec.finishId}"></button>`
   ).join("");
-  $("#toolFins").querySelectorAll(".fin").forEach(el => el.onclick = () => changeFinish(rec.uid, el.dataset.fin));
+  $("#toolFins").querySelectorAll(".fin").forEach(el => {
+    const fid = el.dataset.fin;
+    el.onclick = () => changeFinish(rec.uid, fid);
+    el.onpointerenter = () => showFinish(fid);
+    el.onfocus = () => showFinish(fid);
+  });
+  // pointer (or focus) left the row — go back to what is actually on the piece
+  $("#toolFins").onpointerleave = () => showFinish(rec.finishId);
+  $("#toolFins").onfocusout = e => {
+    if (!$("#toolFins").contains(e.relatedTarget)) showFinish(rec.finishId);
+  };
   // on a phone the tool is docked across the bottom, so the toast has to clear it
   document.body.classList.add("has-tool");
   // read it now, not in a rAF — a backgrounded tab never runs the callback
@@ -2002,6 +2027,15 @@ const thumbOf = path => path ? path.replace("assets/products/", "assets/products
 /* what the rail is currently filtered to */
 const railQuery = { text: "" };
 
+/* WHICH group is expanded. The rail is a single-open accordion: four lists all
+   unfolded at once is a wall of product, and you lose the piece you were looking
+   at. It has to be remembered here rather than read off the DOM, because every
+   add re-renders the rail from scratch — which is what used to make picking a
+   product collapse the group you were working in and leave the FIRST group
+   (openByDefault, i === 0) expanded instead: the one list you weren't using. */
+let openGroup = RAIL_GROUPS[0].id;
+const groupOfCat = catId => (RAIL_GROUPS.find(g => g.cats.includes(catId)) || {}).id;
+
 function railItems(group) {
   const items = group.cats.reduce((a, c) => a.concat(PRODUCTS[c] || []), []);
   const q = railQuery.text.trim().toLowerCase();
@@ -2023,7 +2057,9 @@ function renderRail() {
     const items = railItems(g);
     shown += items.length;
     if (!items.length) return "";
-    const openByDefault = railQuery.text ? true : i === 0;
+    // a search is the one case for opening everything: the lists are already
+    // cut down to the matches, and hiding them behind a header hides the answer
+    const openByDefault = railQuery.text ? true : g.id === openGroup;
     const cards = items.map(p => {
       const fin = cardFinish(p);
       const img = (p.images && (p.images[fin] || p.images[p.defaultFinish])) || "";
@@ -2051,10 +2087,20 @@ function renderRail() {
   const count = $("#railCount");
   if (count) count.textContent = shown === total ? `${total} designs` : `${shown} of ${total}`;
 
+  // toggled in the DOM rather than through a re-render, so opening a group
+  // can't cost you your scroll position or reload every thumbnail
+  const showOnly = id => {
+    openGroup = id;
+    acc.querySelectorAll(".cat-group").forEach(other => {
+      const on = other.dataset.group === id;
+      other.classList.toggle("open", on);
+      const t = other.querySelector("[data-toggle]");
+      if (t) t.setAttribute("aria-expanded", String(on));
+    });
+  };
   acc.querySelectorAll("[data-toggle]").forEach(b => b.onclick = () => {
     const g = b.closest(".cat-group");
-    g.classList.toggle("open");
-    b.setAttribute("aria-expanded", g.classList.contains("open"));
+    showOnly(g.classList.contains("open") ? null : g.dataset.group);   // tap the open one to close it
   });
 
   const productFor = card => (PRODUCTS[card.dataset.cat] || []).find(x => x.id === card.dataset.prod);
@@ -2063,6 +2109,10 @@ function renderRail() {
     // always mount there, regardless of which wall tab is active. Deterministic
     // placement: a spout can never end up on the wrong wall. placeProduct flies
     // the camera to frame the piece once its artwork is in (async).
+    // the group you picked from is the group you are working in — hold it open
+    // (placeProduct re-renders the rail, which reads openGroup back)
+    const gid = groupOfCat(p.catId);
+    if (gid) openGroup = gid;
     const replaced = [...placed.values()].find(r => r.product.catId === p.catId && r.product.id !== p.id);
     const undo = snapshot();
     placeProduct(p, fin, skuCfg(p).mount || "back", true);
@@ -2728,6 +2778,7 @@ function renderEmptyState() {
   $(".stage3d").appendChild(el);
   el.querySelector('[data-e="first"]').onclick = () => {
     const list = PRODUCTS["rain-shower"] || []; const p = list[0]; if (!p) return;
+    openGroup = groupOfCat(p.catId) || openGroup;   // same rule as picking from the rail
     placeProduct(p, cardFinish(p), skuCfg(p).mount || "back", true);
     toast(`${p.name} added`); renderRail();
   };
