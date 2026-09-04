@@ -1234,79 +1234,26 @@ function setEmissive(obj, hex) {
   obj.traverse(o => { if (o.material && o.material.emissive) o.material.emissive.setHex(hex); });
 }
 
-/* Product artwork is UNLIT MeshBasicMaterial (see placeProduct), which has no
-   .emissive — so the emissive tint above highlighted nothing at all and you
-   could not tell what you had just added or which piece was selected. This puts
-   a soft glow behind the selected piece instead, which works for a cutout, a
-   procedural rig and an OBJ alike. */
-let _haloTex = null;
-function haloTexture() {
-  if (_haloTex) return _haloTex;
-  const S = 256, c = mkCanvas(S, S), x = c.getContext("2d");
-  const g = x.createRadialGradient(S / 2, S / 2, S * 0.14, S / 2, S / 2, S * 0.5);
-  g.addColorStop(0.00, "rgba(255,208,126,0.62)");
-  g.addColorStop(0.42, "rgba(255,196,110,0.26)");
-  g.addColorStop(1.00, "rgba(255,190,105,0)");
-  x.fillStyle = g; x.fillRect(0, 0, S, S);
-  _haloTex = new THREE.CanvasTexture(c);
-  return _haloTex;
-}
-/* bounding box of a placed piece in its OWN frame, ignoring the halo */
+/* NO selection glow. A soft warm plane behind the selected piece was meant to
+   mark it, but behind a fitting it is a light source that isn't there: on the
+   ceiling it turned an overhead shower into a light fitting, and on tile it put
+   a halo around a tap that no bathroom would ever have. A product has to be
+   shown as the product, so selection is now stated where it belongs — the tool
+   card names the piece with its code, finish and size, and its tile in the
+   product list is highlighted. Nothing is drawn behind the piece at all. */
+
+/* bounding box of a placed piece in its OWN frame */
 function localBox(root) {
   root.updateMatrixWorld(true);
   const inv = new THREE.Matrix4().copy(root.matrixWorld).invert();
   const box = new THREE.Box3(), tmp = new THREE.Matrix4();
   root.traverse(o => {
-    if (!o.isMesh || !o.geometry || o.name === "selHalo") return;
+    if (!o.isMesh || !o.geometry) return;
     o.geometry.computeBoundingBox();
     box.union(o.geometry.boundingBox.clone().applyMatrix4(tmp.multiplyMatrices(inv, o.matrixWorld)));
   });
   return box;
 }
-function setHalo(rec, on) {
-  if (!rec || !rec.mesh) return;
-  const root = rec.mesh;
-  const olds = [];
-  root.traverse(o => { if (o.name === "selHalo") olds.push(o); });
-  olds.forEach(o => { if (o.parent) o.parent.remove(o); o.geometry.dispose(); });
-  if (!on) return;
-  // A ceiling piece gets NO halo. Additive warm glow on the slab doesn't read as
-  // "selected" up there — it reads as a light fitting shining down out of the
-  // ceiling, which is exactly what an overhead shower must not look like. The
-  // tool card and the highlighted rail tile already say what is selected.
-  if (rec.wall === "ceiling") return;
-
-  // A halo per PART, parented to that part: the body-jet set is four separate
-  // planes around an empty centre, so one halo on the group put a lone glow in
-  // the middle of nothing. An OBJ model is dozens of meshes — one halo on the
-  // root is right for that, sized from its overall box.
-  const parts = [];
-  root.traverse(o => { if (o.isMesh && o.geometry && o.name !== "selHalo" && o.name !== "rim") parts.push(o); });
-  const mk = (parent, w, h, cx, cy, z) => {
-    const halo = new THREE.Mesh(
-      new THREE.PlaneGeometry(Math.max(w, 0.05) * 1.9 + 0.10, Math.max(h, 0.05) * 1.9 + 0.10),
-      new THREE.MeshBasicMaterial({ map: haloTexture(), transparent: true, depthWrite: false,
-        blending: THREE.AdditiveBlending, toneMapped: false }));
-    halo.name = "selHalo";
-    halo.position.set(cx, cy, z);
-    halo.renderOrder = -2;
-    parent.add(halo);
-  };
-  if (parts.length && parts.length <= 6) {
-    parts.forEach(o => {
-      o.geometry.computeBoundingBox();
-      const b = o.geometry.boundingBox, sz = b.getSize(new THREE.Vector3()), c = b.getCenter(new THREE.Vector3());
-      mk(o, sz.x, sz.y, c.x, c.y, b.min.z - 0.004);
-    });
-  } else {
-    const b = localBox(root);
-    if (b.isEmpty()) return;
-    const sz = b.getSize(new THREE.Vector3()), c = b.getCenter(new THREE.Vector3());
-    mk(root, sz.x, sz.y, c.x, c.y, b.min.z - 0.004);
-  }
-}
-
-
 /* Coiled stainless-steel look for the flexible hose: one repeating rib "pitch"
    drawn as a rounded metallic highlight, tiled along the tube length. Used as
    both colour map (silver + dark grooves → reads as chrome, not a pale tube)
@@ -1765,7 +1712,7 @@ function stepPops() {
    always inside the walls) rather than by dollying blindly along a fixed vector. */
 function frameProduct(rec) {
   rec.mesh.updateMatrixWorld(true);
-  const box = localBox(rec.mesh).applyMatrix4(rec.mesh.matrixWorld);   // halo excluded
+  const box = localBox(rec.mesh).applyMatrix4(rec.mesh.matrixWorld);
   if (box.isEmpty()) return;
   const c = box.getCenter(new THREE.Vector3());
   const r = Math.max(0.13, box.getBoundingSphere(new THREE.Sphere()).radius);
@@ -1856,15 +1803,13 @@ function pickProduct(e) {
 function selectProduct(uid) {
   selected = uid;
   meshes.forEach(m => setEmissive(m, 0x000000));
-  placed.forEach(r => setHalo(r, false));
   const rec = placed.get(uid);
-  if (rec) { setEmissive(rec.mesh, 0x2a2013); setHalo(rec, true); }
+  if (rec) setEmissive(rec.mesh, 0x2a2013);
   renderTool();
 }
 function deselect() {
   selected = null; renderTool();
   meshes.forEach(m => setEmissive(m, 0x000000));
-  placed.forEach(r => setHalo(r, false));
 }
 
 renderer.domElement.addEventListener("pointerdown", e => {
