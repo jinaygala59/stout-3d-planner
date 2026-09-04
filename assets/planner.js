@@ -25,23 +25,27 @@ const CEIL_RIM = 0.026, CEIL_EMBED = 0.030;
 const CAT3D = {
   // widths are showroom-scale (a touch larger than life) so every fitting reads
   // clearly from the default camera instead of vanishing on the 3m wall
+  //
+  // LAYOUT: everything except the showers lives on the RIGHT of the room. The
+  // right WALL carries the body jets, the spout and the health faucet (its back
+  // half runs alongside the shower tray). Everything else stacks into a control
+  // column on the right END of the back wall, at x≈1.16, clear of the niche
+  // (0.44–0.84) and of the vanity and mirror, which own the left.
+  // Only the showers stay put: overhead on the ceiling, wall heads on the back
+  // wall centre-line, both over the drain at x=0.
   "rain-shower":  { mount: "ceiling", width: 0.62, z: -0.55 },
-  // BACK wall column (x=0), top→bottom: diverter, then the wall bib tap near the
-  // floor. The thermostatic panel sits off to the right of the niche.
-  // Body jets and spouts live on the RIGHT wall. Its back half runs alongside the
-  // shower tray, so the jets flank the shower the way they would in a real corner
-  // enclosure, and the column on the back wall stops competing with them.
-  // Side walls are positioned by z (depth) rather than x.
+  // --- right wall (positioned by z, i.e. depth, not x) ---
   "body-jet":     { mount: "right", width: 0.17, z: -0.95, y: 1.35, panel: true },   // CENTRE of the 4-jet set
   "bath-spout":   { mount: "right", width: 0.44, z: -0.20, y: 1.42, billboard: true },
-  "diverter":     { mount: "back", width: 0.18, y: 0.90, panel: true },   // its render is a TALL trim panel — keep it slim so it doesn't read as a plank
-  "wall-tap":     { mount: "back", width: 0.34, y: 0.42, billboard: true },   // bucket tap sits LAST, near the floor
-  // Off-column pieces — each has its OWN clear patch of wall:
-  "thermostatic": { mount: "back", width: 0.50, y: 1.60, x:  1.16, panel: true },  // button panel — clear wall right of the niche (left side is all vanity+mirror)
-  "basin-mixer":  { mount: "back", width: 0.34, y: 0.98, x:  1.18, billboard: true },  // open wall to the right of the niche
-  "hand-shower":  { mount: "back", width: 0.17, y: 0.72, x:  0.72, billboard: true },  // handset on a bracket, right of the shower column (like the reference)
-  "health-faucet":{ mount: "right", width: 0.20, y: 0.72, z: 0.52, billboard: true },  // shattaf on the wall beside the WC (wcZ 0.95)
-  "waste":        { mount: "back", width: 0.16, y: 0.40, x:  0.42 },  // small accessory, beside the tap
+  "health-faucet":{ mount: "right", width: 0.20, y: 0.72, z: 0.52, billboard: true },  // shattaf beside the WC (wcZ 0.95)
+  // --- control column, right end of the back wall, top → bottom ---
+  "thermostatic": { mount: "back", width: 0.50, y: 1.60, x: 1.16, panel: true },
+  "diverter":     { mount: "back", width: 0.18, y: 1.00, x: 1.16, panel: true },   // a TALL trim panel — keep it slim so it doesn't read as a plank
+  "wall-tap":     { mount: "back", width: 0.34, y: 0.42, x: 1.16, billboard: true },  // bucket tap sits last, near the floor
+  // --- second, shorter column just inboard of it ---
+  "hand-shower":  { mount: "back", width: 0.17, y: 1.15, x: 0.82, billboard: true },  // handset on a bracket
+  "basin-mixer":  { mount: "back", width: 0.34, y: 0.98, x: 0.82, billboard: true },
+  "waste":        { mount: "back", width: 0.16, y: 0.40, x: 0.86 },
 };
 const catCfg = id => CAT3D[id] || { mount: "back", width: 0.34, y: 1.30 };
 
