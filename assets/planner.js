@@ -74,7 +74,10 @@ const CAT3D = {
   //     end, clear of the niche (0.44–0.84) and of the vanity, which owns the left
   "wall-tap":     { mount: "back", width: 0.34, y: 0.42, x: 1.16, billboard: true },  // bucket tap, near the floor
   "hand-shower":  { mount: "back", width: 0.17, y: 1.15, x: 0.82, billboard: true },  // handset on a bracket
-  "basin-mixer":  { mount: "back", width: 0.34, y: 0.98, x: 0.82, billboard: true },
+  // over the basin, which is the wall-hung vanity on the LEFT (COUNTER.x -1.06)
+  // — the only place a basin mixer can go, whatever the rest of the layout does.
+  // The deck-mounted ones override this with mount:"counter".
+  "basin-mixer":  { mount: "back", width: 0.30, y: 1.24, x: -1.06, billboard: true },
   "waste":        { mount: "back", width: 0.16, y: 0.40, x: 0.86 },
 };
 const catCfg = id => CAT3D[id] || { mount: "back", width: 0.34, y: 1.30 };
@@ -127,13 +130,15 @@ const SKU3D = {
   // --- thermostatic trims / panels ---
   "ST-D5018": { width: 0.55 }, "ST-D5019": { width: 0.52 }, "ST-D5020": { width: 0.44 },
   "ST-TX-01": { width: 0.22 }, "ST-TD3": { width: 0.26 }, "ST-TD4": { width: 0.26 },
-  // --- spouts ---
-  // spouts: `roll` levels the body — see placeProduct. ST-PLAIN renders from a
-  // mesh, so it needs none.
+  // --- spouts: ST-PLAIN is the only genuine one in the range. It renders from a
+  //     mesh, so it needs no `roll`. ---
+  "ST-PLAIN":  { width: 0.24 },
+  // --- basin mixers. WM-001 and WM-002 are the WALL-mounted pair: both were
+  //     filed as spouts and neither is one — see catalog.js. They keep their
+  //     `roll`, which levels a body photographed at an angle (see placeProduct);
+  //     that is a property of the photograph, not of the category. ---
   "ST-WM-001": { width: 0.28, roll: 0.45 },
   "ST-WM-002": { width: 0.26, roll: 0.22 },
-  "ST-PLAIN":  { width: 0.24 },
-  // --- basin mixers + angle valves (the last two are small wall cocks) ---
   "ST-BM-001": { width: 0.16, mount: "counter" }, "ST-OB-D94": { width: 0.20, mount: "counter" },
   // wall taps + angle valves: low on the wall, where a bib tap actually goes
   "ST-SZ-01": { width: 0.20 }, "ST-SZ1": { width: 0.20 },

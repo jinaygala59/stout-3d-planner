@@ -101,9 +101,15 @@ const RAW_PRODUCTS = [
   { code: "ST-D5019", cat: "thermostatic", name: "Regale Thermostatic Panel",        finishes: ["brushedRoseGold","champagne","chrome","gunGrey","matteBlack","roseGold"] },
   { code: "ST-D5020", cat: "thermostatic", name: "Regale Compact Thermostatic Panel",finishes: ["brushedRoseGold","champagne","chrome","gunGrey","matteBlack","roseGold"] },
 
-  // ---- Bath Spouts (wall-mounted) ----
-  { code: "ST-WM-001", cat: "bath-spout", name: "Axis Wall Spout",             finishes: ["brushedGold","brushedBronze"],                          badge: "Signature" },
-  { code: "ST-WM-002", cat: "bath-spout", name: "Axis Slim Wall Spout",        finishes: ["brushedGold","gold","brushedBronze"] },
+  // ---- Wall-mounted BASIN MIXERS ----
+  // Both of these are called "Wall Spout" in the range and neither is one: look
+  // at the artwork. WM-001 carries two levers on its backplate, marked red and
+  // blue; WM-002 carries a single lever. A backplate with a handle on it is a
+  // basin tap, so they are filed as basin mixers and go over the basin — not on
+  // the shower wall with the diverters, where a spout belongs. The names are the
+  // client's own catalogue names, so they stay as they are.
+  { code: "ST-WM-001", cat: "basin-mixer", name: "Axis Wall Spout",            finishes: ["brushedGold","brushedBronze"],                          badge: "Signature" },
+  { code: "ST-WM-002", cat: "basin-mixer", name: "Axis Slim Wall Spout",       finishes: ["brushedGold","gold","brushedBronze"] },
 
   // ---- Thermostatic Control Trim (square dial) ----
   { code: "ST-TX-01", cat: "thermostatic", name: "Regale Thermostatic Control Trim", finishes: ["brushedSteel"] },
@@ -155,6 +161,7 @@ const RAW_PRODUCTS = [
   // REMOVED (not a washroom fitting): basin pop-up waste — same
   // { code: "ST-TSQ",   cat: "waste",        name: "Axis Pop-up Waste",      finishes: ["chrome","brushedGold","gold","roseGold","matteBlack","antiqueGold","brushedBronze"] },
   { code: "ST-J06",   cat: "body-jet",     name: "Axis Round Body Jet",          finishes: ["chrome"] },
+  // the one genuine spout in the range: a spout and a flange, no handle on it
   { code: "ST-PLAIN", cat: "bath-spout",   name: "Axis Plain Wall Spout",       finishes: ["brushedRoseGold","champagne","gunGrey"] },
   // health faucet (new category)
   { code: "ST-SS304", cat: "rain-shower",  name: "Aqua Square Rain Plate",          finishes: ["gold","matteBlack","roseGold"], badge: "New", variant: "square plate · square nozzles" },
