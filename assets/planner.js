@@ -32,9 +32,15 @@ const CAT3D = {
   //
   //    z -1.08   body jets, deep inside the enclosure
   //    z -0.25   ONE plumbed stack where your hand lands at the entry, top to
-  //              bottom: thermostatic panel (1.72), diverter trim (1.30),
-  //              spout (0.95). That is the order a shower wall is actually
-  //              piped in, and it beats three fittings scattered along the wall.
+  //              bottom: thermostatic panel (1.48), diverter (1.06), spout
+  //              (0.75). That is the order a shower wall is piped, and these are
+  //              REACH heights — you set the temperature standing, without
+  //              lifting your arm above your head. They were 1.72 / 1.30 / 0.95,
+  //              which read fine only while the trims were rendering half a
+  //              metre tall; at their real size a valve up there is unusable.
+  //              The 0.36 m of a tall trim eats the wall fast, so the gaps are
+  //              deliberate: 5 cm spout→diverter, 7 cm diverter→panel, measured
+  //              with the tallest SKU in each category.
   //    z  0.52   the shattaf, up by the WC (wcZ 0.95)
   //
   // The diverters used to sit in a column on the right END of the BACK wall
@@ -47,9 +53,9 @@ const CAT3D = {
   "rain-shower":  { mount: "ceiling", width: 0.62, z: -0.55 },
   // --- the right wall, back → front ---
   "body-jet":     { mount: "right", width: 0.17, z: -1.08, y: 1.52, panel: true },   // CENTRE of the 4-jet set (they flank it ±0.32)
-  "bath-spout":   { mount: "right", width: 0.44, z: -0.25, y: 0.95, billboard: true },  // a spout belongs low — it was level with the jets
-  "thermostatic": { mount: "right", width: 0.50, z: -0.25, y: 1.72, panel: true },
-  "diverter":     { mount: "right", width: 0.18, z: -0.25, y: 1.30, panel: true },   // a TALL trim panel — keep it slim so it doesn't read as a plank
+  "bath-spout":   { mount: "right", width: 0.44, z: -0.25, y: 0.75, billboard: true },  // a spout belongs low — it was level with the jets
+  "thermostatic": { mount: "right", width: 0.50, z: -0.25, y: 1.48, panel: true },
+  "diverter":     { mount: "right", width: 0.18, z: -0.25, y: 1.06, panel: true },   // a TALL trim panel — keep it slim so it doesn't read as a plank
   "health-faucet":{ mount: "right", width: 0.20, y: 0.72, z: 0.52, billboard: true },  // shattaf beside the WC (wcZ 0.95)
   // --- the odds and ends the rail doesn't offer stay on the back wall, right
   //     end, clear of the niche (0.44–0.84) and of the vanity, which owns the left
@@ -59,6 +65,27 @@ const CAT3D = {
   "waste":        { mount: "back", width: 0.16, y: 0.40, x: 0.86 },
 };
 const catCfg = id => CAT3D[id] || { mount: "back", width: 0.34, y: 1.30 };
+
+/* The TALLEST a fitting of each type can be, in metres.
+   A cutout is sized from its width, and that quietly breaks for any product
+   whose photograph is taller than it is wide: the Regale 3-Outlet Thermostat is
+   211x637 px, so at its 0.26 m "width" it rendered 0.79 m tall — a two-and-a-
+   half-foot valve on a 2.65 m wall. The concealed diverter came out 0.51 m, and
+   a hand shower would have been 0.72 m. Width alone can't catch this, because
+   the width is right — it is the aspect that runs away.
+   So each type also declares the height it cannot exceed, and a piece whose art
+   is tall is sized by THAT instead (see placeProduct). These are real catalogue
+   maxima: no overhead plate in the range is over 0.60 m, no handset over 0.30 m.
+   Verified against every SKU's artwork, so none of the correctly-sized pieces
+   are touched — the cap only bites where the render was already wrong. */
+const MAX_H = {
+  "rain-shower": 0.85,     // overhead plates are genuinely large (biggest: 0.60)
+  "thermostatic": 0.36, "diverter": 0.34, "body-jet": 0.34,
+  "bath-spout": 0.30, "hand-shower": 0.30, "health-faucet": 0.30,
+  "basin-mixer": 0.34, "wall-tap": 0.28, "waste": 0.30,
+};
+const maxHeight = (product, cfg) =>
+  cfg.maxH != null ? cfg.maxH : (MAX_H[product.catId] == null ? 0.45 : MAX_H[product.catId]);
 
 /* per-SKU overrides — the category default is only a starting point. `width` is
    the piece's REAL width in metres (so a 12 cm angle valve can't render at the
@@ -1525,7 +1552,7 @@ function placeProduct(product, finishId, wall, frame) {
   const mat = new THREE.MeshBasicMaterial({
     map: finishTexture(path), transparent: true, alphaTest: 0.45, side: THREE.DoubleSide, toneMapped: false,
   });
-  const width = cfg.width;
+  let width = cfg.width;
   let mesh;
   if (product.catId === "body-jet" && !cfg.single) {
     // REFERENCE-STYLE flanking SET: 4 body jets (2 left column + 2 right column)
@@ -1558,6 +1585,12 @@ function placeProduct(product, finishId, wall, frame) {
     const img = new Image();
     img.onload = () => {
       const ar = img.naturalHeight / img.naturalWidth || 1.4;
+      // A tall piece is sized by its height, not its width (see MAX_H). Done
+      // here because it needs the real aspect of the loaded artwork — and done
+      // by reassigning `width`, so every body, rim, arm, hose, housing and
+      // shadow built below is measured from the corrected size.
+      const mh = maxHeight(product, cfg);
+      if (width * ar > mh) width = mh / ar;
       mesh.geometry.dispose();
       mesh.geometry = new THREE.PlaneGeometry(width, width * ar);
       // dark backing rim: same cutout, tinted near-black, a touch behind — from an
