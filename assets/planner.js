@@ -83,7 +83,7 @@ const CAT3D = {
      y 1.25 is the CENTRE of the 4-jet set: the rows straddle it at 1.45 and 1.05
      — shoulder blades and lumbar, where a body jet actually sprays. It was 1.52
      with rows at 1.76 / 1.30, and 1.76 m is the back of your head. */
-  "body-jet":     { mount: "right", width: 0.15, z: -1.05, y: 1.25, billboard: true, flip: true },
+  "body-jet":     { mount: "right", width: 0.15, z: -1.05, y: 1.25, jet3d: true },   // built as geometry, not a cutout — see buildBodyJet
   "bath-spout":   { mount: "right", width: 0.44, z: -0.50, y: 1.05, billboard: true },  // its own lane, clear of the valve above and the jets behind
   "thermostatic": { mount: "right", width: 0.50, z: -0.25, y: 1.48, panel: true },
   "diverter":     { mount: "right", width: 0.18, z: -0.25, y: 1.06, panel: true },   // a TALL trim panel — keep it slim so it doesn't read as a plank
@@ -172,7 +172,7 @@ const SKU3D = {
   "ST-BJ-01": { width: 0.22, single: true, y: 1.32, panel: true, billboard: false, flip: false },
   // bossX / bossY are read off each render: where the escutcheon actually sits
   // in the frame, as a fraction of the piece, AFTER the mirror. See wallBoss().
-  "ST-J06":   { width: 0.20, y: 1.24, roll: -0.20, bossX: -0.15, bossY: 0.12 },   // round jet: the frame carries its body as well as its face.
+  "ST-J06":   { width: 0.16, y: 1.24, jetShape: "round", jetRows: 5 },   // round jet: the frame carries its body as well as its face.
                                           // Plumbed as a flanking set of four, like every jet that is not a panel.
   // BJ-02 is photographed from the OTHER side: its plate already sits on the wall
   // side of the frame, so mirroring it would turn the nozzle back into the corner
@@ -180,15 +180,15 @@ const SKU3D = {
   // escutcheon set back and up from the head, so flat on the wall the piece reads
   // as if it were skewed. The sign is opposite a spout's because the plate sits on
   // the other side of the body. Tuned on the RIGHT wall, which is where jets go.
-  "ST-BJ-02": { width: 0.15, flip: false, roll: -0.28, bossX: -0.22, bossY: 0.07 },
+  "ST-BJ-02": { width: 0.15, jetRows: 4 },
   "ST-1030":  { width: 0.50 },                      // re-filed: it is an overhead plate, not a jet
   // --- 2026-09 Drive range ---
   "ST-FDP":   { width: 0.60 },                                   // wide overhead plate
   "ST-CP25":  { width: 0.26 }, "ST-MB2": { width: 0.26 }, "ST-CJ1": { width: 0.28 },   // digital control panels
   "ST-D5001": { width: 0.15 }, "ST-D5002": { width: 0.14 }, "ST-D5003": { width: 0.17 },
   "ST-D5004": { width: 0.14 }, "ST-D5009": { width: 0.13 }, "ST-D5010": { width: 0.13 },
-  "ST-BJ21F": { width: 0.15, y: 1.24, roll: -0.24, bossX: -0.17, bossY: 0.09 },                          // a set of four, like the rest
-  "ST-2FBJ":  { width: 0.15, roll: -0.24, bossX: -0.23, bossY: 0.14 },                                   // small jets — the flanking set of 4
+  "ST-BJ21F": { width: 0.15, y: 1.24, jetShape: "round", jetRows: 6 },                          // a set of four, like the rest
+  "ST-2FBJ":  { width: 0.15, jetRows: 6 },                                   // small jets — the flanking set of 4
   // --- wastes + the re-filed square rain plate ---
   "ST-TXSQ-01": { width: 0.09 }, "ST-TSQ": { width: 0.09 }, "ST-SS304": { width: 0.50 },
   // --- concealed diverter: a tall trim plate (232x735 artwork), so it takes the
@@ -1492,6 +1492,107 @@ function showerArmRig(hex, width, hh, reach) {
   return g;
 }
 
+/* A body jet as REAL GEOMETRY rather than a cutout.
+   Every jet render in the range is a 3/4 view — escutcheon set back and to one
+   side, head turned toward the lens. On a wall that reads as a jet stuck on at an
+   angle, and no amount of rolling, mirroring or billboarding fixes it, because the
+   turn is baked into the photograph. A jet is two squares and a nozzle face, so
+   building it costs almost nothing and it reads correctly from every angle.
+   Parts carry userData.metal, so the finish swatches recolour them. */
+/* The FINISHES tone is a swatch colour, not the product's colour: brushed gold is
+   #c6a15b there, while the render is a far richer rose-gold. Painting geometry
+   with the swatch makes it look cream. Average the artwork's own mid-tones
+   instead — skipping shadow and blown highlight — and use that. */
+const _avgCache = new Map();
+function averageColor(path) {
+  if (_avgCache.has(path)) return _avgCache.get(path);
+  const pr = new Promise(res => {
+    const img = new Image();
+    img.onload = () => {
+      const S = 64, c = mkCanvas(S, S), x = c.getContext("2d");
+      x.drawImage(img, 0, 0, S, S);
+      const d = x.getImageData(0, 0, S, S).data;
+      let r = 0, g = 0, b = 0, n = 0;
+      for (let i = 0; i < d.length; i += 4) {
+        if (d[i + 3] < 200) continue;
+        const lum = (d[i] + d[i + 1] + d[i + 2]) / 3;
+        if (lum < 28 || lum > 246) continue;
+        r += d[i]; g += d[i + 1]; b += d[i + 2]; n++;
+      }
+      res(n ? new THREE.Color(r / n / 255, g / n / 255, b / n / 255) : null);
+    };
+    img.onerror = () => res(null);
+    img.src = path;
+  });
+  _avgCache.set(path, pr);
+  return pr;
+}
+/* repaint a procedural piece from its artwork, keeping each face's baked shade */
+function tintFromArtwork(root, path) {
+  if (!path) return;
+  averageColor(path).then(col => {
+    if (!col) return;
+    root.traverse(o => {
+      if (!o.userData.metal || !o.material) return;
+      o.material.color.copy(col).multiplyScalar(o.userData.shade == null ? 1 : o.userData.shade);
+    });
+  });
+}
+let _nozzleTex = null;
+function nozzleTexture(rows) {
+  const key = "n" + rows;
+  _nozzleTex = _nozzleTex || {};
+  if (_nozzleTex[key]) return _nozzleTex[key];
+  const S = 256, c = mkCanvas(S, S), x = c.getContext("2d");
+  x.fillStyle = "#ffffff"; x.fillRect(0, 0, S, S);
+  const pad = S * 0.14, step = (S - pad * 2) / (rows - 1), r = Math.max(2, step * 0.17);
+  for (let iy = 0; iy < rows; iy++) for (let ix = 0; ix < rows; ix++) {
+    const cx = pad + ix * step, cy = pad + iy * step;
+    x.fillStyle = "rgba(0,0,0,0.55)";
+    x.beginPath(); x.arc(cx, cy, r, 0, 7); x.fill();
+    x.fillStyle = "rgba(255,255,255,0.5)";                 // a lit rim, so each hole reads
+    x.beginPath(); x.arc(cx - r * 0.25, cy - r * 0.3, r * 0.45, 0, 7); x.fill();
+  }
+  _nozzleTex[key] = canvasTex(c, true);
+  return _nozzleTex[key];
+}
+function buildBodyJet(hex, w, opts) {
+  opts = opts || {};
+  const round = !!opts.round, rows = opts.rows || 4;
+  const g = new THREE.Group();
+  // UNLIT, like every other product in the room. Lit metal at 15 cm across just
+  // mirrors a bright white bathroom and a brushed-gold jet comes out cream — the
+  // finish stops reading as the finish. Form comes from a baked tint per face
+  // instead, and `userData.shade` is what changeFinish re-applies on a swatch.
+  const part = (geo, shade, map) => {
+    const c = new THREE.Color(hex).multiplyScalar(shade);
+    const mesh = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({
+      color: c, map: map || null, toneMapped: false,
+    }));
+    mesh.userData.metal = true;
+    mesh.userData.shade = shade;
+    return mesh;
+  };
+  const plateD = w * 0.09, headD = w * 0.30, headW = w * 0.66;
+  const plate = part(round ? new THREE.CylinderGeometry(w / 2, w / 2, plateD, 40)
+                           : new THREE.BoxGeometry(w, w, plateD), 0.82);
+  if (round) plate.rotation.x = Math.PI / 2;               // lie the disc against the wall
+  plate.position.z = plateD / 2;
+  g.add(plate);
+  const head = part(round ? new THREE.CylinderGeometry(headW / 2, headW / 2 * 0.92, headD, 36)
+                          : new THREE.BoxGeometry(headW, headW, headD), 0.62);
+  if (round) head.rotation.x = Math.PI / 2;
+  head.position.z = plateD + headD / 2;
+  g.add(head);
+  const face = part(round ? new THREE.CircleGeometry(headW / 2 * 0.9, 36)
+                          : new THREE.PlaneGeometry(headW * 0.9, headW * 0.9), 1.0, nozzleTexture(rows));
+  face.position.z = plateD + headD + 0.0012;
+  g.add(face);
+  return g;
+}
+
+
+
 /* =========================================================================
    REAL 3D PRODUCT MODELS  (Stout factory OBJ exports)
    Replaces the flat photo cutouts with true 3D geometry the user can spin.
@@ -1652,7 +1753,7 @@ function placeProduct(product, finishId, wall, frame) {
   // Show the ACTUAL product image the user picked (real artwork in the chosen
   // finish) as a cutout standee facing the room — so it matches EXACTLY what was
   // selected (Cascada vs Lumina vs Aeon all look different), just like the 2D site.
-  const is3D = false;
+  let is3D = false;
   const path = (product.images && product.images[finishId]) || (product.images && product.images[product.defaultFinish]);
   // UNLIT material: the product renders are already studio-lit photos — re-lighting
   // them with scene lights + ACES tone mapping washed them out to pale ghosts.
@@ -1665,24 +1766,30 @@ function placeProduct(product, finishId, wall, frame) {
   if (product.catId === "body-jet" && !cfg.single) {
     // REFERENCE-STYLE flanking SET: 4 body jets in two columns of two, one
     // selectable/removable unit. Positioned by the CAT3D anchor; the four
-    // straddle it. SPREAD is measured along the wall (local x, which is world z
-    // on the right wall) and RISE up it, so at the anchor (z -0.96, y 1.25) the
-    // columns land at z -1.17 / -0.75 and the rows at y 1.45 / 1.05: inside the
-    // wet zone, a third of a metre clear of the back wall, and at the two heights
-    // a body jet is plumbed to — shoulder blades and lumbar. The old ±0.32 / +0.24
-    // / -0.22 was both wider than the enclosure and lopsided.
+    // straddle it, at the two heights a jet is plumbed to.
     mesh = new THREE.Group();
     mesh.userData.uid = uid;
     const jetW = cfg.width;
-    // SPREAD/RISE also have to keep the front column off the bath spout, which
-    // owns the lane at z -0.50 and is 0.44 wide (so it reaches back to -0.72)
-    const SPREAD = 0.19, RISE = 0.20;
+    const SPREAD = 0.21, RISE = 0.20;
     const OFFS = [[-SPREAD, RISE], [-SPREAD, -RISE], [SPREAD, RISE], [SPREAD, -RISE]];
+    if (cfg.jet3d) {
+      // real geometry — see buildBodyJet for why the artwork cannot be used here
+      const hex = finishHex(finishId, product);
+      OFFS.forEach(([ox, oy]) => {
+        const jm = buildBodyJet(hex, jetW, { round: cfg.jetShape === "round", rows: cfg.jetRows });
+        jm.position.set(ox, oy, 0);
+        jm.userData.jet = true;
+        mesh.add(jm);
+      });
+      positionOnWall(mesh, wall, defaultSpot(wall, cfg));
+      tintFromArtwork(mesh, path);
+      mesh.userData.retint = p => tintFromArtwork(mesh, p);   // so a finish swap repaints
+      is3D = true;                       // geometry, so recolour by traversal and never billboard
+      setTimeout(reveal, 0);
+    } else {
     OFFS.forEach(([ox, oy]) => {
       const jm = new THREE.Mesh(new THREE.PlaneGeometry(jetW, jetW), mat);
       jm.position.set(ox, oy, 0);
-      // roll each jet in its own plane, NOT the group — rolling the group would
-      // tilt the whole 2x2 grid instead of levelling the pieces in it
       jm.rotation.z = cfg.roll || 0;
       jm.userData.jet = true;
       mesh.add(jm);
@@ -1694,20 +1801,16 @@ function placeProduct(product, finishId, wall, frame) {
       mesh.children.slice().forEach(jm => {
         jm.geometry.dispose();
         jm.geometry = new THREE.PlaneGeometry(jetW, jetW * ar);
-        // the set used to be four flat decals — each jet is a body on the wall.
-        // It carries its own thickness in FRONT only: each one swings to face the
-        // camera (see stepBillboards), and a body sunk back through the tiles
-        // would corner its way out of them on the turn. A boss on the pivot axis
-        // bridges the standoff instead, exactly as a spout's does.
         jm.geometry.translate(0, 0, d);
         extrudeCutout(jm, mat.map, jetW, jetW * ar, d, hex, d);
-        if (sinkFor(wall)) jm.add(wallBoss(hex, jetW, cfg, jetW * ar));
+        if (sinkFor(wall)) jm.add(wallBoss(hex, jetW));
         addContactShadow(jm, jetW, jetW * ar);
       });
       positionOnWall(mesh, wall, defaultSpot(wall, cfg));
       reveal();
     };
     img.src = path;
+    }
   } else {
     mesh = new THREE.Mesh(new THREE.PlaneGeometry(width, width * 1.4), mat);
     mesh.userData.uid = uid;
@@ -2101,7 +2204,13 @@ function changeFinish(uid, fid) {
   sessionFinish = fid;
   if (rec.is3D) {
     const hex = finishHex(fid, rec.product);
-    rec.mesh.traverse(o => { if (o.userData.metal && o.material) o.material.color.setHex(hex); });
+    rec.mesh.traverse(o => {
+      if (!o.userData.metal || !o.material) return;
+      o.material.color.setHex(hex);
+      if (o.userData.shade != null) o.material.color.multiplyScalar(o.userData.shade);
+    });
+    // procedural pieces take their colour from the artwork, not the swatch tone
+    if (rec.mesh.userData.retint) rec.mesh.userData.retint(rec.product.images[fid]);
   } else {
     const path = rec.product.images[fid]; if (!path) return;
     // grouped body-jet set shares ONE material across its 4 jets; single products
