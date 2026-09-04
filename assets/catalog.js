@@ -124,7 +124,7 @@ const RAW_PRODUCTS = [
   // ---- Body Jets ----
   { code: "ST-BJ-01", cat: "body-jet",    name: "Aqua 16-Jet Body Panel",      finishes: ["chrome"],                                               badge: "New" },
   { code: "ST-BJ-02", cat: "body-jet",    name: "Aqua Single-Flow Body Jet",   finishes: ["brushedGold"] },
-  { code: "ST-1030",  cat: "body-jet",    name: "Aqua Square Body Jet",        finishes: ["matteBlack"] },
+  { code: "ST-1030",  cat: "rain-shower", name: "Aqua Square Rain Shower",     finishes: ["matteBlack"], variant: "square plate · waterfall blades + jets" },   // filed as a body jet; its render is a full overhead plate
 
   // ---- Wall Taps (single-lever wall bib tap) ----
   { code: "ST-SZ-01", cat: "wall-tap",    name: "Senza Wall Bib Tap",          finishes: ["chrome","matteBlack"],                                  badge: "New" },

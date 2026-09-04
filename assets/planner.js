@@ -144,7 +144,7 @@ const SKU3D = {
   "ST-J06":   { width: 0.16, single: true },
   // BJ-02 renders its artwork, so it lands as the flanking set of four
   "ST-BJ-02": { width: 0.16 },   // artwork, not the mesh — so give it enough width to read
-  "ST-1030":  { width: 0.12 },                      // a set of four, flanking the column
+  "ST-1030":  { width: 0.50 },                      // re-filed: it is an overhead plate, not a jet
   // --- 2026-09 Drive range ---
   "ST-FDP":   { width: 0.60 },                                   // wide overhead plate
   "ST-CP25":  { width: 0.26 }, "ST-MB2": { width: 0.26 }, "ST-CJ1": { width: 0.28 },   // digital control panels
