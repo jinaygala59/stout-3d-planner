@@ -26,23 +26,34 @@ const CAT3D = {
   // widths are showroom-scale (a touch larger than life) so every fitting reads
   // clearly from the default camera instead of vanishing on the 3m wall
   //
-  // LAYOUT: everything except the showers lives on the RIGHT of the room. The
-  // right WALL carries the body jets, the spout and the health faucet (its back
-  // half runs alongside the shower tray). Everything else stacks into a control
-  // column on the right END of the back wall, at x≈1.16, clear of the niche
-  // (0.44–0.84) and of the vanity and mirror, which own the left.
+  // LAYOUT: everything except the showers lives on the RIGHT of the room, and
+  // the RIGHT WALL is the shower wall — so the whole valve set lives on it, read
+  // back-to-front by z (depth), not by x:
+  //
+  //    z -1.08   body jets, deep inside the enclosure
+  //    z -0.25   ONE plumbed stack where your hand lands at the entry, top to
+  //              bottom: thermostatic panel (1.72), diverter trim (1.30),
+  //              spout (0.95). That is the order a shower wall is actually
+  //              piped in, and it beats three fittings scattered along the wall.
+  //    z  0.52   the shattaf, up by the WC (wcZ 0.95)
+  //
+  // The diverters used to sit in a column on the right END of the BACK wall
+  // (x 1.16) — which is not the right wall at all: you looked for them where
+  // the jets are and they were round the corner, tucked against the niche.
+  // Heights are a real valve wall now, and they clear each other: no two of
+  // these overlap in both z and y, whatever their artwork's aspect.
   // Only the showers stay put: overhead on the ceiling, wall heads on the back
   // wall centre-line, both over the drain at x=0.
   "rain-shower":  { mount: "ceiling", width: 0.62, z: -0.55 },
-  // --- right wall (positioned by z, i.e. depth, not x) ---
-  "body-jet":     { mount: "right", width: 0.17, z: -0.95, y: 1.35, panel: true },   // CENTRE of the 4-jet set
-  "bath-spout":   { mount: "right", width: 0.44, z: -0.20, y: 1.42, billboard: true },
+  // --- the right wall, back → front ---
+  "body-jet":     { mount: "right", width: 0.17, z: -1.08, y: 1.52, panel: true },   // CENTRE of the 4-jet set (they flank it ±0.32)
+  "bath-spout":   { mount: "right", width: 0.44, z: -0.25, y: 0.95, billboard: true },  // a spout belongs low — it was level with the jets
+  "thermostatic": { mount: "right", width: 0.50, z: -0.25, y: 1.72, panel: true },
+  "diverter":     { mount: "right", width: 0.18, z: -0.25, y: 1.30, panel: true },   // a TALL trim panel — keep it slim so it doesn't read as a plank
   "health-faucet":{ mount: "right", width: 0.20, y: 0.72, z: 0.52, billboard: true },  // shattaf beside the WC (wcZ 0.95)
-  // --- control column, right end of the back wall, top → bottom ---
-  "thermostatic": { mount: "back", width: 0.50, y: 1.60, x: 1.16, panel: true },
-  "diverter":     { mount: "back", width: 0.18, y: 1.00, x: 1.16, panel: true },   // a TALL trim panel — keep it slim so it doesn't read as a plank
-  "wall-tap":     { mount: "back", width: 0.34, y: 0.42, x: 1.16, billboard: true },  // bucket tap sits last, near the floor
-  // --- second, shorter column just inboard of it ---
+  // --- the odds and ends the rail doesn't offer stay on the back wall, right
+  //     end, clear of the niche (0.44–0.84) and of the vanity, which owns the left
+  "wall-tap":     { mount: "back", width: 0.34, y: 0.42, x: 1.16, billboard: true },  // bucket tap, near the floor
   "hand-shower":  { mount: "back", width: 0.17, y: 1.15, x: 0.82, billboard: true },  // handset on a bracket
   "basin-mixer":  { mount: "back", width: 0.34, y: 0.98, x: 0.82, billboard: true },
   "waste":        { mount: "back", width: 0.16, y: 0.40, x: 0.86 },
@@ -85,23 +96,23 @@ const SKU3D = {
   "ST-MN-AC": { width: 0.12, y: 0.55 }, "ST-JF1": { width: 0.12, y: 0.55 },
   // --- body jets: BJ-01 is ONE 16-jet panel (its own patch of wall, clear of the
   //     shower column); the small single jets still come as a flanking set of 4 ---
-  "ST-BJ-01": { width: 0.22, single: true, z: -0.95, y: 1.35 },
-  "ST-J06":   { width: 0.16, single: true, z: -0.95, y: 1.35 },
-  // BJ-02 renders from its own 3D model, so it lands as ONE jet — it needs the
-  // off-column spot too, or it sits inside the bath spout at x 0
-  "ST-BJ-02": { width: 0.12, z: -0.95, y: 1.35 },
+  "ST-BJ-01": { width: 0.22, single: true },
+  "ST-J06":   { width: 0.16, single: true },
+  // BJ-02 renders from its own 3D model, so it lands as ONE jet
+  "ST-BJ-02": { width: 0.12 },
   "ST-1030":  { width: 0.12 },                      // a set of four, flanking the column
   // --- 2026-09 Drive range ---
   "ST-FDP":   { width: 0.60 },                                   // wide overhead plate
   "ST-CP25":  { width: 0.26 }, "ST-MB2": { width: 0.26 }, "ST-CJ1": { width: 0.28 },   // digital control panels
   "ST-D5001": { width: 0.15 }, "ST-D5002": { width: 0.14 }, "ST-D5003": { width: 0.17 },
   "ST-D5004": { width: 0.14 }, "ST-D5009": { width: 0.13 }, "ST-D5010": { width: 0.13 },
-  "ST-BJ21F": { width: 0.12, single: true, x: 0.62, y: 1.35 },   // one concealed jet on its own patch of wall
+  "ST-BJ21F": { width: 0.12, single: true },                     // one concealed jet, on the jet lane
   "ST-2FBJ":  { width: 0.12 },                                   // small jets — the flanking set of 4
   // --- wastes + the re-filed square rain plate ---
   "ST-TXSQ-01": { width: 0.09 }, "ST-TSQ": { width: 0.09 }, "ST-SS304": { width: 0.50 },
-  // --- concealed diverter: a tall trim plate (232x735 artwork) ---
-  "ST-D5017": { width: 0.16, y: 0.95 },
+  // --- concealed diverter: a tall trim plate (232x735 artwork), so it takes the
+  //     diverter lane's height like the rest of them ---
+  "ST-D5017": { width: 0.16 },
 };
 /* the config a product is actually placed with: category default + its own overrides */
 const skuCfg = product => Object.assign({}, catCfg(product.catId), SKU3D[product.code] || {});
