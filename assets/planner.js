@@ -83,7 +83,12 @@ const CAT3D = {
      y 1.25 is the CENTRE of the 4-jet set: the rows straddle it at 1.45 and 1.05
      — shoulder blades and lumbar, where a body jet actually sprays. It was 1.52
      with rows at 1.76 / 1.30, and 1.76 m is the back of your head. */
-  "body-jet":     { mount: "right", width: 0.15, z: -1.05, y: 1.25, jet3d: true },   // built as geometry, not a cutout — see buildBodyJet
+  // Jets render their own PHOTOGRAPH, like every other product. A procedural jet
+  // was tried to escape the 3/4 angle baked into the renders, and it did fix the
+  // angle — but the piece on the wall was then geometry we invented, not the SKU
+  // the client picked, which is not a trade this tool gets to make. buildBodyJet
+  // is still there behind `jet3d` if a real per-SKU model ever arrives.
+  "body-jet":     { mount: "right", width: 0.15, z: -1.05, y: 1.25, billboard: true },
   "bath-spout":   { mount: "right", width: 0.44, z: -0.50, y: 1.05, billboard: true },  // its own lane, clear of the valve above and the jets behind
   "thermostatic": { mount: "right", width: 0.50, z: -0.25, y: 1.48, panel: true },
   /* The diverter shared z -0.25 with the thermostatic, which was fine while a
@@ -206,7 +211,7 @@ const SKU3D = {
   "ST-BJ-01": { width: 0.22, single: true, y: 1.32, panel: true, billboard: false, flip: false },
   // bossX / bossY are read off each render: where the escutcheon actually sits
   // in the frame, as a fraction of the piece, AFTER the mirror. See wallBoss().
-  "ST-J06":   { width: 0.16, y: 1.24, jetShape: "round", jetRows: 5 },   // round jet: the frame carries its body as well as its face.
+  "ST-J06":   { width: 0.20, y: 1.24, roll: -0.20 },   // round jet: the frame carries its body as well as its face.
                                           // Plumbed as a flanking set of four, like every jet that is not a panel.
   // BJ-02 is photographed from the OTHER side: its plate already sits on the wall
   // side of the frame, so mirroring it would turn the nozzle back into the corner
@@ -214,7 +219,7 @@ const SKU3D = {
   // escutcheon set back and up from the head, so flat on the wall the piece reads
   // as if it were skewed. The sign is opposite a spout's because the plate sits on
   // the other side of the body. Tuned on the RIGHT wall, which is where jets go.
-  "ST-BJ-02": { width: 0.15, jetRows: 4 },
+  "ST-BJ-02": { width: 0.15, flip: false, roll: -0.28 },
   "ST-1030":  { width: 0.50 },                      // re-filed: it is an overhead plate, not a jet
   // --- 2026-09 Drive range ---
   "ST-FDP":   { width: 0.60 },                                   // wide overhead plate
@@ -228,8 +233,8 @@ const SKU3D = {
   "ST-D5001": { width: 0.16 }, "ST-D5002": { width: 0.15 }, "ST-D5003": { width: 0.17 },
   "ST-D5004": { width: 0.18 },
   "ST-D5009": { width: 0.17, y: 1.04 }, "ST-D5010": { width: 0.17, y: 1.03 },
-  "ST-BJ21F": { width: 0.15, y: 1.24, jetRows: 6 },   // SQUARE plate + head (only the spray insert is round) — its own name says so                          // a set of four, like the rest
-  "ST-2FBJ":  { width: 0.15, jetRows: 6 },                                   // small jets — the flanking set of 4
+  "ST-BJ21F": { width: 0.15, y: 1.24, roll: -0.24 },   // a set of four, like the rest
+  "ST-2FBJ":  { width: 0.15, roll: -0.24 },                                  // the flanking set of four
   // --- wastes + the re-filed square rain plate ---
   "ST-TXSQ-01": { width: 0.09 }, "ST-TSQ": { width: 0.09 }, "ST-SS304": { width: 0.50 },
   // --- concealed diverter: a tall trim plate (232x735 artwork), so it takes the
