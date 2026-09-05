@@ -270,11 +270,18 @@ const SKU3D = {
   "ST-TXSQ-01": { width: 0.09 }, "ST-TSQ": { width: 0.09 }, "ST-SS304": { width: 0.50 },
   // --- concealed diverter: a tall trim plate (232x735 artwork), so it takes the
   //     diverter lane's height like the rest of them ---
-  // 235x744 — the tallest trim in the range. It renders 0.66 m on the wall, and at
-  // y 1.00 its bottom edge reached 0.656, which left nothing underneath: the
-  // filler spout now shares this lane and has to sit BELOW it. y 1.15 lifts the
-  // bottom to 0.806 and still keeps the trim inside the jet grid (0.934..1.74).
-  "ST-D5017": { width: 0.16, y: 1.15 },
+  /* 235x744 — the tallest trim in the range. It renders 0.507 m on the wall
+     (0.16 x the artwork's 3.17 aspect), NOT the 0.66 an earlier pass recorded:
+     that number, and the 1.15 it produced, came from a box measured while the
+     placement pop was still easing, which reports every piece at 55% of its
+     real size. Corrected, y 1.15 hung the plate at 0.897..1.404 and the filler
+     spout tops out at 0.907 — they overlapped by a centimetre.
+     1.30 is where it actually belongs: 1.047..1.554, which is 14 cm of daylight
+     above the spout and 5 cm below the upper jet row, and near enough the grid
+     centre that it still reads as the trim inside the four. It cannot simply
+     take the category's 1.34 — that puts its top at 1.594 against jets that
+     start at 1.602, and 8 mm is not a gap you can see. */
+  "ST-D5017": { width: 0.16, y: 1.30 },
 };
 /* the config a product is actually placed with: category default + its own overrides */
 const skuCfg = product => Object.assign({}, catCfg(product.catId), SKU3D[product.code] || {});
