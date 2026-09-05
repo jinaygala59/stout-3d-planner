@@ -262,7 +262,14 @@ const SKU3D = {
      hang from reach height instead of straddling it. */
   "ST-D5001": { width: 0.16 }, "ST-D5002": { width: 0.15 }, "ST-D5003": { width: 0.17 },
   "ST-D5004": { width: 0.18 },
-  "ST-D5009": { width: 0.17, y: 1.04 }, "ST-D5010": { width: 0.17, y: 1.03 },
+  /* NO per-SKU `y` on these. They used to carry 1.04 / 1.03, from when the trim
+     lane was its own column down at y 1.06 and a tall plate had to hang from
+     reach height rather than straddle it. The lane is now the CENTRE OF THE
+     JET GRID (see CAT3D "diverter"), and those leftovers were pulling the two
+     tallest 3-way plates 31 cm below it — the trim sitting level with the
+     bottom pair of jets instead of in the middle of all four. Every trim takes
+     the category anchor now, which is what puts it in the middle. */
+  "ST-D5009": { width: 0.17 }, "ST-D5010": { width: 0.17 },
   /* Square jets, hung SQUARE. `faceOn` swaps in the de-skewed copy of the same
      photograph (roomArt), which makes three things fall out at once: the plate
      is a true square so the artwork's aspect is 1:1 and it can't render as a
@@ -290,7 +297,7 @@ const SKU3D = {
      centre that it still reads as the trim inside the four. It cannot simply
      take the category's 1.34 — that puts its top at 1.594 against jets that
      start at 1.602, and 8 mm is not a gap you can see. */
-  "ST-D5017": { width: 0.16, y: 1.30 },
+  "ST-D5017": { width: 0.16 },   // also centres on the grid: at 0.51 m it is taller than the grid, so it overhangs evenly top and bottom
 };
 /* the config a product is actually placed with: category default + its own overrides */
 const skuCfg = product => Object.assign({}, catCfg(product.catId), SKU3D[product.code] || {});
@@ -665,7 +672,7 @@ function aoPlane(w, h, sides) {
 const THEMES = {
   white: {
     id: "white", label: "White", swatch: "#f1ede6",
-    bg: 0x121214, exposure: 0.94,
+    bg: 0x121214, exposure: 0.94, art: 1.0,
     env: ["#e9e1d3", "#a89f8e", "#4c473e"],
     /* WHITE = MARBLE. Flat plaster was the problem: however finely you grain a
        plain wall, a room of four featureless surfaces has nothing in it for the
@@ -709,7 +716,7 @@ const THEMES = {
   },
   black: {
     id: "black", label: "Black", swatch: "#232326",
-    bg: 0x08080a, exposure: 1.0,
+    bg: 0x08080a, exposure: 1.0, art: 0.64,
     env: ["#63636a", "#26262b", "#0d0d10"],
     /* This room was BLACK, not dark: every surface sat between 0x0b and 0x2b, so
        the stone, the joints and the fittings all fell into the same hole and you
@@ -740,7 +747,7 @@ const THEMES = {
   },
   grey: {
     id: "grey", label: "Grey", swatch: "#93969a",
-    bg: 0x0e0f11, exposure: 0.96,
+    bg: 0x0e0f11, exposure: 0.96, art: 0.85,
     env: ["#d3d3d7", "#84848a", "#2e2e32"],
     surfaces: {
       side:    { kind: "slab", base: "#9d9a96", vein: "#e6e3de", veins: 16, veinAlpha: 0.42, clouds: 20, grain: 0.07,
@@ -1298,7 +1305,10 @@ function applyTheme(id, silent) {
   if (!silent && typeof toast === "function") toast(t.label + " bathroom");
 }
 document.querySelectorAll("#themeTabs [data-theme]").forEach(b => {
-  b.onclick = () => applyTheme(b.dataset.theme);
+  // re-print, for the new room, every photograph already hanging in the old one.
+  // Only here: applyTheme's other two callers are boot (nothing is placed yet,
+  // and `placed` is not even declared) and restore (which places afterwards).
+  b.onclick = () => { applyTheme(b.dataset.theme); exposeAllArtwork(); };
 });
 
 /* ---- ceiling colour ----------------------------------------------------- */
@@ -1463,6 +1473,33 @@ function productTexture(path, cfg) {
   if (cfg && cfg.flip) { t.wrapS = THREE.RepeatWrapping; t.repeat.x = -1; t.offset.x = 1; }
   return t;
 }
+
+/* PRINT THE PHOTOGRAPH FOR THE ROOM IT IS HANGING IN.
+   Product artwork renders UNLIT — MeshBasicMaterial, toneMapped off — because
+   re-lighting a studio photograph with the room's own lights and pushing it
+   through ACES turned every fitting into a pale ghost. That is the right call,
+   but it has a cost: an unlit texture is the same brightness whatever room it
+   is in. Every one of these renders was shot against a white sweep under studio
+   light, so on the White marble it sits correctly and on the BLACK room it is a
+   glowing white bar stuck to a near-black wall — the single loudest reason a
+   dark scene reads as a collage instead of a photograph. Chrome makes it worse:
+   real chrome in a black bathroom reflects the black bathroom.
+   So each room states the exposure a product may print at, and the artwork's
+   material is tinted by it. This is a camera decision, not a retouch: no pixel
+   is repainted and no colour is invented, the same photograph is simply printed
+   down for a darker room, exactly as a photographer would expose for it. The
+   extruded body underneath is a lit MeshStandardMaterial and already responds
+   to the room on its own, which is why only the face needs telling. */
+const artExposure = () => (THEME && THEME.art != null ? THEME.art : 1);
+function exposeArtwork(root) {
+  root.traverse(o => {
+    if (o.material && o.material.userData && o.material.userData.artwork) {
+      o.material.color.setScalar(artExposure());
+    }
+  });
+}
+/* every piece on the wall, re-printed for the room that just changed under it */
+function exposeAllArtwork() { placed.forEach(rec => exposeArtwork(rec.mesh)); }
 
 /* THE ARTWORK A PIECE WEARS ON THE WALL, which is not always its catalogue shot.
    A body jet is photographed in three-quarter, and a jet is a flat plate on a
@@ -2067,6 +2104,8 @@ function placeProduct(product, finishId, wall, frame) {
   const mat = new THREE.MeshBasicMaterial({
     map: productTexture(art, cfg), transparent: true, alphaTest: 0.45, side: THREE.DoubleSide, toneMapped: false,
   });
+  mat.userData.artwork = true;             // it is a photograph, so it gets exposed for the room
+  mat.color.setScalar(artExposure());
   let width = cfg.width;
   let mesh;
   if (product.catId === "body-jet" && !cfg.single) {
@@ -2433,6 +2472,8 @@ function cutoutFallback(rec) {
   const mat = new THREE.MeshBasicMaterial({
     map: productTexture(roomArt(path, rec.cfg), rec.cfg), transparent: true, alphaTest: 0.45, side: THREE.DoubleSide, toneMapped: false,
   });
+  mat.userData.artwork = true;
+  mat.color.setScalar(artExposure());
   const plane = new THREE.Mesh(new THREE.PlaneGeometry(width, width * 1.2), mat);
   if (rec.wall === "ceiling") plane.rotation.x = -Math.PI / 2;
   rec.mesh.add(plane);
@@ -2513,7 +2554,9 @@ function renderTool() {
   showFinish(rec.finishId);
 
   $("#toolFins").innerHTML = rec.product.finishes.map(fid =>
-    `<button type="button" class="fin ${fid === rec.finishId ? "on" : ""}" style="background:${FINISHES[fid].swatch}"
+    // a product referencing a finish the palette no longer defines must not take
+    // the whole tool down — it renders as a plain chip and stays selectable
+    `<button type="button" class="fin ${fid === rec.finishId ? "on" : ""}" style="background:${(FINISHES[fid] || {}).swatch || "#888"}"
       data-fin="${fid}" title="${FINISHES[fid].name}" aria-label="${rec.product.name} in ${FINISHES[fid].name}"
       aria-pressed="${fid === rec.finishId}"></button>`
   ).join("");

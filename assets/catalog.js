@@ -149,7 +149,14 @@ const RAW_PRODUCTS = [
   // NOT IN THE CLIENT'S DRIVE FOLDER — no file in it names this SKU, so it
   // is not part of the range and must not be offered. Checked against all
   // 533 filenames. Restore the line if a render for it ever arrives.
-  { code: "ST-BJ-02", cat: "body-jet",    name: "Aqua Single-Flow Body Jet",   finishes: ["brushedSteel","brushedGold","roseGold"] },
+  /* The 3-Function Body Jet, off the client's own screenshot. Catalogue page
+     119 gives it as 50 x 50 mm brass, "3 Function Body Jet", but prints no
+     CODE line on that page — ST-BJ3F is a PLACEHOLDER until the real one is
+     confirmed. Only rose gold is offered: that is the one render there is,
+     and the range it is "similar to" is not a reason to show a colour we
+     cannot picture. */
+  { code: "ST-BJ3F",  cat: "body-jet",    name: "Aqua 3-Function Body Jet",   finishes: ["roseGold"], badge: "New", variant: "square escutcheon · 3 jets" },
+  { code: "ST-BJ-02", cat: "body-jet",    name: "Aqua Single-Flow Body Jet",   finishes: ["gunGrey","brushedGold","roseGold","matteBlack"] },
   { code: "ST-1030",  cat: "rain-shower", name: "Aqua Square Rain Shower",     finishes: ["matteBlack"], variant: "square plate · waterfall blades + jets" },   // filed as a body jet; its render is a full overhead plate
 
   // ---- Wall Taps (single-lever wall bib tap) ----
