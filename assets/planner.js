@@ -211,15 +211,11 @@ const SKU3D = {
   "ST-BJ-01": { width: 0.22, single: true, y: 1.32, panel: true, billboard: false, flip: false },
   // bossX / bossY are read off each render: where the escutcheon actually sits
   // in the frame, as a fraction of the piece, AFTER the mirror. See wallBoss().
-  "ST-J06":   { width: 0.20, y: 1.24 },   // round jet: the frame carries its body as well as its face.
+  "ST-J06":   { width: 0.20, y: 1.24, bossX: -0.15, bossY: 0.12 },   // round jet: the frame carries its body as well as its face.
                                           // Plumbed as a flanking set of four, like every jet that is not a panel.
   // BJ-02 is photographed from the OTHER side: its plate already sits on the wall
   // side of the frame, so mirroring it would turn the nozzle back into the corner
-  // `roll` levels a jet in its own plane. These renders are 3/4 views with the
-  // escutcheon set back and up from the head, so flat on the wall the piece reads
-  // as if it were skewed. The sign is opposite a spout's because the plate sits on
-  // the other side of the body. Tuned on the RIGHT wall, which is where jets go.
-  "ST-BJ-02": { width: 0.15, flip: false },
+  "ST-BJ-02": { width: 0.15, flip: false, bossX: -0.22, bossY: 0.07 },
   "ST-1030":  { width: 0.50 },                      // re-filed: it is an overhead plate, not a jet
   // --- 2026-09 Drive range ---
   "ST-FDP":   { width: 0.60 },                                   // wide overhead plate
@@ -233,8 +229,8 @@ const SKU3D = {
   "ST-D5001": { width: 0.16 }, "ST-D5002": { width: 0.15 }, "ST-D5003": { width: 0.17 },
   "ST-D5004": { width: 0.18 },
   "ST-D5009": { width: 0.17, y: 1.04 }, "ST-D5010": { width: 0.17, y: 1.03 },
-  "ST-BJ21F": { width: 0.15, y: 1.24 },   // a set of four, like the rest
-  "ST-2FBJ":  { width: 0.15 },                                  // the flanking set of four
+  "ST-BJ21F": { width: 0.15, y: 1.24, bossX: -0.17, bossY: 0.09 },   // a set of four, like the rest
+  "ST-2FBJ":  { width: 0.15, bossX: -0.23, bossY: 0.14 },        // the flanking set of four
   // --- wastes + the re-filed square rain plate ---
   "ST-TXSQ-01": { width: 0.09 }, "ST-TSQ": { width: 0.09 }, "ST-SS304": { width: 0.50 },
   // --- concealed diverter: a tall trim plate (232x735 artwork), so it takes the
@@ -1381,7 +1377,12 @@ function measuredRoll(img, src) {
    the aspect test anyway.
    A hand-set `roll` in SKU3D still overrides, for a product that needs one. */
 const LEVEL_CATS = new Set(["bath-spout", "basin-mixer", "thermostatic", "diverter",
-                            "wall-tap", "health-faucet", "body-jet"]);
+                            "wall-tap", "health-faucet"]);
+// body-jet is deliberately NOT levelled. By the rule above, `roll` is only
+// meaningful for a piece with a horizontal body; a jet is a square plate with a
+// nozzle on it, so the fit has no body to find and returned ~3 degrees off the
+// escutcheon's corner. Four jets each tilted 3 degrees is exactly what reads as
+// a grid that will not line up. They hang dead level.
 const rollFor = (product, cfg, img, src) =>
   cfg.roll != null ? cfg.roll
                    : (LEVEL_CATS.has(product.catId) ? measuredRoll(img, src) : 0);
@@ -2014,7 +2015,10 @@ function placeProduct(product, finishId, wall, frame) {
         jm.geometry = new THREE.PlaneGeometry(jetW, jetW * ar);
         jm.geometry.translate(0, 0, d);
         extrudeCutout(jm, mat.map, jetW, jetW * ar, d, hex, d);
-        if (sinkFor(wall)) jm.add(wallBoss(hex, jetW));
+        // pass cfg + the real height: without them wallBoss falls back to the frame
+        // CENTRE, which for a jet bridges thin air and leaves the escutcheon
+        // floating on the standoff — the misalignment you see across a set of four
+        if (sinkFor(wall)) jm.add(wallBoss(hex, jetW, cfg, jetW * ar));
         addContactShadow(jm, jetW, jetW * ar);
       });
       positionOnWall(mesh, wall, defaultSpot(wall, cfg));
