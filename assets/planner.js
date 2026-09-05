@@ -2279,8 +2279,21 @@ const RAIL_GROUPS = [
   { id: "diverters", name: "Diverters", cats: ["thermostatic", "diverter"] },
   { id: "bodyjets",  name: "Body Jets", cats: ["body-jet"] },
   { id: "showers",   name: "Showers",   cats: ["rain-shower"] },
-  { id: "spouts",    name: "Spouts",    cats: ["bath-spout"] },
+  // basin-mixer is in here because two products literally named "Axis Wall Spout"
+  // were re-filed into it; without this the Spouts group showed ONE item and
+  // those two vanished from the planner entirely.
+  { id: "spouts",    name: "Spouts & Mixers", cats: ["bath-spout", "basin-mixer"] },
+  // The four groups above are the client's running order. The three below carry
+  // the rest of the range — 19 products that were loaded, sized and anchored but
+  // had no way into the room, because the list only ever showed those four.
+  { id: "handshowers", name: "Hand Showers", cats: ["hand-shower"] },
+  { id: "taps",        name: "Taps & Valves", cats: ["wall-tap"] },
+  { id: "accessories", name: "Wastes & Accessories", cats: ["waste", "health-faucet"] },
 ];
+/* Auto-arrange builds a SHOWER SET, so it stays on the shower categories even
+   though the list now offers the whole range — otherwise the demo would drop a
+   waste and a bib tap into it and stop reading as one. */
+const DEMO_CATS = ["rain-shower", "thermostatic", "diverter", "bath-spout", "body-jet"];
 const RAIL_CATS = RAIL_GROUPS.reduce((a, g) => a.concat(g.cats), []);
 
 /* The finish the visitor is designing in. Picking any swatch sets it, and every
@@ -2667,7 +2680,7 @@ function autoArrange() {
   const canWear = (cid, fin) => (PRODUCTS[cid] || []).some(p => (p.finishes || []).includes(fin));
   let best = null;
   PREF.forEach(fin => {
-    const covered = RAIL_CATS.filter(cid => canWear(cid, fin)).length;
+    const covered = DEMO_CATS.filter(cid => canWear(cid, fin)).length;
     if (!best || covered > best.covered) best = { fin, covered };
   });
   const fin = best ? best.fin : "chrome";
@@ -2676,7 +2689,7 @@ function autoArrange() {
   const undo = snapshot();
   [...placed.values()].forEach(r => removeProduct(r.uid));
   const skipped = [];
-  RAIL_CATS.forEach(cid => {
+  DEMO_CATS.forEach(cid => {
     const list = (PRODUCTS[cid] || []).filter(p => (p.finishes || []).includes(fin));
     if (!list.length) { if ((PRODUCTS[cid] || []).length) skipped.push(categoryName(cid)); return; }
     const p = list[0];
@@ -2820,6 +2833,14 @@ function syncToolbar() {
       el.classList.remove("in-menu");
       home.parent.insertBefore(el, home.next);
     }
+  });
+  // A group whose controls have all moved into the menu is left empty — but it
+  // still draws the divider line before it, so the phone bar showed two stray
+  // separators with nothing between them.
+  document.querySelectorAll(".topbar .group").forEach(g => {
+    const live = [...g.children].some(c =>
+      !c.classList.contains("glabel") && !c.hidden && c.id !== "moreMenu");
+    g.classList.toggle("is-empty", !live);
   });
 }
 window.addEventListener("resize", syncToolbar);
@@ -3055,8 +3076,9 @@ function renderEmptyState() {
   el.innerHTML =
     '<p class="e-kicker">Start your bathroom</p>' +
     '<h2>Choose an overhead shower</h2>' +
-    '<p class="e-body">Pick anything from the products list and it locks into its correct place, ' +
-    'in the finish you choose. Nothing is priced here — your Stout consultant does that.</p>' +
+    '<p class="e-body">Pick anything from the products list and it locks into its correct place. ' +
+    'Tap it in the room to try it in another finish. Nothing is priced here — your Stout ' +
+    'consultant does that.</p>' +
     '<div class="e-row">' +
       '<button type="button" data-e="first">Add a rain shower</button>' +
       '<button type="button" data-e="set">Auto-arrange a full set</button>' +
