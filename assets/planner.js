@@ -1441,13 +1441,21 @@ function measuredRoll(img, src) {
    whole head and arm off at an angle. A handset is vertical and is skipped by
    the aspect test anyway.
    A hand-set `roll` in SKU3D still overrides, for a product that needs one. */
-const LEVEL_CATS = new Set(["bath-spout", "basin-mixer", "thermostatic", "diverter",
+const LEVEL_CATS = new Set(["bath-spout", "basin-mixer",
                             "wall-tap", "health-faucet"]);
-// body-jet is deliberately NOT levelled. By the rule above, `roll` is only
-// meaningful for a piece with a horizontal body; a jet is a square plate with a
-// nozzle on it, so the fit has no body to find and returned ~3 degrees off the
-// escutcheon's corner. Four jets each tilted 3 degrees is exactly what reads as
-// a grid that will not line up. They hang dead level.
+/* body-jet, thermostatic and diverter are deliberately NOT levelled. By the rule
+   above, `roll` is only meaningful for a piece photographed at an angle with a
+   horizontal BODY to find — a spout, a tap, a mixer. It is meaningless, and
+   actively harmful, on a flat plate shot square-on.
+   A jet is a square plate with a nozzle on it: the fit found no body and
+   returned ~3 degrees off the escutcheon's corner, and four jets each tilted
+   3 degrees is exactly what reads as a grid that will not line up.
+   A thermostatic panel or diverter trim is the same mistake at a larger size.
+   The Grande panel came out 5.9 degrees off — on a 56 cm bar that is 6 cm of
+   drop end to end, hung against tile joints that are dead level, and it is the
+   first thing you see. There is no body in that photograph either: it is a
+   rectangle with a dial and a row of buttons, already square in frame. These
+   three hang level, which is how they are installed. */
 const rollFor = (product, cfg, img, src) =>
   cfg.roll != null ? cfg.roll
                    : (LEVEL_CATS.has(product.catId) ? measuredRoll(img, src) : 0);
@@ -1491,11 +1499,26 @@ function productTexture(path, cfg) {
    extruded body underneath is a lit MeshStandardMaterial and already responds
    to the room on its own, which is why only the face needs telling. */
 const artExposure = () => (THEME && THEME.art != null ? THEME.art : 1);
+/* Tag a material with the levels it was AUTHORED at, so exposing is idempotent:
+   the room can be switched any number of times and the tint is always computed
+   from the original, never compounded onto the last one. */
+function artMaterial(mat, emissive) {
+  mat.userData.artwork = { color: 1, emissive: emissive || 0 };
+  return mat;
+}
 function exposeArtwork(root) {
+  const e = artExposure();
   root.traverse(o => {
-    if (o.material && o.material.userData && o.material.userData.artwork) {
-      o.material.color.setScalar(artExposure());
-    }
+    const a = o.material && o.material.userData && o.material.userData.artwork;
+    if (!a) return;
+    o.material.color.setScalar(a.color * e);
+    /* Emission is dimmed HARDER than the surface — e squared. A lit surface in
+       a dark room goes dark because little light reaches it, and that is the
+       first factor. Emission does not: it is the piece giving off light of its
+       own, and a chrome plate does not glow. It is here at all only to keep the
+       dial and buttons legible, so in a dark room it should retreat almost to
+       nothing while the diffuse face carries the piece. */
+    if (o.material.emissive) o.material.emissive.setScalar(a.emissive * e * e);
   });
 }
 /* every piece on the wall, re-printed for the room that just changed under it */
@@ -1628,6 +1651,10 @@ function reliefFace(mesh) {
     metalness: 0.22, roughness: 0.42, envMapIntensity: 0.85,
   });
   mesh.material.userData.relief = true;
+  // 0x8f8f8f is 0.561 of full emission — record it as the authored level so the
+  // room exposure below scales from it instead of stacking on top of it
+  artMaterial(mesh.material, 0x8f / 255);
+  exposeArtwork(mesh);
   flat.dispose();                       // the texture is shared and stays alive
 }
 
@@ -1647,6 +1674,80 @@ function addContactShadow(mesh, w, h) {
   s.position.set(-w * 0.045, -h * 0.10, -(OFF - 0.002));
   s.renderOrder = -1;
   mesh.add(s);
+}
+
+/* ---- SEATING A FLAT TRIM INTO THE WALL ----------------------------------
+   A diverter plate sat on the tile with nothing between it and the grout, so it
+   read as laid ON the wall rather than set INTO it. Two things fix that, and
+   they are what you see on a real concealed valve:
+
+   1. A MOUNTING FLANGE — the plate is not the whole fitting. Behind it is a
+      wider backing collar that covers the cut in the tile, and the step from
+      collar to plate is the border your eye reads as "this is let into the
+      wall". It is built from the artwork's OWN silhouette scaled up, not from a
+      rectangle, so it follows a round plate, a rounded square and a tall
+      rectangle equally well — the range has all three.
+
+   2. A CONTACT SEAM — the occlusion line where the collar meets the tile: tight
+      and dark at the edge, gone within a couple of centimetres. The radial blob
+      addContactShadow paints is right for a spout, which is a small shape
+      throwing a shadow to one side, but under a big flat rectangle it reads as
+      nothing at all. This is a ring, and it is drawn to the plate's own
+      proportions so the border stays an even width all the way round.        */
+let _seamTex = null;
+function seamTexture(ar, mFrac) {
+  const key = ar.toFixed(2) + "_" + mFrac.toFixed(2);
+  _seamTex = _seamTex || {};
+  if (_seamTex[key]) return _seamTex[key];
+  // outer canvas covers plate + margin on every side, in the plate's proportions
+  const outW = 1 + 2 * mFrac, outH = ar + 2 * mFrac;
+  const W = 256, H = Math.max(24, Math.round(W * outH / outW));
+  const c = mkCanvas(W, H), x = c.getContext("2d");
+  const ix = W * (mFrac / outW), iy = H * (mFrac / outH);
+  const iw = W - ix * 2, ih = H - iy * 2;
+  x.save();
+  x.shadowColor = "rgba(0,0,0,0.9)";
+  x.shadowBlur = Math.min(W, H) * 0.16;
+  x.shadowOffsetY = Math.min(W, H) * 0.035;
+  x.fillStyle = "#000";
+  x.fillRect(ix, iy, iw, ih);          // its SHADOW is the ring we want
+  x.restore();
+  x.clearRect(ix, iy, iw, ih);         // the plate's own footprint stays clear
+  _seamTex[key] = canvasTex(c, false);
+  return _seamTex[key];
+}
+function seatPanel(mesh, map, w, h, hex) {
+  ["trimFlange", "trimSeam"].forEach(n => {
+    const prev = mesh.getObjectByName(n);
+    if (prev) { mesh.remove(prev); if (prev.geometry) prev.geometry.dispose(); }
+  });
+  /* The collar is a fixed ~2 cm of metal, so it has to come off the plate's
+     SMALLER side. Taken off the width it was 4.7 cm on a 0.55 m thermostatic
+     bar — a border thicker than a third of the bar's own height, which reads
+     as a picture frame rather than a backing collar. */
+  const m = Math.max(0.010, Math.min(w, h) * 0.13);
+  // the collar: the same cutout, scaled up, darker, bridging tile to plate
+  const fw = w + 2 * m, fh = h + 2 * m;
+  const flange = new THREE.Mesh(new THREE.PlaneGeometry(fw, fh),
+    new THREE.MeshStandardMaterial({
+      map, alphaTest: 0.45, side: THREE.DoubleSide,
+      color: new THREE.Color(hex).multiplyScalar(0.62),
+      metalness: 0.9, roughness: 0.34, envMapIntensity: 1.0,
+    }));
+  flange.name = "trimFlange";
+  flange.userData.metal = true; flange.userData.shade = 0.62;
+  flange.position.z = -(OFF - 0.004);               // just off the tile, behind the plate
+  mesh.add(flange);
+  // the seam on the tile, a little wider again than the collar
+  const sm = m * 1.9;
+  const seam = new THREE.Mesh(new THREE.PlaneGeometry(w + 2 * sm, h + 2 * sm),
+    new THREE.MeshBasicMaterial({
+      map: seamTexture(h / w, sm / w), transparent: true, opacity: 0.8, depthWrite: false,
+    }));
+  seam.name = "trimSeam";
+  seam.position.z = -(OFF - 0.002);
+  seam.renderOrder = -1;
+  mesh.add(seam);
 }
 
 function setEmissive(obj, hex) {
@@ -2104,7 +2205,7 @@ function placeProduct(product, finishId, wall, frame) {
   const mat = new THREE.MeshBasicMaterial({
     map: productTexture(art, cfg), transparent: true, alphaTest: 0.45, side: THREE.DoubleSide, toneMapped: false,
   });
-  mat.userData.artwork = true;             // it is a photograph, so it gets exposed for the room
+  artMaterial(mat);                        // it is a photograph, so it prints for the room it hangs in
   mat.color.setScalar(artExposure());
   let width = cfg.width;
   let mesh;
@@ -2230,14 +2331,22 @@ function placeProduct(product, finishId, wall, frame) {
            client's reference makes the point: you see the body standing off the
            tile, its end face catching the light, a shadow under it. At 5% of the
            width the body was 2.4 cm on a 55 cm panel — technically there, but
-           read as a sticker at any normal viewing distance. A real concealed
-           valve trim stands ~5 cm proud (the cartridge is behind the wall, the
-           plate and its controls are not), so that is what it gets. */
-        const d = Math.max(0.024, width * 0.095);
+           read as a sticker at any normal viewing distance.
+           A real concealed trim stands 3-5 cm proud: the cartridge is behind the
+           wall, the plate and its controls are not. That is the figure to hit,
+           and it is measured FROM THE TILE — but this offset is measured from
+           the anchor, and the anchor already floats OFF (2.5 cm) clear of the
+           wall. Asking for 4.75 cm here bought 7.7 cm of fitting standing off
+           the tile, which is not a trim any more, it is a shelf. Subtract the
+           standoff and ask for the real number. */
+        const proud = Math.min(0.050, Math.max(0.030, width * 0.085));
+        const d = Math.max(0.004, proud - OFF);
         mesh.geometry.translate(0, 0, d);
         mesh.remove(rim);                                   // the extrusion IS the rim now
         extrudeCutout(mesh, mesh.material.map, width, width * ar, d + sinkFor(wall), finishHex(finishId, product), d);
         reliefFace(mesh);                                   // dial and buttons catch the light
+        // ...and let it into the wall instead of leaving it sitting on it
+        seatPanel(mesh, mesh.material.map, width, width * ar, finishHex(finishId, product));
       }
       if (cfg.billboard) {
         // a spout or tap is a solid object seen from the side: without a body it
@@ -2472,7 +2581,7 @@ function cutoutFallback(rec) {
   const mat = new THREE.MeshBasicMaterial({
     map: productTexture(roomArt(path, rec.cfg), rec.cfg), transparent: true, alphaTest: 0.45, side: THREE.DoubleSide, toneMapped: false,
   });
-  mat.userData.artwork = true;
+  artMaterial(mat);
   mat.color.setScalar(artExposure());
   const plane = new THREE.Mesh(new THREE.PlaneGeometry(width, width * 1.2), mat);
   if (rec.wall === "ceiling") plane.rotation.x = -Math.PI / 2;
