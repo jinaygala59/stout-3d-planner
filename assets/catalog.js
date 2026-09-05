@@ -149,7 +149,7 @@ const RAW_PRODUCTS = [
   // NOT IN THE CLIENT'S DRIVE FOLDER — no file in it names this SKU, so it
   // is not part of the range and must not be offered. Checked against all
   // 533 filenames. Restore the line if a render for it ever arrives.
-  // { code: "ST-BJ-02", cat: "body-jet",    name: "Aqua Single-Flow Body Jet",   finishes: ["brushedGold"] },
+  { code: "ST-BJ-02", cat: "body-jet",    name: "Aqua Single-Flow Body Jet",   finishes: ["brushedSteel","brushedGold","roseGold"] },
   { code: "ST-1030",  cat: "rain-shower", name: "Aqua Square Rain Shower",     finishes: ["matteBlack"], variant: "square plate · waterfall blades + jets" },   // filed as a body jet; its render is a full overhead plate
 
   // ---- Wall Taps (single-lever wall bib tap) ----
