@@ -117,7 +117,10 @@ const RAW_PRODUCTS = [
   { code: "ST-WM-002", cat: "basin-mixer", name: "Axis Slim Wall Spout",       finishes: ["gunGrey","champagne","brushedRoseGold"] },
 
   // ---- Thermostatic Control Trim (square dial) ----
-  { code: "ST-TX-01", cat: "thermostatic", name: "Regale Thermostatic Control Trim", finishes: ["brushedSteel"] },
+  // Withdrawn from the list at the client's request (2026-09-05). It is left here
+  // rather than deleted so it can come back with one edit if the range changes.
+  // Its finish, brushedSteel, stays defined — the Senza hand showers still use it.
+  // { code: "ST-TX-01", cat: "thermostatic", name: "Regale Thermostatic Control Trim", finishes: ["brushedSteel"] },
 
   // ---- Basin Mixers (tall vessel, single-lever) ----
   { code: "ST-BM-001", cat: "basin-mixer", name: "Aria Tall Basin Mixer",      finishes: ["chrome","roseGold"], badge: "Signature" },
