@@ -48,15 +48,10 @@ const CAT3D = {
   //              put the back column at z -1.40 — 10 cm off the back wall, in the
   //              corner. Centred with a tighter straddle they sit in the shower,
   //              not in the join.
-  //    z -0.50   the spout, at filling height. It was stacked under the valve at
-  //              0.75, which is bath-filler height — and this room has no bath,
-  //              so it read as pointing at bare floor. On its own lane it can
-  //              come up to 1.05 without fouling the tall diverter trim, which
-  //              reaches down to 0.89. The lane sits between the jets and the
-  //              valve: the jets' lower row is at this exact height (y 1.05), so
-  //              the clearance here is in DEPTH — 5.5 cm from the front jet
-  //              column, 8 cm from the diverter.
-  //    z -0.25   the valve, where your hand lands at the entry: thermostatic
+  //    z -0.25   the valve lane, and the whole column that hangs off it: the
+  //              thermostatic panel or diverter trim at hand height, the four
+  //              jets framing it, and the filler spout below at y 0.78.
+  //              Where your hand lands at the entry: thermostatic
   //              panel (1.48) with the diverter (1.06) under it. These are REACH
   //              heights — you set the temperature standing, without lifting your
   //              arm above your head. They were 1.72 / 1.30, which read fine only
@@ -99,11 +94,18 @@ const CAT3D = {
      0.11 m is what one of these plates measures. It was 0.15 — half again life
      size, four of them, and it looked it. */
   "body-jet":     { mount: "right", width: 0.11, z: -0.25, y: 1.34, billboard: false },
-  // A filler spout belongs LOW and back in the wet zone. Dropping it to 0.78 is
-  // where one actually sits, and it also frees the valve lane at z -0.25 — the
-  // clash that had pushed the diverter out of that lane was this spout sitting at
-  // 1.05, right where a full-height trim reaches.
-  "bath-spout":   { mount: "right", width: 0.44, z: -0.72, y: 0.78, billboard: true },
+  /* THE SPOUT SITS UNDER THE VALVE (asked for directly). It was on its own lane
+     at z -0.72, a third of a metre behind the jets — read as a separate fitting
+     on a separate part of the wall rather than the bottom of one column. On the
+     valve lane it finishes the stack the way a shower wall is actually drawn:
+     jets and trim above, filler below, all on the same centre line.
+     y 0.78 is unchanged — filler height, and it is what keeps this clear of
+     everything above it. The numbers, with the tallest artwork in each category:
+       spout   y 0.67..0.89   z -0.47..-0.03
+       jets    lower row 0.965..1.075, columns at z -0.625..-0.515 and 0.015..0.125
+       valve   1.08..1.60 at z -0.50..0.00
+     so it clears the jet row by 7.5 cm vertically and the jet columns in z. */
+  "bath-spout":   { mount: "right", width: 0.44, z: -0.25, y: 0.78, billboard: true },
   "thermostatic": { mount: "right", width: 0.50, z: -0.25, y: 1.34, panel: true },
   /* The valve lane is a single POINT, not a column: z -0.25, y 1.34, the centre
      of the jet grid. Both trim types answer to it, because on the wall they ARE
@@ -1963,9 +1965,10 @@ function placeProduct(product, finishId, wall, frame) {
      that are really one fitting: Diverters holds thermostatic panels AND
      diverter plates, but on the wall there is a single trim, in the middle of
      the jet grid, and both are anchored to it. So a pick from that list
-     replaces whatever is already in the lane instead of joining it. Spouts is
-     deliberately NOT solo — a bath spout and a basin mixer are two fittings on
-     two different walls that happen to share a list. */
+     replaces whatever is already in the lane instead of joining it. Showers and
+     Body Jets are solo for the same reason. Spouts is deliberately NOT — a bath
+     spout and a basin mixer are two fittings on two different walls that only
+     happen to share a list. */
   const railGrp = RAIL_GROUPS.find(g => g.cats.includes(product.catId));
   const supersedes = railGrp && railGrp.solo
     ? r => railGrp.cats.includes(r.product.catId)
@@ -2560,10 +2563,18 @@ const RAIL_GROUPS = [
   // 19 products had a way into the room — a fair engineering instinct, but not
   // what was asked for, so they are hidden again. They stay loaded, sized and
   // anchored: adding a group back here is all it takes.
-  // solo: the two categories in this list are one fitting on the wall — see placeProduct
+  /* `solo` — ONE of these on the wall at a time, whichever category the pick
+     comes from: choosing a second supersedes the first. Three of the four lists
+     are solo because each describes a single fitting. Diverters needs it most,
+     spanning two categories that are one trim on the wall; Showers and Body
+     Jets happen to be one category each today, so the per-category rule in
+     placeProduct already gives the same answer — but that is a coincidence of
+     how the catalogue is filed, not a promise. Say it here, and folding hand
+     showers into Showers (or a jet panel into Body Jets) can't quietly leave
+     two overhead heads or eight jets on the same wall. */
   { id: "diverters", name: "Diverters", cats: ["thermostatic", "diverter"], solo: true },
-  { id: "bodyjets",  name: "Body Jets", cats: ["body-jet"] },
-  { id: "showers",   name: "Showers",   cats: ["rain-shower"] },
+  { id: "bodyjets",  name: "Body Jets", cats: ["body-jet"], solo: true },
+  { id: "showers",   name: "Showers",   cats: ["rain-shower"], solo: true },
   // basin-mixer rides with the spouts because two products literally named
   // "Axis Wall Spout" are filed there; without it this group shows ONE item and
   // those two disappear from the planner altogether.
