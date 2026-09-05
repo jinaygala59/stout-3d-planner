@@ -1568,13 +1568,16 @@ function addContactShadow(mesh, w, h) {
   const prev = mesh.getObjectByName("contactShadow");
   if (prev) { mesh.remove(prev); prev.geometry.dispose(); }
   const s = new THREE.Mesh(
-    new THREE.PlaneGeometry(w * 1.45, h * 1.25),
-    new THREE.MeshBasicMaterial({ map: shadowTexture(), transparent: true, opacity: 0.5, depthWrite: false })
+    new THREE.PlaneGeometry(w * 1.5, h * 1.5),
+    new THREE.MeshBasicMaterial({ map: shadowTexture(), transparent: true, opacity: 0.62, depthWrite: false })
   );
   s.name = "contactShadow";
-  // ON the wall face (the anchor is OFF in front of it), or the body we now
-  // build down to the wall swallows the shadow whole
-  s.position.set(0, -h * 0.025, -(OFF - 0.002));
+  /* ON the wall face (the anchor is OFF in front of it), or the body we build
+     down to the wall swallows the shadow whole. Offset DOWN and to the left,
+     away from the key light at (1.4, 3.8, 3.4): a fitting that stands 5 cm off
+     the tile throws its shadow to one side, and that offset is most of what
+     tells the eye it is standing off at all. */
+  s.position.set(-w * 0.045, -h * 0.10, -(OFF - 0.002));
   s.renderOrder = -1;
   mesh.add(s);
 }
@@ -2154,9 +2157,14 @@ function placeProduct(product, finishId, wall, frame) {
         mesh.geometry.translate(0, width * ar / 2, 0);   // stand it on the counter, don't bury it
         rim.position.z = -0.008;
       } else if (cfg.panel && wall !== "ceiling") {
-        // a thermostatic panel / diverter trim / jet plate is a solid object on
-        // the wall, not a sticker — give it a body that follows its own outline
-        const d = Math.max(0.016, width * 0.05);
+        /* A thermostatic panel or diverter trim is a BLOCK on the wall, and the
+           client's reference makes the point: you see the body standing off the
+           tile, its end face catching the light, a shadow under it. At 5% of the
+           width the body was 2.4 cm on a 55 cm panel — technically there, but
+           read as a sticker at any normal viewing distance. A real concealed
+           valve trim stands ~5 cm proud (the cartridge is behind the wall, the
+           plate and its controls are not), so that is what it gets. */
+        const d = Math.max(0.024, width * 0.095);
         mesh.geometry.translate(0, 0, d);
         mesh.remove(rim);                                   // the extrusion IS the rim now
         extrudeCutout(mesh, mesh.material.map, width, width * ar, d + sinkFor(wall), finishHex(finishId, product), d);
