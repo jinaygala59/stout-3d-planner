@@ -2699,7 +2699,7 @@ function designAsText() {
     ``,
     ...lines,
     ``,
-    `Please send me availability and a quotation for these.`,
+    `Please send me availability and a quotation for supplying and installing these.`,
   ].join("\n");
 }
 if ($("#emailDesign")) $("#emailDesign").onclick = () => {
@@ -2869,13 +2869,27 @@ async function downloadSpecSheet() {
       y += rowH;
     });
 
+    // ---- who Stout is, and what "we'll take it from here" covers ----
+    if (y + 34 > PH - 24) { doc.addPage(); y = M + 8; }
+    y += 4;
+    doc.setFillColor(249, 247, 243); doc.roundedRect(M, y, PW - 2 * M, 28, 2, 2, "F");
+    doc.setTextColor(...INK); doc.setFont("helvetica", "bold"); doc.setFontSize(10);
+    doc.text("About Stout", M + 6, y + 8);
+    doc.setFont("helvetica", "normal"); doc.setFontSize(8.6); doc.setTextColor(...MUTE);
+    doc.text(doc.splitTextToSize(
+      "Stout is a single point of contact for the whole bathroom. We manufacture and supply the " +
+      "complete range of fittings shown here, and our own teams install them on site — so the pieces " +
+      "you have chosen, the delivery and the fitting are all handled by us, with one warranty behind them.",
+      PW - 2 * M - 12), M + 6, y + 14);
+    y += 34;
+
     // ---- footer on every page ----
     const pages = doc.getNumberOfPages();
     for (let p = 1; p <= pages; p++) {
       doc.setPage(p);
       doc.setDrawColor(...LINE); doc.setLineWidth(0.3); doc.line(M, PH - 16, PW - M, PH - 16);
       doc.setTextColor(...MUTE); doc.setFont("helvetica", "normal"); doc.setFontSize(7.8);
-      doc.text("Finishes shown are indicative. For availability and a personalised quotation, please contact your Stout consultant.", M, PH - 11);
+      doc.text("Finishes shown are indicative. Your Stout consultant will confirm availability and quote for supply and installation.", M, PH - 11);
       doc.text("Stout Sanitaryware  ·  skventuresdirect@gmail.com", M, PH - 7);
       doc.text(`Page ${p} / ${pages}`, PW - M, PH - 7, { align: "right" });
     }
@@ -3294,8 +3308,8 @@ function renderEmptyState() {
     '<p class="e-kicker">Start your bathroom</p>' +
     '<h2>Choose an overhead shower</h2>' +
     '<p class="e-body">Pick anything from the products list and it locks into its correct place. ' +
-    'Tap it in the room to try it in another finish. Nothing is priced here — your Stout ' +
-    'consultant does that.</p>' +
+    'Tap it in the room to try it in another finish. Nothing is priced here — Stout supplies ' +
+    'and installs the whole design, and your consultant quotes it.</p>' +
     '<div class="e-row">' +
       '<button type="button" data-e="first">Add a rain shower</button>' +
       '<button type="button" data-e="set">Auto-arrange a full set</button>' +
