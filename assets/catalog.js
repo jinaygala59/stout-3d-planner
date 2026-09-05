@@ -99,7 +99,7 @@ const RAW_PRODUCTS = [
   { code: "ST-C1011", cat: "rain-shower", name: "Cascada Maxima Panel",        finishes: ["gunGrey","brushedRoseGold"], variant: "waterfall blades + LED + centre jet" },
 
   // ---- Concealed Diverter (single-lever) ----
-  { code: "ST-D5017", cat: "diverter",    name: "Regale Concealed Diverter",   finishes: ["brushedRoseGold"],                                          badge: "Signature" },
+  { code: "ST-D5017", cat: "diverter",    name: "Regale Concealed Diverter",   finishes: ["chrome","gunGrey","champagne","brushedRoseGold","matteBlack"],                                          badge: "Signature" },
 
   // ---- Thermostatic Diverter panels (D-series) ----
   { code: "ST-D5018", cat: "thermostatic", name: "Regale Grande Thermostatic Panel", finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], badge: "Bestseller" },
@@ -205,7 +205,7 @@ const RAW_PRODUCTS = [
   { code: "ST-D5003", cat: "diverter", name: "Regale 3-Way Concealed Diverter", finishes: ["chrome"], variant: "square plate · 3 buttons" },
   { code: "ST-D5004", cat: "diverter", name: "Regale 5-Button Diverter Plate", finishes: ["chrome","roseGold","matteBlack"], variant: "tall plate · dial + 5 buttons" },
   { code: "ST-D5009", cat: "diverter", name: "Regale 2-Way Concealed Thermostat", finishes: ["chrome","roseGold","matteBlack"], variant: "tall plate · 2 outlets" },
-  { code: "ST-D5010", cat: "diverter", name: "Regale 3-Way Concealed Thermostat", finishes: ["chrome","gold","matteBlack"], variant: "tall plate · 3 outlets" },
+  { code: "ST-D5010", cat: "diverter", name: "Regale 3-Way Concealed Thermostat", finishes: ["chrome","roseGold","matteBlack"], variant: "tall plate · 3 outlets" },
   { code: "ST-BJ21F", cat: "body-jet", name: "Aqua Square Concealed Body Jet", finishes: ["brushedRoseGold","champagne","chrome","gunGrey","matteBlack","roseGold"], variant: "square escutcheon · single jet" },
   { code: "ST-2FBJ", cat: "body-jet", name: "Aqua Micro-Jet Body Spray", finishes: ["chrome","matteBlack","roseGold"], variant: "square plate · multi micro-jet" },
 ];
