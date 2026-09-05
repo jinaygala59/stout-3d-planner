@@ -10,7 +10,7 @@ import hashlib, os, shutil
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 DIST = os.path.join(ROOT, "dist")
-SKIP_DIRS = {".git", "dist", "_dev", "__pycache__"}
+SKIP_DIRS = {".git", "dist", "_dev", "__pycache__", "_quarantine"}
 SKIP_EXT = (".py", ".log")
 STAMPED = ("assets/planner.css", "assets/catalog.js", "assets/planner.js")
 
