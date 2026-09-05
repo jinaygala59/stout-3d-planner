@@ -101,10 +101,13 @@ const CAT3D = {
      jets and trim above, filler below, all on the same centre line.
      y 0.78 is unchanged — filler height, and it is what keeps this clear of
      everything above it. The numbers, with the tallest artwork in each category:
-       spout   y 0.67..0.89   z -0.47..-0.03
-       jets    lower row 0.965..1.075, columns at z -0.625..-0.515 and 0.015..0.125
-       valve   1.08..1.60 at z -0.50..0.00
-     so it clears the jet row by 7.5 cm vertically and the jet columns in z. */
+     Measured on the wall (with a piece SELECTED the box is meaningless — its
+     halo is ~1.9x the piece and inflates it):
+       spout      y 0.693..0.863   filler height
+       trim       y 0.969..1.317   ST-D5017, the range's tallest, lifted to 1.15
+       jet grid   y 1.126..1.551   the trim sits inside it, which is the point
+     — 10 cm of daylight under the trim. At the trim's old y 1.00 the spout's top
+     edge and the trim's bottom edge met at 0.82, which is what the lift buys. */
   "bath-spout":   { mount: "right", width: 0.44, z: -0.25, y: 0.78, billboard: true },
   "thermostatic": { mount: "right", width: 0.50, z: -0.25, y: 1.34, panel: true },
   /* The valve lane is a single POINT, not a column: z -0.25, y 1.34, the centre
@@ -267,7 +270,11 @@ const SKU3D = {
   "ST-TXSQ-01": { width: 0.09 }, "ST-TSQ": { width: 0.09 }, "ST-SS304": { width: 0.50 },
   // --- concealed diverter: a tall trim plate (232x735 artwork), so it takes the
   //     diverter lane's height like the rest of them ---
-  "ST-D5017": { width: 0.16, y: 1.00 },   // 235x744 — the tallest trim in the range, 0.51 m
+  // 235x744 — the tallest trim in the range. It renders 0.66 m on the wall, and at
+  // y 1.00 its bottom edge reached 0.656, which left nothing underneath: the
+  // filler spout now shares this lane and has to sit BELOW it. y 1.15 lifts the
+  // bottom to 0.806 and still keeps the trim inside the jet grid (0.934..1.74).
+  "ST-D5017": { width: 0.16, y: 1.15 },
 };
 /* the config a product is actually placed with: category default + its own overrides */
 const skuCfg = product => Object.assign({}, catCfg(product.catId), SKU3D[product.code] || {});
