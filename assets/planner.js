@@ -1564,6 +1564,36 @@ function extrudeCutout(mesh, map, w, h, depth, hex, faceZ) {
 
 /* attach (or refresh) a shadow plane as a CHILD of the product mesh, sitting
    just behind it toward the wall, so it follows every move / resize for free */
+/* RELIEF ON A TRIM PLATE'S FACE.
+   The client's reference shows the dial standing out of the plate and the
+   buttons raised in their squares. Ours were printed flat, because the face is
+   the product PHOTOGRAPH on an unlit material — exact colour, zero relief.
+
+   Rebuilding each control as geometry was the obvious answer and the wrong one:
+   it means finding the dial and the buttons in the picture, and a detector that
+   finds five buttons out of six puts a chrome cylinder somewhere there isn't
+   one. A control in the wrong place looks far worse than a flat one.
+
+   So the relief comes from the photograph itself. The same image drives a bump
+   map, and every dial, ring, knurl and plate edge catches light exactly where it
+   sits in the render, because it IS the render. What it costs is that the face
+   is now lit by the room, which is what washed these out to pale ghosts before —
+   so the artwork is fed back in as an emissive map too, holding its own studio
+   brightness while the bump does the shading. */
+function reliefFace(mesh) {
+  const flat = mesh.material;
+  if (!flat || !flat.map) return;
+  mesh.material = new THREE.MeshStandardMaterial({
+    map: flat.map,
+    bumpMap: flat.map, bumpScale: 0.006,      // compared on screen at .0026/.006/.012
+    emissiveMap: flat.map, emissive: new THREE.Color(0x8f8f8f),
+    transparent: true, alphaTest: 0.45, side: THREE.DoubleSide,
+    metalness: 0.22, roughness: 0.42, envMapIntensity: 0.85,
+  });
+  mesh.material.userData.relief = true;
+  flat.dispose();                       // the texture is shared and stays alive
+}
+
 function addContactShadow(mesh, w, h) {
   const prev = mesh.getObjectByName("contactShadow");
   if (prev) { mesh.remove(prev); prev.geometry.dispose(); }
@@ -2168,6 +2198,7 @@ function placeProduct(product, finishId, wall, frame) {
         mesh.geometry.translate(0, 0, d);
         mesh.remove(rim);                                   // the extrusion IS the rim now
         extrudeCutout(mesh, mesh.material.map, width, width * ar, d + sinkFor(wall), finishHex(finishId, product), d);
+        reliefFace(mesh);                                   // dial and buttons catch the light
       }
       if (cfg.billboard) {
         // a spout or tap is a solid object seen from the side: without a body it
@@ -2534,6 +2565,11 @@ function changeFinish(uid, fid) {
     const old = targetMat.map;
     const next = productTexture(roomArt(path, rec.cfg), rec.cfg);   // face-on art and the mirror both survive a finish swap
     targetMat.map = next;
+    // a relief face drives its bump and emissive off the SAME image, and this
+    // material is updated before the traverse below, so it would skip itself and
+    // leave both pointing at a texture we are about to dispose
+    if (targetMat.bumpMap === old) targetMat.bumpMap = next;
+    if (targetMat.emissiveMap === old) targetMat.emissiveMap = next;
     targetMat.needsUpdate = true;
     // everything that shares the artwork has to move to the new texture BEFORE
     // the old one is disposed, or it renders with a dead map. Traverse rather
@@ -2541,7 +2577,12 @@ function changeFinish(uid, fid) {
     // match, and a jet SET has four extrusions — the other three kept pointing
     // at the texture we are about to dispose.
     rec.mesh.traverse(o => {
-      if (o.material && o.material.map === old) { o.material.map = next; o.material.needsUpdate = true; }
+      if (!o.material || o.material.map !== old) return;
+      o.material.map = next;
+      // a relief face drives its bump and emissive off the same image
+      if (o.material.bumpMap === old) o.material.bumpMap = next;
+      if (o.material.emissiveMap === old) o.material.emissiveMap = next;
+      o.material.needsUpdate = true;
     });
     if (old) old.dispose();
     const hex = finishHex(fid, rec.product);
