@@ -88,19 +88,31 @@ const CAT3D = {
   // angle — but the piece on the wall was then geometry we invented, not the SKU
   // the client picked, which is not a trade this tool gets to make. buildBodyJet
   // is still there behind `jet3d` if a real per-SKU model ever arrives.
-  "body-jet":     { mount: "right", width: 0.15, z: -1.05, y: 1.25, billboard: true },
+  /* THE SET, AND WHAT SITS IN THE MIDDLE OF IT. Four jets on a 0.64 m square,
+     centred on the valve lane at z -0.25, y 1.34 — so the trim the client picks
+     lands dead centre of the grid and the four jets frame it, which is how this
+     wall is drawn in every brochure in the trade. The pitch is the same across
+     as it is up (see SPREAD / RISE in placeProduct), so the four read as a
+     square and not as two stacked pairs, and it clears the widest panel in the
+     range on both axes. The rows land at 1.02 and 1.66: lumbar and shoulder
+     blades, where a body jet is actually plumbed.
+     0.11 m is what one of these plates measures. It was 0.15 — half again life
+     size, four of them, and it looked it. */
+  "body-jet":     { mount: "right", width: 0.11, z: -0.25, y: 1.34, billboard: false },
   // A filler spout belongs LOW and back in the wet zone. Dropping it to 0.78 is
   // where one actually sits, and it also frees the valve lane at z -0.25 — the
   // clash that had pushed the diverter out of that lane was this spout sitting at
   // 1.05, right where a full-height trim reaches.
   "bath-spout":   { mount: "right", width: 0.44, z: -0.72, y: 0.78, billboard: true },
-  "thermostatic": { mount: "right", width: 0.50, z: -0.25, y: 1.48, panel: true },
-  /* Back in the thermostatic's lane, so the two read as ONE valve column rather
-     than two pieces staggered 23 cm apart along the wall. That is what the
-     stagger looked like and it was the real complaint. It is safe now the spout
-     has dropped to 0.78: a full-height trim reaches down to 0.75 here and the
-     spout owns z -0.94..-0.50, so they no longer meet in either axis. */
-  "diverter":     { mount: "right", width: 0.18, z: -0.25, y: 1.00, panel: true },
+  "thermostatic": { mount: "right", width: 0.50, z: -0.25, y: 1.34, panel: true },
+  /* The valve lane is now a single POINT, not a column: z -0.25, y 1.34, the
+     centre of the jet grid. Both trim types answer to it, so whichever one is
+     picked out of the Diverters group lands in the middle of the four jets.
+     Two of them at once would land on each other, so placeProduct steps the
+     second one aside into the free lane rather than stacking it — see
+     valveSpot(). It is clear of the spout, which owns z -0.94..-0.50 at 0.63..
+     0.93, and of the jets, which own z ±0.32 from this centre. */
+  "diverter":     { mount: "right", width: 0.18, z: -0.25, y: 1.34, panel: true },
   "health-faucet":{ mount: "right", width: 0.20, y: 0.72, z: 0.52, billboard: true },  // shattaf beside the WC (wcZ 0.95)
   // --- the odds and ends the rail doesn't offer stay on the back wall, right
   //     end, clear of the niche (0.44–0.84) and of the vanity, which owns the left
@@ -214,7 +226,13 @@ const SKU3D = {
   "ST-BJ-01": { width: 0.22, single: true, y: 1.32, panel: true, billboard: false, flip: false },
   // bossX / bossY are read off each render: where the escutcheon actually sits
   // in the frame, as a fraction of the piece, AFTER the mirror. See wallBoss().
-  "ST-J06":   { width: 0.20, y: 1.24, bossX: -0.15, bossY: 0.12 },   // round jet: the frame carries its body as well as its face.
+  /* The ROUND jet is the one render in the range shot in near-profile: its face
+     is an ellipse three-fifths as wide as it is tall, with the head's own body
+     across the right of the frame. There is no square-on face in those pixels to
+     recover, so it keeps its swing and its off-centre boss — it cannot be made
+     to hang at 90 degrees without a new render from the factory. The two SQUARE
+     jets below can, and are. */
+  "ST-J06":   { width: 0.14, bossX: -0.15, bossY: 0.12, billboard: true },   // round jet: the frame carries its body as well as its face.
                                           // Plumbed as a flanking set of four, like every jet that is not a panel.
   // BJ-02 is photographed from the OTHER side: its plate already sits on the wall
   // side of the frame, so mirroring it would turn the nozzle back into the corner
@@ -232,8 +250,18 @@ const SKU3D = {
   "ST-D5001": { width: 0.16 }, "ST-D5002": { width: 0.15 }, "ST-D5003": { width: 0.17 },
   "ST-D5004": { width: 0.18 },
   "ST-D5009": { width: 0.17, y: 1.04 }, "ST-D5010": { width: 0.17, y: 1.03 },
-  "ST-BJ21F": { width: 0.15, y: 1.24, bossX: -0.17, bossY: 0.09 },   // a set of four, like the rest
-  "ST-2FBJ":  { width: 0.15, bossX: -0.23, bossY: 0.14 },        // the flanking set of four
+  /* Square jets, hung SQUARE. `faceOn` swaps in the de-skewed copy of the same
+     photograph (roomArt), which makes three things fall out at once: the plate
+     is a true square so the artwork's aspect is 1:1 and it can't render as a
+     leaning parallelogram; the escutcheon is dead centre of the frame, so the
+     boss goes back to the origin (0 is falsy — wallBoss reads that as centred)
+     and no longer has to be nudged per SKU; and there is nothing left to mirror,
+     because a face-on plate has no side to be shot from. `billboard: false`
+     keeps them flush: these are recessed plates, and a plate that swings to
+     follow the camera is a plate that is no longer in the wall.
+     0.11 m is the real plate; 0.15 was a jet the size of a side plate. */
+  "ST-BJ21F": { width: 0.11, faceOn: true, billboard: false, flip: false, bossX: 0, bossY: 0 },
+  "ST-2FBJ":  { width: 0.11, faceOn: true, billboard: false, flip: false, bossX: 0, bossY: 0 },
   // --- wastes + the re-filed square rain plate ---
   "ST-TXSQ-01": { width: 0.09 }, "ST-TSQ": { width: 0.09 }, "ST-SS304": { width: 0.50 },
   // --- concealed diverter: a tall trim plate (232x735 artwork), so it takes the
@@ -1412,6 +1440,21 @@ function productTexture(path, cfg) {
   return t;
 }
 
+/* THE ARTWORK A PIECE WEARS ON THE WALL, which is not always its catalogue shot.
+   A body jet is photographed in three-quarter, and a jet is a flat plate on a
+   flat wall: laid on the tile, that baked-in angle reads as four plates stuck on
+   crooked, every one of them leaning the same way. It is the first thing anyone
+   sees, and no amount of positioning fixes it, because the tilt is IN the photo.
+   `faceOn` points at a copy of that same photograph with the plate's own
+   perspective divided out — its front face warped back to the square it really
+   is, by a homography measured off the render's own silhouette and bevel seam
+   (assets/products/face/). Nothing is repainted, redrawn or substituted: it is
+   the product's own pixels, seen square-on instead of from the corner. The rail,
+   the swatches and the spec sheet keep the catalogue shot, because three-quarter
+   is the right way to SHOW a product — it is only the wrong way to MOUNT one. */
+const roomArt = (path, cfg) =>
+  (cfg && cfg.faceOn && path) ? path.replace("assets/products/", "assets/products/face/") : path;
+
 /* soft radial "contact shadow" so a mounted product grounds onto the wall
    instead of floating. Built once as a canvas texture, reused for every piece. */
 let _shadowTex = null;
@@ -1897,7 +1940,7 @@ function build3DHolder(product, finishId, wall, spec, uid, onReady) {
     holder.add(orient);
     holder.updateMatrixWorld(true);
     const sz = new THREE.Box3().setFromObject(holder).getSize(new THREE.Vector3());
-    seatOnWall(holder, wall, defaultSpot(wall, skuCfg(product)), sz);
+    seatOnWall(holder, wall, defaultSpot(wall, skuCfg(product), uid), sz);
     if (selected === uid) setEmissive(holder, 0x2a2013);    // keep highlight if still selected
     hideLoading();
     if (onReady) onReady();
@@ -1948,11 +1991,12 @@ function placeProduct(product, finishId, wall, frame) {
   // selected (Cascada vs Lumina vs Aeon all look different), just like the 2D site.
   let is3D = false;
   const path = (product.images && product.images[finishId]) || (product.images && product.images[product.defaultFinish]);
+  const art = roomArt(path, cfg);      // square-on copy for the wall; `path` stays the catalogue shot
   // UNLIT material: the product renders are already studio-lit photos — re-lighting
   // them with scene lights + ACES tone mapping washed them out to pale ghosts.
   // Basic + toneMapped:false shows the artwork exactly as shot (crisp, saturated).
   const mat = new THREE.MeshBasicMaterial({
-    map: productTexture(path, cfg), transparent: true, alphaTest: 0.45, side: THREE.DoubleSide, toneMapped: false,
+    map: productTexture(art, cfg), transparent: true, alphaTest: 0.45, side: THREE.DoubleSide, toneMapped: false,
   });
   let width = cfg.width;
   let mesh;
@@ -1963,7 +2007,13 @@ function placeProduct(product, finishId, wall, frame) {
     mesh = new THREE.Group();
     mesh.userData.uid = uid;
     const jetW = cfg.width;
-    const SPREAD = 0.21, RISE = 0.20;
+    /* EQUAL PITCH. The four sit on the corners of a 0.64 m SQUARE — the same
+       0.32 out from centre across as up — so the set reads as a square of four
+       and not as two stacked pairs, and the gap a jet leaves for the trim in the
+       middle is the same gap in both directions. 0.53 m of clear space either
+       way: the widest panel in the range is 0.50 across and 0.50 tall, so even
+       that one is framed by the jets rather than fouling them. */
+    const SPREAD = 0.32, RISE = 0.32;
     const OFFS = [[-SPREAD, RISE], [-SPREAD, -RISE], [SPREAD, RISE], [SPREAD, -RISE]];
     if (cfg.jet3d) {
       // real geometry — see buildBodyJet for why the artwork cannot be used here
@@ -1994,7 +2044,7 @@ function placeProduct(product, finishId, wall, frame) {
         jm.userData.jet = true;
         mesh.add(jm);
       });
-      positionOnWall(mesh, wall, defaultSpot(wall, cfg));
+      positionOnWall(mesh, wall, defaultSpot(wall, cfg, uid));
       tintFromArtwork(mesh, path);
       mesh.userData.retint = p => tintFromArtwork(mesh, p);   // so a finish swap repaints
       is3D = true;                       // geometry, so recolour by traversal and never billboard
@@ -2011,7 +2061,7 @@ function placeProduct(product, finishId, wall, frame) {
     img.onload = () => {
       const ar = img.naturalHeight / img.naturalWidth || 1;
       const d = 0.016, hex = finishHex(finishId, product);
-      const jetRoll = rollFor(product, cfg, img, path);
+      const jetRoll = rollFor(product, cfg, img, art);
       mesh.children.slice().forEach(jm => {
         jm.rotation.z = jetRoll;                  // measured, not typed
         jm.geometry.dispose();
@@ -2024,10 +2074,10 @@ function placeProduct(product, finishId, wall, frame) {
         if (sinkFor(wall)) jm.add(wallBoss(hex, jetW, cfg, jetW * ar));
         addContactShadow(jm, jetW, jetW * ar);
       });
-      positionOnWall(mesh, wall, defaultSpot(wall, cfg));
+      positionOnWall(mesh, wall, defaultSpot(wall, cfg, uid));
       reveal();
     };
-    img.src = path;
+    img.src = art;
     }
   } else {
     mesh = new THREE.Mesh(new THREE.PlaneGeometry(width, width * 1.4), mat);
@@ -2036,7 +2086,7 @@ function placeProduct(product, finishId, wall, frame) {
     img.onload = () => {
       const ar = img.naturalHeight / img.naturalWidth || 1.4;
       // hang it level — measured off this very artwork, see measuredRoll
-      mesh.rotation.z = rollFor(product, cfg, img, path);
+      mesh.rotation.z = rollFor(product, cfg, img, art);
       // A tall piece is sized by its height, not its width (see MAX_H). Done
       // here because it needs the real aspect of the loaded artwork — and done
       // by reassigning `width`, so every body, rim, arm, hose, housing and
@@ -2114,17 +2164,17 @@ function placeProduct(product, finishId, wall, frame) {
         mesh.remove(rim);
         extrudeCutout(mesh, mesh.material.map, width, width * ar, vis + CEIL_EMBED, finishHex(finishId, product), vis);
       }
-      positionOnWall(mesh, wall, defaultSpot(wall, cfg));
+      positionOnWall(mesh, wall, defaultSpot(wall, cfg, uid));
       reveal();
     };
     img.onerror = () => reveal();
-    img.src = path;
+    img.src = art;
   }
   // `roll` counter-rotates a cutout in its own plane. The spout renders are shot
   // from above at a 3/4 angle, so laid flat on a wall the body slopes downhill and
   // the piece reads as if it were stuck on crooked next to the square-on plates.
   mesh.rotation.set(w.rot.x, w.rot.y, mesh.isGroup ? 0 : (cfg.roll || 0));
-  positionOnWall(mesh, wall, defaultSpot(wall, cfg));
+  positionOnWall(mesh, wall, defaultSpot(wall, cfg, uid));
   room.add(mesh); meshes.push(mesh);
   // a jet SET is one record holding four separate fittings, so it swings per jet
   // rather than as a slab — stepBillboards needs to be told which it is
@@ -2138,11 +2188,34 @@ function placeProduct(product, finishId, wall, frame) {
   return uid;
 }
 
-function defaultSpot(wall, cfg) {
+/* Two trims cannot both have the middle of the jet grid. The Diverters group
+   holds thermostatic panels AND diverter plates, and both now answer to the same
+   anchor, so the second one placed would land exactly on the first and hide it.
+   It takes the free lane instead — forward of the grid, past the near jet column
+   at z +0.07 and short of the shattaf at 0.52 — which is where a second trim
+   goes on a real wall anyway. The first one placed keeps the centre. */
+const VALVE_LANE_2 = 0.30;
+function valveSpot(p, uid) {
+  let taken = false;
+  placed.forEach(rec => {
+    // skip the piece we are placing: a trim is positioned once up front and again
+    // when its artwork loads, and by the second call it is already in `placed` —
+    // so without this every trim finds ITSELF in the lane and steps around itself
+    if (rec.uid === uid || !rec.cfg || !rec.cfg.panel || rec.wall !== "right") return;
+    if (Math.abs(rec.mesh.position.z - p.z) < 0.18) taken = true;
+  });
+  if (taken) p.z = VALVE_LANE_2;
+  return p;
+}
+
+function defaultSpot(wall, cfg, uid) {
   if (wall === "counter") return new THREE.Vector3(COUNTER.x, COUNTER.y, COUNTER.z);
   if (wall === "ceiling") return new THREE.Vector3(0, WALLS.ceiling.val, cfg.z != null ? cfg.z : -0.5);
   if (wall === "left")  return new THREE.Vector3(WALLS.left.val, cfg.y != null ? cfg.y : 1.3, cfg.z != null ? cfg.z : 0);
-  if (wall === "right") return new THREE.Vector3(WALLS.right.val, cfg.y != null ? cfg.y : 1.3, cfg.z != null ? cfg.z : 0);
+  if (wall === "right") {
+    const p = new THREE.Vector3(WALLS.right.val, cfg.y != null ? cfg.y : 1.3, cfg.z != null ? cfg.z : 0);
+    return cfg.panel ? valveSpot(p, uid) : p;
+  }
   return new THREE.Vector3(cfg.x != null ? cfg.x : 0, cfg.y != null ? cfg.y : 1.3, WALLS.back.val);   // back
 }
 
@@ -2306,7 +2379,7 @@ function cutoutFallback(rec) {
   clearGroup(rec.mesh);
   const width = rec.cfg.width || 0.34;
   const mat = new THREE.MeshBasicMaterial({
-    map: productTexture(path, rec.cfg), transparent: true, alphaTest: 0.45, side: THREE.DoubleSide, toneMapped: false,
+    map: productTexture(roomArt(path, rec.cfg), rec.cfg), transparent: true, alphaTest: 0.45, side: THREE.DoubleSide, toneMapped: false,
   });
   const plane = new THREE.Mesh(new THREE.PlaneGeometry(width, width * 1.2), mat);
   if (rec.wall === "ceiling") plane.rotation.x = -Math.PI / 2;
@@ -2314,7 +2387,7 @@ function cutoutFallback(rec) {
   rec.mesh.rotation.set(0, MODEL_WALL_YROT[rec.wall] || 0, 0);
   rec.mesh.updateMatrixWorld(true);
   const sz = new THREE.Box3().setFromObject(rec.mesh).getSize(new THREE.Vector3());
-  seatOnWall(rec.mesh, rec.wall, defaultSpot(rec.wall, rec.cfg), sz);
+  seatOnWall(rec.mesh, rec.wall, defaultSpot(rec.wall, rec.cfg, rec.uid), sz);
 }
 
 /* =========================================================================
@@ -2438,7 +2511,7 @@ function changeFinish(uid, fid) {
     const targetMat = rec.mesh.material || (rec.mesh.children[0] && rec.mesh.children[0].material);
     if (!targetMat) return;
     const old = targetMat.map;
-    const next = productTexture(path, rec.cfg);   // a mirrored jet stays mirrored through a finish swap
+    const next = productTexture(roomArt(path, rec.cfg), rec.cfg);   // face-on art and the mirror both survive a finish swap
     targetMat.map = next;
     targetMat.needsUpdate = true;
     // everything that shares the artwork has to move to the new texture BEFORE
