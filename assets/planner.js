@@ -2878,14 +2878,19 @@ function copyShareLink() {
   if (!placed.size) { toast("Add a few fittings first, then share the room"); return; }
   syncHash();
   const url = shareURL();
-  const done = () => toast("Link copied — it reopens this exact room", {
+  // Tell the visitor straight away and treat the clipboard as best-effort. The
+  // clipboard promise never settles at all when the document isn't focused, so
+  // hanging the confirmation off it means a click that silently does nothing.
+  toast("Link copied — it reopens this exact room", {
     label: "Email it", run: () => { window.location.href =
       `mailto:?subject=${encodeURIComponent("My Stout bathroom design")}` +
       `&body=${encodeURIComponent(designAsText() + "\n\n" + url)}`; },
   });
+  const askInstead = () => { try { window.prompt("Copy this link:", url); } catch (_) { /* blocked */ } };
   try {
-    navigator.clipboard.writeText(url).then(done, () => { window.prompt("Copy this link:", url); });
-  } catch (_) { window.prompt("Copy this link:", url); }
+    const w = navigator.clipboard && navigator.clipboard.writeText(url);
+    if (w && w.catch) w.catch(askInstead); else askInstead();
+  } catch (_) { askInstead(); }
 }
 if ($("#shareDesign")) $("#shareDesign").onclick = copyShareLink;
 
