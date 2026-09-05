@@ -89,15 +89,18 @@ const CAT3D = {
   // the client picked, which is not a trade this tool gets to make. buildBodyJet
   // is still there behind `jet3d` if a real per-SKU model ever arrives.
   "body-jet":     { mount: "right", width: 0.15, z: -1.05, y: 1.25, billboard: true },
-  "bath-spout":   { mount: "right", width: 0.44, z: -0.50, y: 1.05, billboard: true },  // its own lane, clear of the valve above and the jets behind
+  // A filler spout belongs LOW and back in the wet zone. Dropping it to 0.78 is
+  // where one actually sits, and it also frees the valve lane at z -0.25 — the
+  // clash that had pushed the diverter out of that lane was this spout sitting at
+  // 1.05, right where a full-height trim reaches.
+  "bath-spout":   { mount: "right", width: 0.44, z: -0.72, y: 0.78, billboard: true },
   "thermostatic": { mount: "right", width: 0.50, z: -0.25, y: 1.48, panel: true },
-  /* The diverter shared z -0.25 with the thermostatic, which was fine while a
-     diverter rendered 34 cm tall and the spout was elsewhere. It is not fine
-     now: a full-height trim reaches down to 0.75, and the bath spout owns
-     z -0.72..-0.28 at exactly that height, so the two intersected. The
-     diverter takes the lane in front of the spout instead — still the valve
-     wall, still where your hand lands walking in, and clear of both. */
-  "diverter":     { mount: "right", width: 0.18, z: -0.02, y: 1.06, panel: true },
+  /* Back in the thermostatic's lane, so the two read as ONE valve column rather
+     than two pieces staggered 23 cm apart along the wall. That is what the
+     stagger looked like and it was the real complaint. It is safe now the spout
+     has dropped to 0.78: a full-height trim reaches down to 0.75 here and the
+     spout owns z -0.94..-0.50, so they no longer meet in either axis. */
+  "diverter":     { mount: "right", width: 0.18, z: -0.25, y: 1.00, panel: true },
   "health-faucet":{ mount: "right", width: 0.20, y: 0.72, z: 0.52, billboard: true },  // shattaf beside the WC (wcZ 0.95)
   // --- the odds and ends the rail doesn't offer stay on the back wall, right
   //     end, clear of the niche (0.44–0.84) and of the vanity, which owns the left
