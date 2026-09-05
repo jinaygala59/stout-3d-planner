@@ -176,9 +176,9 @@ const SKU3D = {
      axis is the mean of the two. All three come out at the same -5.8 deg, which
      is what you would expect of one product family shot on one rig.
      The tall plates in this group measure 0.00 and are left alone. */
-  "ST-D5018": { width: 0.55, roll: -0.102 },
-  "ST-D5019": { width: 0.52, roll: -0.102 },
-  "ST-D5020": { width: 0.44, roll: -0.101 },
+  "ST-D5018": { width: 0.55 },
+  "ST-D5019": { width: 0.52 },
+  "ST-D5020": { width: 0.44 },
   "ST-TX-01": { width: 0.22 },
   // 211x637 plates: a three-outlet column trim is ~0.16 wide, not 0.26. At 0.26
   // it wanted to be 0.79 m tall, which is what the old cap was there to stop —
@@ -190,13 +190,13 @@ const SKU3D = {
      one was wrong — two of them in SIGN, so the piece was rolled further
      downhill and hung on the wall at a diagonal. If you change a roll, measure
      it: eyeballing a 3/4 product shot does not work. --- */
-  "ST-PLAIN":  { width: 0.24, roll: -0.39 },   // artwork body slopes -22.4°
+  "ST-PLAIN":  { width: 0.24 },   // artwork body slopes -22.4°
   // --- basin mixers. WM-001 and WM-002 are the WALL-mounted pair: both were
   //     filed as spouts and neither is one — see catalog.js. Their roll is
   //     measured the same way; it is a property of the photograph, not the
   //     category, so it travels with the SKU. ---
-  "ST-WM-001": { width: 0.28, roll: -0.34 },   // measured -19.2°
-  "ST-WM-002": { width: 0.26, roll: 0.08 },    // measured  +4.6° — nearly level already
+  "ST-WM-001": { width: 0.28 },   // measured -19.2°
+  "ST-WM-002": { width: 0.26 },    // measured  +4.6° — nearly level already
   "ST-BM-001": { width: 0.16, mount: "counter" }, "ST-OB-D94": { width: 0.20, mount: "counter" },
   // wall taps + angle valves: low on the wall, where a bib tap actually goes
   "ST-SZ-01": { width: 0.20 }, "ST-SZ1": { width: 0.20 },
@@ -211,7 +211,7 @@ const SKU3D = {
   "ST-BJ-01": { width: 0.22, single: true, y: 1.32, panel: true, billboard: false, flip: false },
   // bossX / bossY are read off each render: where the escutcheon actually sits
   // in the frame, as a fraction of the piece, AFTER the mirror. See wallBoss().
-  "ST-J06":   { width: 0.20, y: 1.24, roll: -0.20 },   // round jet: the frame carries its body as well as its face.
+  "ST-J06":   { width: 0.20, y: 1.24 },   // round jet: the frame carries its body as well as its face.
                                           // Plumbed as a flanking set of four, like every jet that is not a panel.
   // BJ-02 is photographed from the OTHER side: its plate already sits on the wall
   // side of the frame, so mirroring it would turn the nozzle back into the corner
@@ -219,7 +219,7 @@ const SKU3D = {
   // escutcheon set back and up from the head, so flat on the wall the piece reads
   // as if it were skewed. The sign is opposite a spout's because the plate sits on
   // the other side of the body. Tuned on the RIGHT wall, which is where jets go.
-  "ST-BJ-02": { width: 0.15, flip: false, roll: -0.28 },
+  "ST-BJ-02": { width: 0.15, flip: false },
   "ST-1030":  { width: 0.50 },                      // re-filed: it is an overhead plate, not a jet
   // --- 2026-09 Drive range ---
   "ST-FDP":   { width: 0.60 },                                   // wide overhead plate
@@ -233,8 +233,8 @@ const SKU3D = {
   "ST-D5001": { width: 0.16 }, "ST-D5002": { width: 0.15 }, "ST-D5003": { width: 0.17 },
   "ST-D5004": { width: 0.18 },
   "ST-D5009": { width: 0.17, y: 1.04 }, "ST-D5010": { width: 0.17, y: 1.03 },
-  "ST-BJ21F": { width: 0.15, y: 1.24, roll: -0.24 },   // a set of four, like the rest
-  "ST-2FBJ":  { width: 0.15, roll: -0.24 },                                  // the flanking set of four
+  "ST-BJ21F": { width: 0.15, y: 1.24 },   // a set of four, like the rest
+  "ST-2FBJ":  { width: 0.15 },                                  // the flanking set of four
   // --- wastes + the re-filed square rain plate ---
   "ST-TXSQ-01": { width: 0.09 }, "ST-TSQ": { width: 0.09 }, "ST-SS304": { width: 0.50 },
   // --- concealed diverter: a tall trim plate (232x735 artwork), so it takes the
@@ -1308,6 +1308,84 @@ const WALLS = {
   counter: { plane: new THREE.Plane(new THREE.Vector3(0, 1, 0), 0), fix: "y", val: 0, rot: { x: 0, y: 0 } },
 };
 
+/* =============================================================================
+   HOW LEVEL A PRODUCT HANGS IS MEASURED, NOT TYPED.
+
+   Every product render in the range is a studio 3/4 shot, so the body in the
+   photograph slopes — a wall spout by 22 degrees, a thermostatic bar by 6. Laid
+   flat on the tiles that slope is what the client sees, and the piece reads as
+   stuck on crooked. `roll` counter-rotates the cutout to cancel it.
+
+   That number used to be typed in by eye, one SKU at a time, and by eye it was
+   wrong: of the ten set that way, two had the wrong SIGN — which does not
+   half-fix the tilt, it doubles it. The catalogue is 60-odd products and each
+   one has three finishes shot separately, so eyeballing does not scale and
+   never converges.
+
+   So the app measures it. Fit the body's centreline through the artwork's own
+   alpha channel by least squares and take that angle. Two details matter:
+
+     - Fit the WHOLE silhouette, not just the slender part of it. Filtering to
+       the thin columns to keep a flange or a lever out of the fit sounds right
+       and renders wrong: on the plain wall spout it returned 17.9 deg where the
+       piece needs 22.4, and it hung visibly downhill. The tapering body means
+       the tube's own centreline is not the axis the eye levels against — the
+       whole outline is. Checked on screen, piece by piece, at each value.
+     - Only for pieces whose photograph is wider than it is tall. A tall trim
+       plate has no horizontal body to level, and fitting one returns noise.
+
+   Anything unmeasurable hangs straight, which is the safe failure. A `roll` in
+   SKU3D still wins if a product ever genuinely needs a hand-set angle.
+   ============================================================================= */
+const _rollCache = new Map();
+function measuredRoll(img, src) {
+  if (_rollCache.has(src)) return _rollCache.get(src);
+  let roll = 0;
+  try {
+    const W = 220, H = Math.max(8, Math.round(W * img.naturalHeight / img.naturalWidth));
+    if (H / W <= 1.35) {
+      const c = mkCanvas(W, H), x = c.getContext("2d");
+      x.drawImage(img, 0, 0, W, H);
+      const d = x.getImageData(0, 0, W, H).data;
+      const col = [];
+      for (let X = 0; X < W; X++) {
+        let sum = 0, cnt = 0;
+        for (let Y = 0; Y < H; Y++) if (d[(Y * W + X) * 4 + 3] > 128) { sum += Y; cnt++; }
+        if (cnt > 1) col.push({ x: X, y: sum / cnt, n: cnt });
+      }
+      if (col.length > 24) {
+        // trim the ends: the extreme columns are the nozzle tip and the outer
+        // edge of the flange, both of which curve away from the body's axis
+        const seg = col.slice(Math.floor(col.length * 0.10), Math.ceil(col.length * 0.90));
+        const N = seg.length;
+        let sx = 0, sy = 0, sxy = 0, sxx = 0;
+        seg.forEach(q => { sx += q.x; sy += q.y; sxy += q.x * q.y; sxx += q.x * q.x; });
+        const den = N * sxx - sx * sx;
+        if (N > 8 && Math.abs(den) > 1e-6) {
+          const a = Math.atan((N * sxy - sx * sy) / den);
+          if (Math.abs(a) < 0.7) roll = a;     // past ~40° the fit has found something that is not the body
+        }
+      }
+    }
+  } catch (_) { roll = 0; }                    // unreadable pixels — hang it straight
+  _rollCache.set(src, roll);
+  return roll;
+}
+/* WHICH products get levelled at all. Opt-in, because "level" only means
+   something for a piece with a horizontal body — a spout, a mixer, a control
+   bar. It is meaningless or actively wrong elsewhere, and the audit caught both
+   cases: an overhead plate seen from below is symmetric and measures 0 (no
+   harm), but a WALL shower head carries its own arm in the photograph, and
+   measuring that silhouette asked for -31 degrees, which would have hung the
+   whole head and arm off at an angle. A handset is vertical and is skipped by
+   the aspect test anyway.
+   A hand-set `roll` in SKU3D still overrides, for a product that needs one. */
+const LEVEL_CATS = new Set(["bath-spout", "basin-mixer", "thermostatic", "diverter",
+                            "wall-tap", "health-faucet", "body-jet"]);
+const rollFor = (product, cfg, img, src) =>
+  cfg.roll != null ? cfg.roll
+                   : (LEVEL_CATS.has(product.catId) ? measuredRoll(img, src) : 0);
+
 function finishTexture(path) {
   const t = texLoader.load(path);
   t.encoding = THREE.sRGBEncoding; t.anisotropy = maxAniso;
@@ -1929,7 +2007,9 @@ function placeProduct(product, finishId, wall, frame) {
     img.onload = () => {
       const ar = img.naturalHeight / img.naturalWidth || 1;
       const d = 0.016, hex = finishHex(finishId, product);
+      const jetRoll = rollFor(product, cfg, img, path);
       mesh.children.slice().forEach(jm => {
+        jm.rotation.z = jetRoll;                  // measured, not typed
         jm.geometry.dispose();
         jm.geometry = new THREE.PlaneGeometry(jetW, jetW * ar);
         jm.geometry.translate(0, 0, d);
@@ -1948,6 +2028,8 @@ function placeProduct(product, finishId, wall, frame) {
     const img = new Image();
     img.onload = () => {
       const ar = img.naturalHeight / img.naturalWidth || 1.4;
+      // hang it level — measured off this very artwork, see measuredRoll
+      mesh.rotation.z = rollFor(product, cfg, img, path);
       // A tall piece is sized by its height, not its width (see MAX_H). Done
       // here because it needs the real aspect of the loaded artwork — and done
       // by reassigning `width`, so every body, rim, arm, hose, housing and
