@@ -86,7 +86,13 @@ const CAT3D = {
   "body-jet":     { mount: "right", width: 0.15, z: -1.05, y: 1.25, jet3d: true },   // built as geometry, not a cutout — see buildBodyJet
   "bath-spout":   { mount: "right", width: 0.44, z: -0.50, y: 1.05, billboard: true },  // its own lane, clear of the valve above and the jets behind
   "thermostatic": { mount: "right", width: 0.50, z: -0.25, y: 1.48, panel: true },
-  "diverter":     { mount: "right", width: 0.18, z: -0.25, y: 1.06, panel: true },   // a TALL trim panel — keep it slim so it doesn't read as a plank
+  /* The diverter shared z -0.25 with the thermostatic, which was fine while a
+     diverter rendered 34 cm tall and the spout was elsewhere. It is not fine
+     now: a full-height trim reaches down to 0.75, and the bath spout owns
+     z -0.72..-0.28 at exactly that height, so the two intersected. The
+     diverter takes the lane in front of the spout instead — still the valve
+     wall, still where your hand lands walking in, and clear of both. */
+  "diverter":     { mount: "right", width: 0.18, z: -0.02, y: 1.06, panel: true },
   "health-faucet":{ mount: "right", width: 0.20, y: 0.72, z: 0.52, billboard: true },  // shattaf beside the WC (wcZ 0.95)
   // --- the odds and ends the rail doesn't offer stay on the back wall, right
   //     end, clear of the niche (0.44–0.84) and of the vanity, which owns the left
@@ -95,7 +101,7 @@ const CAT3D = {
   // over the basin, which is the wall-hung vanity on the LEFT (COUNTER.x -1.06)
   // — the only place a basin mixer can go, whatever the rest of the layout does.
   // The deck-mounted ones override this with mount:"counter".
-  "basin-mixer":  { mount: "back", width: 0.30, y: 1.24, x: -1.06, billboard: true },
+  "basin-mixer":  { mount: "back", width: 0.30, y: 1.22, x: -1.06, billboard: true },  // over the basin, under the mirror (1.37)
   "waste":        { mount: "back", width: 0.16, y: 0.40, x: 0.86 },
 };
 const catCfg = id => CAT3D[id] || { mount: "back", width: 0.34, y: 1.30 };
@@ -114,7 +120,14 @@ const catCfg = id => CAT3D[id] || { mount: "back", width: 0.34, y: 1.30 };
    are touched — the cap only bites where the render was already wrong. */
 const MAX_H = {
   "rain-shower": 0.85,     // overhead plates are genuinely large (biggest: 0.60)
-  "thermostatic": 0.36, "diverter": 0.34, "body-jet": 0.34,
+  /* 0.36 / 0.34 were too low for this range and the cap stopped guarding and
+     started deforming. A cap works by shrinking the WIDTH until the height
+     fits, so on a genuinely tall plate — the concealed diverters are 235x744
+     and 387x900 artwork — it did not shorten the piece, it squeezed it into a
+     matchstick 10 cm wide and 34 cm tall. Real tall trims run to about half a
+     metre, so the caps say so, and the widths below say what each plate really
+     measures. The cap still bites on anything past that. */
+  "thermostatic": 0.50, "diverter": 0.52, "body-jet": 0.34,
   "bath-spout": 0.30, "hand-shower": 0.30, "health-faucet": 0.30,
   "basin-mixer": 0.34, "wall-tap": 0.28, "waste": 0.30,
 };
@@ -146,18 +159,39 @@ const SKU3D = {
   // not a rain head at all — it is a handset, so it hangs on a wall outlet + hose
   "ST-OP1":  { width: 0.18, mount: "right", y: 0.75, z: 0.52, hose: true },   // beside the WC, where a jet spray actually goes
   // --- thermostatic trims / panels ---
-  "ST-D5018": { width: 0.55 }, "ST-D5019": { width: 0.52 }, "ST-D5020": { width: 0.44 },
-  "ST-TX-01": { width: 0.22 }, "ST-TD3": { width: 0.26 }, "ST-TD4": { width: 0.26 },
-  // --- spouts: ST-PLAIN is the only genuine one in the range. Now that it
-  //     renders from its photograph rather than the m15 proxy, it needs the same
-  //     `roll` the others do — its body is shot sloping ~19° downhill. ---
-  "ST-PLAIN":  { width: 0.24, roll: 0.33 },
+  /* The three wide thermostatic bars are photographed running UPHILL to the
+     right — 4.8 deg on the two Regale panels, 7.1 deg on the Compact. Laid flat
+     on the tiles that is a bar mounted visibly crooked, and it shows badly
+     because these sit right next to vertical grout lines. `roll` counter-rotates
+     the cutout in its own plane and levels them, exactly as it does for the
+     spouts (see placeProduct). The angles are measured off each render's own
+     silhouette rather than guessed: the top and bottom edges are least-squares
+     fitted across the frame and averaged, because the two disagree (-4.9 and
+     -6.9 on the Grande) — the bar is slightly tapered as well as tilted, so its
+     axis is the mean of the two. All three come out at the same -5.8 deg, which
+     is what you would expect of one product family shot on one rig.
+     The tall plates in this group measure 0.00 and are left alone. */
+  "ST-D5018": { width: 0.55, roll: -0.102 },
+  "ST-D5019": { width: 0.52, roll: -0.102 },
+  "ST-D5020": { width: 0.44, roll: -0.101 },
+  "ST-TX-01": { width: 0.22 },
+  // 211x637 plates: a three-outlet column trim is ~0.16 wide, not 0.26. At 0.26
+  // it wanted to be 0.79 m tall, which is what the old cap was there to stop —
+  // and stopping it that way is what made it 12 cm wide. Right width, right cap.
+  "ST-TD3":   { width: 0.16 }, "ST-TD4": { width: 0.16 },
+  /* --- spouts + wall mixers: `roll` is MEASURED, never guessed. Fit the body's
+     centreline through the artwork's alpha channel by least squares, take the
+     angle, negate it. Every one of these three was set by eye first and every
+     one was wrong — two of them in SIGN, so the piece was rolled further
+     downhill and hung on the wall at a diagonal. If you change a roll, measure
+     it: eyeballing a 3/4 product shot does not work. --- */
+  "ST-PLAIN":  { width: 0.24, roll: -0.39 },   // artwork body slopes -22.4°
   // --- basin mixers. WM-001 and WM-002 are the WALL-mounted pair: both were
-  //     filed as spouts and neither is one — see catalog.js. They keep their
-  //     `roll`, which levels a body photographed at an angle (see placeProduct);
-  //     that is a property of the photograph, not of the category. ---
-  "ST-WM-001": { width: 0.28, roll: 0.45 },
-  "ST-WM-002": { width: 0.26, roll: 0.22 },
+  //     filed as spouts and neither is one — see catalog.js. Their roll is
+  //     measured the same way; it is a property of the photograph, not the
+  //     category, so it travels with the SKU. ---
+  "ST-WM-001": { width: 0.28, roll: -0.34 },   // measured -19.2°
+  "ST-WM-002": { width: 0.26, roll: 0.08 },    // measured  +4.6° — nearly level already
   "ST-BM-001": { width: 0.16, mount: "counter" }, "ST-OB-D94": { width: 0.20, mount: "counter" },
   // wall taps + angle valves: low on the wall, where a bib tap actually goes
   "ST-SZ-01": { width: 0.20 }, "ST-SZ1": { width: 0.20 },
@@ -185,15 +219,22 @@ const SKU3D = {
   // --- 2026-09 Drive range ---
   "ST-FDP":   { width: 0.60 },                                   // wide overhead plate
   "ST-CP25":  { width: 0.26 }, "ST-MB2": { width: 0.26 }, "ST-CJ1": { width: 0.28 },   // digital control panels
-  "ST-D5001": { width: 0.15 }, "ST-D5002": { width: 0.14 }, "ST-D5003": { width: 0.17 },
-  "ST-D5004": { width: 0.14 }, "ST-D5009": { width: 0.13 }, "ST-D5010": { width: 0.13 },
-  "ST-BJ21F": { width: 0.15, y: 1.24, jetShape: "round", jetRows: 6 },                          // a set of four, like the rest
+  /* Concealed diverter plates, at the width each one actually measures. `y` is
+     the plate CENTRE, so the taller a trim is the lower its centre has to sit —
+     a 0.40 m plate centred at the category's 1.06 would put its top control at
+     1.26 and its foot at 0.86, which is right; centring the 0.51 m one there
+     would push it up into the thermostatic panel above. The tall ones therefore
+     hang from reach height instead of straddling it. */
+  "ST-D5001": { width: 0.16 }, "ST-D5002": { width: 0.15 }, "ST-D5003": { width: 0.17 },
+  "ST-D5004": { width: 0.18 },
+  "ST-D5009": { width: 0.17, y: 1.04 }, "ST-D5010": { width: 0.17, y: 1.03 },
+  "ST-BJ21F": { width: 0.15, y: 1.24, jetRows: 6 },   // SQUARE plate + head (only the spray insert is round) — its own name says so                          // a set of four, like the rest
   "ST-2FBJ":  { width: 0.15, jetRows: 6 },                                   // small jets — the flanking set of 4
   // --- wastes + the re-filed square rain plate ---
   "ST-TXSQ-01": { width: 0.09 }, "ST-TSQ": { width: 0.09 }, "ST-SS304": { width: 0.50 },
   // --- concealed diverter: a tall trim plate (232x735 artwork), so it takes the
   //     diverter lane's height like the rest of them ---
-  "ST-D5017": { width: 0.16 },
+  "ST-D5017": { width: 0.16, y: 1.00 },   // 235x744 — the tallest trim in the range, 0.51 m
 };
 /* the config a product is actually placed with: category default + its own overrides */
 const skuCfg = product => Object.assign({}, catCfg(product.catId), SKU3D[product.code] || {});
@@ -914,6 +955,13 @@ function buildShell(t) {
    ============================================================================= */
 /* where a deck-mounted mixer stands on the vanity (filled in by buildCornerBasin) */
 const COUNTER = { x: -1.06, y: 0.98, z: -1.39 };
+/* The vanity ships with a mixer on it. Choosing one of your own replaces it —
+   and that is true whether the one you chose stands on the deck or hangs on the
+   WALL above the basin, which is what ST-WM-001 and ST-WM-002 do. Keyed to
+   mount:"counter" alone, a wall mixer left the stock tap standing and the basin
+   ended up with two. */
+const isBasinMixer = (product, wall) => wall === "counter" || (product && product.catId === "basin-mixer");
+
 function setStockMixer(on) {
   const m = cornerBasinUnit && cornerBasinUnit.getObjectByName("stockMixer");
   if (m) m.visible = on;
@@ -1074,12 +1122,18 @@ function buildBathroomDetails(t) {
   const halo = new THREE.Mesh(new THREE.PlaneGeometry(1.02, 1.24),
     new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(haloC), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false }));
   halo.position.set(-1.08, 1.58, -HZ + 0.014); grp.add(halo);
-  const mirrorFrame = new THREE.Mesh(new THREE.BoxGeometry(0.8, 1.0, 0.026),
+  /* The mirror used to run 1.08 → 2.08, i.e. from just above the counter, which
+     left no wall at all over the basin — and the range has two WALL-mounted basin
+     mixers (ST-WM-001, ST-WM-002) that have to go exactly there. Placed, they
+     rendered inside the mirror and you never saw them. It now starts at 1.37, a
+     40 cm splash gap over the counter, which is where a mirror sits in any
+     vanity detailed for a wall mixer. */
+  const mirrorFrame = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.78, 0.026),
     new THREE.MeshStandardMaterial({ color: F.mirrorFrame, metalness: 0.55, roughness: 0.42, envMapIntensity: 1 }));
-  mirrorFrame.position.set(-1.08, 1.58, -HZ + 0.026); grp.add(mirrorFrame);
-  const mirror = new THREE.Mesh(new THREE.PlaneGeometry(0.74, 0.94),
+  mirrorFrame.position.set(-1.08, 1.76, -HZ + 0.026); grp.add(mirrorFrame);
+  const mirror = new THREE.Mesh(new THREE.PlaneGeometry(0.74, 0.72),
     new THREE.MeshStandardMaterial({ color: 0x8b9096, metalness: 1, roughness: 0.06, envMapIntensity: 1.7 }));
-  mirror.position.set(-1.08, 1.58, -HZ + 0.041); grp.add(mirror);
+  mirror.position.set(-1.08, 1.76, -HZ + 0.041); grp.add(mirror);
 
   /* WALL-HUNG WC on the right wall */
   const porcelain = new THREE.MeshStandardMaterial({ color: F.wc, roughness: 0.14, metalness: 0.02, envMapIntensity: 0.9 });
@@ -1544,50 +1598,102 @@ function nozzleTexture(rows) {
   _nozzleTex = _nozzleTex || {};
   if (_nozzleTex[key]) return _nozzleTex[key];
   const S = 256, c = mkCanvas(S, S), x = c.getContext("2d");
-  x.fillStyle = "#ffffff"; x.fillRect(0, 0, S, S);
+  /* A spray face is a recessed plate, not a white square. Flat white it was the
+     brightest thing on the piece, so the jet read as a blank tile with specks on
+     it; a soft dish behind the nubs is what gives it a middle and an edge. */
+  const dish = x.createRadialGradient(S * 0.42, S * 0.38, S * 0.06, S / 2, S / 2, S * 0.72);
+  dish.addColorStop(0, "#ffffff"); dish.addColorStop(0.55, "#d2d2d4"); dish.addColorStop(1, "#8e8e92");
+  x.fillStyle = dish; x.fillRect(0, 0, S, S);
   const pad = S * 0.14, step = (S - pad * 2) / (rows - 1), r = Math.max(2, step * 0.17);
   for (let iy = 0; iy < rows; iy++) for (let ix = 0; ix < rows; ix++) {
     const cx = pad + ix * step, cy = pad + iy * step;
-    x.fillStyle = "rgba(0,0,0,0.55)";
+    x.fillStyle = "rgba(0,0,0,0.72)";                      // the nub itself, sunk in
     x.beginPath(); x.arc(cx, cy, r, 0, 7); x.fill();
-    x.fillStyle = "rgba(255,255,255,0.5)";                 // a lit rim, so each hole reads
+    x.fillStyle = "rgba(255,255,255,0.55)";                // a lit rim, so each hole reads
     x.beginPath(); x.arc(cx - r * 0.25, cy - r * 0.3, r * 0.45, 0, 7); x.fill();
   }
   _nozzleTex[key] = canvasTex(c, true);
   return _nozzleTex[key];
 }
+/* A BODY JET, built as geometry.
+   FOUR parts, because that is what one is: a plate screwed flat to the tile, a
+   swivel neck, a nozzle head, and the spray face. Two things the first pass got
+   wrong and this fixes:
+
+   THE AIM. A body jet is a ball joint you point at your back. A head standing
+   dead perpendicular to the tile is the one thing it never looks like — and with
+   the head centred on its plate, square to the wall, the whole piece read as
+   nested squares with no silhouette at all. `yaw` / `pitch` turn everything past
+   the plate, and the caller works them out per jet so a set of four converges on
+   whoever is standing in the enclosure.
+
+   THE SEAT. `sink` runs the plate BACK through the anchor and into the wall. A
+   piece is anchored OFF (2.5 cm) clear of its tiles, so without the overrun the
+   jet stands on a cushion of air — the same bug the cutouts had, see WALL_SINK.
+   Overshoot past the wall face is occluded by the wall, so it costs nothing. */
 function buildBodyJet(hex, w, opts) {
   opts = opts || {};
   const round = !!opts.round, rows = opts.rows || 4;
+  const sink = opts.sink || 0, yaw = opts.yaw || 0, pitch = opts.pitch || 0;
   const g = new THREE.Group();
-  // UNLIT, like every other product in the room. Lit metal at 15 cm across just
-  // mirrors a bright white bathroom and a brushed-gold jet comes out cream — the
-  // finish stops reading as the finish. Form comes from a baked tint per face
-  // instead, and `userData.shade` is what changeFinish re-applies on a swatch.
+  /* LIT metal, not a flat fill. Built out of unlit faces a jet is four shapes in
+     one colour: no edge between plate and head, no highlight along the neck,
+     nothing to say any of it stands off the wall — which is exactly how it read.
+     It sits just off metalMat's mirror finish: rough enough that the finish's own
+     hue carries instead of the white room washing a brushed gold to cream, but
+     still env-lit enough to have highlights at all — a full metal with the
+     environment turned down goes dead flat in the Black room, which is where the
+     first pass's unlit fill fell apart worst. `userData.shade` tints each part
+     and is what changeFinish re-applies on a swatch. */
   const part = (geo, shade, map) => {
-    const c = new THREE.Color(hex).multiplyScalar(shade);
-    const mesh = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({
-      color: c, map: map || null, toneMapped: false,
+    const mesh = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({
+      color: new THREE.Color(hex).multiplyScalar(shade),
+      map: map || null, metalness: 1.0, roughness: 0.26, envMapIntensity: 1.15,
     }));
     mesh.userData.metal = true;
     mesh.userData.shade = shade;
     return mesh;
   };
-  const plateD = w * 0.09, headD = w * 0.30, headW = w * 0.66;
-  const plate = part(round ? new THREE.CylinderGeometry(w / 2, w / 2, plateD, 40)
-                           : new THREE.BoxGeometry(w, w, plateD), 0.82);
+  /* Proportions are what make it read as a fitting rather than a tile: a THIN
+     plate, a neck you can actually see, and a head narrower than the plate so
+     there is a frame of tile-facing metal around it. The first pass had a head
+     0.66 wide and 0.30 deep on a 0.09 plate — near enough the same square, near
+     enough flush, so the whole jet flattened into concentric outlines. */
+  // --- the plate: flat on the tile, tail buried in it ---
+  const proud = w * 0.075;
+  const plate = part(round ? new THREE.CylinderGeometry(w / 2, w / 2, proud + sink, 40)
+                           : new THREE.BoxGeometry(w, w, proud + sink), 1.0);
   if (round) plate.rotation.x = Math.PI / 2;               // lie the disc against the wall
-  plate.position.z = plateD / 2;
+  plate.position.z = proud / 2 - sink / 2;                 // face at +proud, back at -sink
   g.add(plate);
-  const head = part(round ? new THREE.CylinderGeometry(headW / 2, headW / 2 * 0.92, headD, 36)
-                          : new THREE.BoxGeometry(headW, headW, headD), 0.62);
+  // --- the neck stands square on the plate; the BALL is at the top of it ---
+  const neckR = w * 0.15, neckD = w * 0.14;
+  const neck = part(new THREE.CylinderGeometry(neckR, neckR * 1.22, neckD, 24), 0.40);
+  neck.rotation.x = Math.PI / 2;
+  neck.position.z = proud + neckD / 2;
+  g.add(neck);
+  /* The head swivels about the BALL, not about the plate. Pivoting at the plate
+     face turned the aim into a slide: the head is most of the piece's depth away
+     from there, so a 20 deg turn walked it clean off the escutcheon and the jet
+     looked knocked out of its socket rather than pointed. A real ball sits
+     directly behind the head, so that is where this pivot goes — the head turns
+     nearly on the spot and stays on its plate. */
+  const aim = new THREE.Group();
+  aim.position.z = proud + neckD;
+  aim.rotation.set(pitch, yaw, 0);
+  g.add(aim);
+  const ball = part(new THREE.SphereGeometry(neckR * 1.05, 20, 14), 0.48);
+  aim.add(ball);
+  const headD = w * 0.32, headW = w * 0.54;
+  const head = part(round ? new THREE.CylinderGeometry(headW / 2, headW / 2 * 0.94, headD, 36)
+                          : new THREE.BoxGeometry(headW, headW, headD), 0.70);
   if (round) head.rotation.x = Math.PI / 2;
-  head.position.z = plateD + headD / 2;
-  g.add(head);
-  const face = part(round ? new THREE.CircleGeometry(headW / 2 * 0.9, 36)
-                          : new THREE.PlaneGeometry(headW * 0.9, headW * 0.9), 1.0, nozzleTexture(rows));
-  face.position.z = plateD + headD + 0.0012;
-  g.add(face);
+  head.position.z = headD / 2;
+  aim.add(head);
+  const face = part(round ? new THREE.CircleGeometry(headW / 2 * 0.88, 36)
+                          : new THREE.PlaneGeometry(headW * 0.88, headW * 0.88), 0.92, nozzleTexture(rows));
+  face.position.z = headD + 0.0012;
+  aim.add(face);
   return g;
 }
 
@@ -1744,7 +1850,7 @@ function placeProduct(product, finishId, wall, frame) {
     mesh.rotation.set(0, 0, 0);
     room.add(mesh); meshes.push(mesh);
     placed.set(uid, { uid, mesh, product, finishId, wall, cfg, is3D: true });
-    if (wall === "counter") setStockMixer(false);
+    if (isBasinMixer(product, wall)) setStockMixer(false);
     selectProduct(uid);
     renderRail();
     saveDesign();
@@ -1775,8 +1881,28 @@ function placeProduct(product, finishId, wall, frame) {
     if (cfg.jet3d) {
       // real geometry — see buildBodyJet for why the artwork cannot be used here
       const hex = finishHex(finishId, product);
+      /* AIM. Four jets all firing square out of the tile is not an installation,
+         so each is turned back towards the person standing in the enclosure:
+         `ox` runs along the wall and `oy` up it, both from the set's own centre,
+         so the sign of each offset IS the direction to turn — far column
+         forward, near column back, top row down, bottom row up, onto mid-torso.
+         But the angle here is a RENDER decision, not a plumbing one. At the true
+         geometry (~22 deg yaw for a body 0.55 m off the wall) you are looking at
+         the BACK of the near column's heads from every angle this room can be
+         viewed from: no nozzle face, just a blank cup turned away beside its
+         plate, which reads as a jet knocked out of its socket rather than one
+         that is aimed. The convergence has to survive being seen from outside
+         the shower, so it is cut to a hint of it — enough that the set is
+         obviously toed-in when you look along the wall, not enough to hide a
+         single nozzle face. */
+      const AIM_YAW = 0.10, AIM_PITCH = 0.08;              // rad: ~6 deg / ~4.5 deg
       OFFS.forEach(([ox, oy]) => {
-        const jm = buildBodyJet(hex, jetW, { round: cfg.jetShape === "round", rows: cfg.jetRows });
+        const jm = buildBodyJet(hex, jetW, {
+          round: cfg.jetShape === "round", rows: cfg.jetRows,
+          sink: sinkFor(wall),                              // seat it IN the tile, not on it
+          yaw: -(ox / SPREAD) * AIM_YAW,
+          pitch: (oy / RISE) * AIM_PITCH,
+        });
         jm.position.set(ox, oy, 0);
         jm.userData.jet = true;
         mesh.add(jm);
@@ -1911,7 +2037,7 @@ function placeProduct(product, finishId, wall, frame) {
   const jetSet = product.catId === "body-jet" && !cfg.single;
   placed.set(uid, { uid, mesh, product, finishId, wall, cfg, is3D, jetSet,
                     halfW: jetSet ? cfg.width / 2 : undefined });
-  if (wall === "counter") setStockMixer(false);
+  if (isBasinMixer(product, wall)) setStockMixer(false);
   selectProduct(uid);
   renderRail();
   saveDesign();
@@ -2246,7 +2372,7 @@ function changeFinish(uid, fid) {
 }
 function removeProduct(uid) {
   const rec = placed.get(uid); if (!rec) return;
-  if (rec.wall === "counter") setStockMixer(true);   // the vanity gets its own mixer back
+  if (isBasinMixer(rec.product, rec.wall)) setStockMixer(true);   // the vanity gets its own mixer back
   const pi = pops.findIndex(p => p.mesh === rec.mesh); if (pi >= 0) pops.splice(pi, 1);
   room.remove(rec.mesh);
   const i = meshes.indexOf(rec.mesh); if (i >= 0) meshes.splice(i, 1);
