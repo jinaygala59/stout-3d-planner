@@ -17,6 +17,11 @@ const FINISHES = {
   gold:          { id: "gold",          name: "Gold",            swatch: "linear-gradient(135deg,#f6de9b,#d4af37 52%,#a9832b)",             tone: "#d4af37" },
   matteBlack:    { id: "matteBlack",    name: "Matte Black",     swatch: "linear-gradient(135deg,#2b2b2e,#141416)",                        tone: "#1d1d20" },
   roseGold:      { id: "roseGold",      name: "Rose Gold",       swatch: "linear-gradient(135deg,#e6c1b6,#cf9184 55%,#b4756a)",             tone: "#cf9a8c" },
+  // NOT IN THE CLIENT'S RANGE. The Drive folder's filenames use eight finish
+  // codes — BG, BRG, BV, CP, FG, GG, MB, RG — and neither antique gold nor
+  // brushed bronze is among them. No product offers either any more; these two
+  // stay defined only because the legacy 2D scene data below still names them.
+  // Do not put either on a product.
   antiqueGold:   { id: "antiqueGold",   name: "Antique Gold",    swatch: "linear-gradient(135deg,#cdb079,#a9863f 55%,#7f6229)",             tone: "#b08d57" },
   brushedBronze: { id: "brushedBronze", name: "Brushed Bronze",  swatch: "linear-gradient(135deg,#b79877,#8c6a4a 55%,#5f4630)",             tone: "#8c6a4a" },
   brushedSteel:  { id: "brushedSteel",  name: "Brushed Steel",   swatch: "linear-gradient(135deg,#eaeef1,#b9c0c6 50%,#8b9298,#e2e6e9)",     tone: "#b9c0c6" },
