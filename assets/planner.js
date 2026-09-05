@@ -105,13 +105,12 @@ const CAT3D = {
   // 1.05, right where a full-height trim reaches.
   "bath-spout":   { mount: "right", width: 0.44, z: -0.72, y: 0.78, billboard: true },
   "thermostatic": { mount: "right", width: 0.50, z: -0.25, y: 1.34, panel: true },
-  /* The valve lane is now a single POINT, not a column: z -0.25, y 1.34, the
-     centre of the jet grid. Both trim types answer to it, so whichever one is
-     picked out of the Diverters group lands in the middle of the four jets.
-     Two of them at once would land on each other, so placeProduct steps the
-     second one aside into the free lane rather than stacking it — see
-     valveSpot(). It is clear of the spout, which owns z -0.94..-0.50 at 0.63..
-     0.93, and of the jets, which own z ±0.32 from this centre. */
+  /* The valve lane is a single POINT, not a column: z -0.25, y 1.34, the centre
+     of the jet grid. Both trim types answer to it, because on the wall they ARE
+     one fitting — picking a second one out of the Diverters list replaces the
+     first rather than joining it (placeProduct, `solo`). It is clear of the
+     spout, which owns z -0.94..-0.50 at 0.63..0.93, and of the jets, which own
+     z ±0.32 from this centre. */
   "diverter":     { mount: "right", width: 0.18, z: -0.25, y: 1.34, panel: true },
   "health-faucet":{ mount: "right", width: 0.20, y: 0.72, z: 0.52, billboard: true },  // shattaf beside the WC (wcZ 0.95)
   // --- the odds and ends the rail doesn't offer stay on the back wall, right
@@ -1940,7 +1939,7 @@ function build3DHolder(product, finishId, wall, spec, uid, onReady) {
     holder.add(orient);
     holder.updateMatrixWorld(true);
     const sz = new THREE.Box3().setFromObject(holder).getSize(new THREE.Vector3());
-    seatOnWall(holder, wall, defaultSpot(wall, skuCfg(product), uid), sz);
+    seatOnWall(holder, wall, defaultSpot(wall, skuCfg(product)), sz);
     if (selected === uid) setEmissive(holder, 0x2a2013);    // keep highlight if still selected
     hideLoading();
     if (onReady) onReady();
@@ -1958,9 +1957,20 @@ function placeProduct(product, finishId, wall, frame) {
   const cfg = skuCfg(product);
   wall = wall || cfg.mount || "back";
   const w = WALLS[wall];
-  // ONE fitting per category — anchors are fixed, so a second one would stack
-  // invisibly on top of the first. Picking another design simply swaps it.
-  [...placed.values()].filter(r => r.product.catId === product.catId).forEach(r => removeProduct(r.uid));
+  /* ONE fitting per category — anchors are fixed, so a second one would stack
+     invisibly on top of the first. Picking another design simply swaps it.
+     A `solo` rail group is stricter, because a group can span two categories
+     that are really one fitting: Diverters holds thermostatic panels AND
+     diverter plates, but on the wall there is a single trim, in the middle of
+     the jet grid, and both are anchored to it. So a pick from that list
+     replaces whatever is already in the lane instead of joining it. Spouts is
+     deliberately NOT solo — a bath spout and a basin mixer are two fittings on
+     two different walls that happen to share a list. */
+  const railGrp = RAIL_GROUPS.find(g => g.cats.includes(product.catId));
+  const supersedes = railGrp && railGrp.solo
+    ? r => railGrp.cats.includes(r.product.catId)
+    : r => r.product.catId === product.catId;
+  [...placed.values()].filter(supersedes).forEach(r => removeProduct(r.uid));
   const uid = "u" + (uidSeq++);
   // REAL 3D MODEL path: if this category has a factory OBJ, place true geometry
   // (auto-aligned + brand metal finish) instead of the flat photo cutout.
@@ -2044,7 +2054,7 @@ function placeProduct(product, finishId, wall, frame) {
         jm.userData.jet = true;
         mesh.add(jm);
       });
-      positionOnWall(mesh, wall, defaultSpot(wall, cfg, uid));
+      positionOnWall(mesh, wall, defaultSpot(wall, cfg));
       tintFromArtwork(mesh, path);
       mesh.userData.retint = p => tintFromArtwork(mesh, p);   // so a finish swap repaints
       is3D = true;                       // geometry, so recolour by traversal and never billboard
@@ -2074,7 +2084,7 @@ function placeProduct(product, finishId, wall, frame) {
         if (sinkFor(wall)) jm.add(wallBoss(hex, jetW, cfg, jetW * ar));
         addContactShadow(jm, jetW, jetW * ar);
       });
-      positionOnWall(mesh, wall, defaultSpot(wall, cfg, uid));
+      positionOnWall(mesh, wall, defaultSpot(wall, cfg));
       reveal();
     };
     img.src = art;
@@ -2164,7 +2174,7 @@ function placeProduct(product, finishId, wall, frame) {
         mesh.remove(rim);
         extrudeCutout(mesh, mesh.material.map, width, width * ar, vis + CEIL_EMBED, finishHex(finishId, product), vis);
       }
-      positionOnWall(mesh, wall, defaultSpot(wall, cfg, uid));
+      positionOnWall(mesh, wall, defaultSpot(wall, cfg));
       reveal();
     };
     img.onerror = () => reveal();
@@ -2174,7 +2184,7 @@ function placeProduct(product, finishId, wall, frame) {
   // from above at a 3/4 angle, so laid flat on a wall the body slopes downhill and
   // the piece reads as if it were stuck on crooked next to the square-on plates.
   mesh.rotation.set(w.rot.x, w.rot.y, mesh.isGroup ? 0 : (cfg.roll || 0));
-  positionOnWall(mesh, wall, defaultSpot(wall, cfg, uid));
+  positionOnWall(mesh, wall, defaultSpot(wall, cfg));
   room.add(mesh); meshes.push(mesh);
   // a jet SET is one record holding four separate fittings, so it swings per jet
   // rather than as a slab — stepBillboards needs to be told which it is
@@ -2188,34 +2198,11 @@ function placeProduct(product, finishId, wall, frame) {
   return uid;
 }
 
-/* Two trims cannot both have the middle of the jet grid. The Diverters group
-   holds thermostatic panels AND diverter plates, and both now answer to the same
-   anchor, so the second one placed would land exactly on the first and hide it.
-   It takes the free lane instead — forward of the grid, past the near jet column
-   at z +0.07 and short of the shattaf at 0.52 — which is where a second trim
-   goes on a real wall anyway. The first one placed keeps the centre. */
-const VALVE_LANE_2 = 0.30;
-function valveSpot(p, uid) {
-  let taken = false;
-  placed.forEach(rec => {
-    // skip the piece we are placing: a trim is positioned once up front and again
-    // when its artwork loads, and by the second call it is already in `placed` —
-    // so without this every trim finds ITSELF in the lane and steps around itself
-    if (rec.uid === uid || !rec.cfg || !rec.cfg.panel || rec.wall !== "right") return;
-    if (Math.abs(rec.mesh.position.z - p.z) < 0.18) taken = true;
-  });
-  if (taken) p.z = VALVE_LANE_2;
-  return p;
-}
-
-function defaultSpot(wall, cfg, uid) {
+function defaultSpot(wall, cfg) {
   if (wall === "counter") return new THREE.Vector3(COUNTER.x, COUNTER.y, COUNTER.z);
   if (wall === "ceiling") return new THREE.Vector3(0, WALLS.ceiling.val, cfg.z != null ? cfg.z : -0.5);
   if (wall === "left")  return new THREE.Vector3(WALLS.left.val, cfg.y != null ? cfg.y : 1.3, cfg.z != null ? cfg.z : 0);
-  if (wall === "right") {
-    const p = new THREE.Vector3(WALLS.right.val, cfg.y != null ? cfg.y : 1.3, cfg.z != null ? cfg.z : 0);
-    return cfg.panel ? valveSpot(p, uid) : p;
-  }
+  if (wall === "right") return new THREE.Vector3(WALLS.right.val, cfg.y != null ? cfg.y : 1.3, cfg.z != null ? cfg.z : 0);
   return new THREE.Vector3(cfg.x != null ? cfg.x : 0, cfg.y != null ? cfg.y : 1.3, WALLS.back.val);   // back
 }
 
@@ -2387,7 +2374,7 @@ function cutoutFallback(rec) {
   rec.mesh.rotation.set(0, MODEL_WALL_YROT[rec.wall] || 0, 0);
   rec.mesh.updateMatrixWorld(true);
   const sz = new THREE.Box3().setFromObject(rec.mesh).getSize(new THREE.Vector3());
-  seatOnWall(rec.mesh, rec.wall, defaultSpot(rec.wall, rec.cfg, rec.uid), sz);
+  seatOnWall(rec.mesh, rec.wall, defaultSpot(rec.wall, rec.cfg), sz);
 }
 
 /* =========================================================================
@@ -2573,7 +2560,8 @@ const RAIL_GROUPS = [
   // 19 products had a way into the room — a fair engineering instinct, but not
   // what was asked for, so they are hidden again. They stay loaded, sized and
   // anchored: adding a group back here is all it takes.
-  { id: "diverters", name: "Diverters", cats: ["thermostatic", "diverter"] },
+  // solo: the two categories in this list are one fitting on the wall — see placeProduct
+  { id: "diverters", name: "Diverters", cats: ["thermostatic", "diverter"], solo: true },
   { id: "bodyjets",  name: "Body Jets", cats: ["body-jet"] },
   { id: "showers",   name: "Showers",   cats: ["rain-shower"] },
   // basin-mixer rides with the spouts because two products literally named
