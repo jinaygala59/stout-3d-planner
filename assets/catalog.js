@@ -75,10 +75,10 @@ const CATEGORIES = [
    whichever is off. */
 const RAW_PRODUCTS = [
   // ---- Overhead / Rain Showers (C-series) ----
-  { code: "ST-C1012", cat: "rain-shower", name: "Cascada Square Rain Shower",  finishes: ["brushedGold","gold"],                                   badge: "Signature", variant: "waterfall blades + LED strips" },
-  { code: "ST-C1013", cat: "rain-shower", name: "Cascada Slim Rain Shower",    finishes: ["brushedGold","gold"], variant: "hex plate · 6 jets" },
-  { code: "ST-C1014", cat: "rain-shower", name: "Cascada Grande Rain Shower",  finishes: ["brushedGold","gold"], variant: "hex plate · LED strips" },
-  { code: "ST-C1015", cat: "rain-shower", name: "Cascada Maxima Rain Shower",  finishes: ["brushedGold","gold"], variant: "hex plate · LED strips + 5 jets" },
+  { code: "ST-C1012", cat: "rain-shower", name: "Cascada Square Rain Shower",  finishes: ["brushedRoseGold","gunGrey"],                                   badge: "Signature", variant: "waterfall blades + LED strips" },
+  { code: "ST-C1013", cat: "rain-shower", name: "Cascada Slim Rain Shower",    finishes: ["brushedRoseGold","gunGrey"], variant: "hex plate · 6 jets" },
+  { code: "ST-C1014", cat: "rain-shower", name: "Cascada Grande Rain Shower",  finishes: ["brushedRoseGold","gunGrey"], variant: "hex plate · LED strips" },
+  { code: "ST-C1015", cat: "rain-shower", name: "Cascada Maxima Rain Shower",  finishes: ["brushedRoseGold","gunGrey"], variant: "hex plate · LED strips + 5 jets" },
   { code: "ST-C1016", cat: "rain-shower", name: "Lumina Rain Shower",          finishes: ["chrome"], variant: "square plate · plain" },
   { code: "ST-C1017", cat: "rain-shower", name: "Lumina Edge Rain Shower",     finishes: ["chrome"], variant: "square plate · centre slot" },
   { code: "ST-C1018", cat: "rain-shower", name: "Lumina Matrix Rain Shower",   finishes: ["chrome"], variant: "square plate · 4 jets" },
@@ -91,7 +91,7 @@ const RAW_PRODUCTS = [
   { code: "ST-C1007", cat: "rain-shower", name: "Lumina Slim Panel",           finishes: ["chrome"], variant: "slim plate · LED strip + 4 jets" },
   { code: "ST-C1008", cat: "rain-shower", name: "Cascada Compact Panel",       finishes: ["gold","matteBlack","roseGold"], variant: "wide plate · LED strip + 4 jets" },
   { code: "ST-C1010", cat: "rain-shower", name: "Cascada Grande Panel",        finishes: ["gold","matteBlack","roseGold"], variant: "wide plate · plain" },
-  { code: "ST-C1011", cat: "rain-shower", name: "Cascada Maxima Panel",        finishes: ["brushedGold","gold"], variant: "waterfall blades + LED + centre jet" },
+  { code: "ST-C1011", cat: "rain-shower", name: "Cascada Maxima Panel",        finishes: ["brushedRoseGold","gunGrey"], variant: "waterfall blades + LED + centre jet" },
 
   // ---- Concealed Diverter (single-lever) ----
   { code: "ST-D5017", cat: "diverter",    name: "Regale Concealed Diverter",   finishes: ["brushedGold"],                                          badge: "Signature" },
@@ -108,8 +108,8 @@ const RAW_PRODUCTS = [
   // basin tap, so they are filed as basin mixers and go over the basin — not on
   // the shower wall with the diverters, where a spout belongs. The names are the
   // client's own catalogue names, so they stay as they are.
-  { code: "ST-WM-001", cat: "basin-mixer", name: "Axis Wall Spout",            finishes: ["brushedGold","brushedBronze"],                          badge: "Signature" },
-  { code: "ST-WM-002", cat: "basin-mixer", name: "Axis Slim Wall Spout",       finishes: ["brushedGold","gold","brushedBronze"] },
+  { code: "ST-WM-001", cat: "basin-mixer", name: "Axis Wall Spout",            finishes: ["brushedGold"],                          badge: "Signature" },
+  { code: "ST-WM-002", cat: "basin-mixer", name: "Axis Slim Wall Spout",       finishes: ["brushedRoseGold","champagne","gunGrey"] },
 
   // ---- Thermostatic Control Trim (square dial) ----
   { code: "ST-TX-01", cat: "thermostatic", name: "Regale Thermostatic Control Trim", finishes: ["brushedSteel"] },
@@ -128,8 +128,14 @@ const RAW_PRODUCTS = [
   { code: "ST-1036",   cat: "hand-shower", name: "Lumina Edge Hand Shower",     finishes: ["chrome"] },
 
   // ---- Body Jets ----
-  { code: "ST-BJ-01", cat: "body-jet",    name: "Aqua 16-Jet Body Panel",      finishes: ["chrome"],                                               badge: "New" },
-  { code: "ST-BJ-02", cat: "body-jet",    name: "Aqua Single-Flow Body Jet",   finishes: ["brushedGold"] },
+  // NOT IN THE CLIENT'S DRIVE FOLDER — no file in it names this SKU, so it
+  // is not part of the range and must not be offered. Checked against all
+  // 533 filenames. Restore the line if a render for it ever arrives.
+  // { code: "ST-BJ-01", cat: "body-jet",    name: "Aqua 16-Jet Body Panel",      finishes: ["chrome"],                                               badge: "New" },
+  // NOT IN THE CLIENT'S DRIVE FOLDER — no file in it names this SKU, so it
+  // is not part of the range and must not be offered. Checked against all
+  // 533 filenames. Restore the line if a render for it ever arrives.
+  // { code: "ST-BJ-02", cat: "body-jet",    name: "Aqua Single-Flow Body Jet",   finishes: ["brushedGold"] },
   { code: "ST-1030",  cat: "rain-shower", name: "Aqua Square Rain Shower",     finishes: ["matteBlack"], variant: "square plate · waterfall blades + jets" },   // filed as a body jet; its render is a full overhead plate
 
   // ---- Wall Taps (single-lever wall bib tap) ----
@@ -171,8 +177,14 @@ const RAW_PRODUCTS = [
   // waste
   { code: "ST-SZ1",   cat: "wall-tap",     name: "Senza Bib Tap",     finishes: ["chrome"] },
   // concealed thermostatic panels
-  { code: "ST-TD3",   cat: "thermostatic", name: "Regale 3-Outlet Thermostat",  finishes: ["chrome"] },
-  { code: "ST-TD4",   cat: "thermostatic", name: "Regale 4-Outlet Thermostat",  finishes: ["brushedBronze"] },
+  // NOT IN THE CLIENT'S DRIVE FOLDER — no file in it names this SKU, so it
+  // is not part of the range and must not be offered. Checked against all
+  // 533 filenames. Restore the line if a render for it ever arrives.
+  // { code: "ST-TD3",   cat: "thermostatic", name: "Regale 3-Outlet Thermostat",  finishes: ["chrome"] },
+  // NOT IN THE CLIENT'S DRIVE FOLDER — no file in it names this SKU, so it
+  // is not part of the range and must not be offered. Checked against all
+  // 533 filenames. Restore the line if a render for it ever arrives.
+  // { code: "ST-TD4",   cat: "thermostatic", name: "Regale 4-Outlet Thermostat",  finishes: ["brushedBronze"] },
 
   /* ---- 2026-09 Drive range: showers, diverters, spouts and body jets, each
      with the full set of finishes from the factory photography ---- */
