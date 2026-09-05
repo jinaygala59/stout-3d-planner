@@ -109,14 +109,22 @@ const CAT3D = {
      — 10 cm of daylight under the trim. At the trim's old y 1.00 the spout's top
      edge and the trim's bottom edge met at 0.82, which is what the lift buys. */
   "bath-spout":   { mount: "right", width: 0.44, z: -0.25, y: 0.78, billboard: true },
-  "thermostatic": { mount: "right", width: 0.50, z: -0.25, y: 1.34, panel: true },
+  /* THE VALVE GOES ON THE WALL YOU FACE. It sat on the right wall, which the
+     room is only ever viewed along — and a flat plate seen edge-on foreshortens
+     into a slant, so it read as hanging off the wall at an angle rather than
+     mounted on it. Its rotation was exactly flush the whole time; the wall was
+     the problem, not the fitting. On the back wall, right of the niche
+     (0.44–0.84) and clear of the vanity, it reads square-on from the opening
+     view — which is also where a shower valve goes: the wall you face when you
+     step in, at hand height. */
+  "thermostatic": { mount: "back", width: 0.50, x: 1.20, y: 1.34, panel: true },
   /* The valve lane is a single POINT, not a column: z -0.25, y 1.34, the centre
      of the jet grid. Both trim types answer to it, because on the wall they ARE
      one fitting — picking a second one out of the Diverters list replaces the
      first rather than joining it (placeProduct, `solo`). It is clear of the
      spout, which owns z -0.94..-0.50 at 0.63..0.93, and of the jets, which own
      z ±0.32 from this centre. */
-  "diverter":     { mount: "right", width: 0.18, z: -0.25, y: 1.34, panel: true },
+  "diverter":     { mount: "back", width: 0.18, x: 1.20, y: 1.34, panel: true },
   "health-faucet":{ mount: "right", width: 0.20, y: 0.72, z: 0.52, billboard: true },  // shattaf beside the WC (wcZ 0.95)
   // --- the odds and ends the rail doesn't offer stay on the back wall, right
   //     end, clear of the niche (0.44–0.84) and of the vanity, which owns the left
