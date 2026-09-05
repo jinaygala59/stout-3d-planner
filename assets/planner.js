@@ -2492,20 +2492,18 @@ function isPlaced(pid) { for (const r of placed.values()) if (r.product.id === p
    diverter families read as one "Diverters" list while each product keeps its own
    catId — and therefore its own wall anchor. */
 const RAIL_GROUPS = [
-  // client-specified running order for the product list
+  // The client asked for FOUR groups, in this order, and only these. A previous
+  // pass added Hand Showers, Taps & Valves and Wastes & Accessories so the other
+  // 19 products had a way into the room — a fair engineering instinct, but not
+  // what was asked for, so they are hidden again. They stay loaded, sized and
+  // anchored: adding a group back here is all it takes.
   { id: "diverters", name: "Diverters", cats: ["thermostatic", "diverter"] },
   { id: "bodyjets",  name: "Body Jets", cats: ["body-jet"] },
   { id: "showers",   name: "Showers",   cats: ["rain-shower"] },
-  // basin-mixer is in here because two products literally named "Axis Wall Spout"
-  // were re-filed into it; without this the Spouts group showed ONE item and
-  // those two vanished from the planner entirely.
+  // basin-mixer rides with the spouts because two products literally named
+  // "Axis Wall Spout" are filed there; without it this group shows ONE item and
+  // those two disappear from the planner altogether.
   { id: "spouts",    name: "Spouts & Mixers", cats: ["bath-spout", "basin-mixer"] },
-  // The four groups above are the client's running order. The three below carry
-  // the rest of the range — 19 products that were loaded, sized and anchored but
-  // had no way into the room, because the list only ever showed those four.
-  { id: "handshowers", name: "Hand Showers", cats: ["hand-shower"] },
-  { id: "taps",        name: "Taps & Valves", cats: ["wall-tap"] },
-  { id: "accessories", name: "Wastes & Accessories", cats: ["waste", "health-faucet"] },
 ];
 /* Auto-arrange builds a SHOWER SET, so it stays on the shower categories even
    though the list now offers the whole range — otherwise the demo would drop a
