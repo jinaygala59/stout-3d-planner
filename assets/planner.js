@@ -109,22 +109,23 @@ const CAT3D = {
      — 10 cm of daylight under the trim. At the trim's old y 1.00 the spout's top
      edge and the trim's bottom edge met at 0.82, which is what the lift buys. */
   "bath-spout":   { mount: "right", width: 0.44, z: -0.25, y: 0.78, billboard: true },
-  /* THE VALVE GOES ON THE WALL YOU FACE. It sat on the right wall, which the
-     room is only ever viewed along — and a flat plate seen edge-on foreshortens
-     into a slant, so it read as hanging off the wall at an angle rather than
-     mounted on it. Its rotation was exactly flush the whole time; the wall was
-     the problem, not the fitting. On the back wall, right of the niche
-     (0.44–0.84) and clear of the vanity, it reads square-on from the opening
-     view — which is also where a shower valve goes: the wall you face when you
-     step in, at hand height. */
-  "thermostatic": { mount: "back", width: 0.50, x: 1.20, y: 1.34, panel: true },
+  /* THE VALVE IS ON THE RIGHT WALL, IN THE MIDDLE OF THE JET GRID. This is the
+     client's own layout and it does not move: the diverter at the centre of the
+     wall with the body jets straddling it, which is how their showers are
+     specified. It shares the jets' anchor exactly (z -0.25, y 1.34).
+     It was moved to the back wall once, on a misreading of "the diverter looks
+     slant" — that slant is the RIGHT WALL being viewed along its length from the
+     opening camera, which foreshortens any flat plate on it. The fitting is
+     flush: its rotation measures exactly -90 against a wall at -90. Use the
+     Right view tab to see the wall square-on. Do not "fix" it by moving it. */
+  "thermostatic": { mount: "right", width: 0.50, z: -0.25, y: 1.34, panel: true },
   /* The valve lane is a single POINT, not a column: z -0.25, y 1.34, the centre
      of the jet grid. Both trim types answer to it, because on the wall they ARE
      one fitting — picking a second one out of the Diverters list replaces the
      first rather than joining it (placeProduct, `solo`). It is clear of the
      spout, which owns z -0.94..-0.50 at 0.63..0.93, and of the jets, which own
      z ±0.32 from this centre. */
-  "diverter":     { mount: "back", width: 0.18, x: 1.20, y: 1.34, panel: true },
+  "diverter":     { mount: "right", width: 0.18, z: -0.25, y: 1.34, panel: true },
   "health-faucet":{ mount: "right", width: 0.20, y: 0.72, z: 0.52, billboard: true },  // shattaf beside the WC (wcZ 0.95)
   // --- the odds and ends the rail doesn't offer stay on the back wall, right
   //     end, clear of the niche (0.44–0.84) and of the vanity, which owns the left
@@ -2653,6 +2654,45 @@ function railItems(group) {
 /* The rail carries NO colour UI any more — no filter chips and no swatches on
    the cards. Colour is chosen on the piece itself, from the tool that appears
    when you select it, so the list stays about picking a design. */
+/* WHAT YOU HAVE CHOSEN, where you can see it.
+   The lists open one at a time, so with four groups collapsed a customer had no
+   way to review their own room without opening every group and hunting for the
+   gold borders — and the only complete statement of the design was inside a
+   downloaded PDF. This is that statement, in the rail: every piece, its finish,
+   click to fly to it, × to take it out. */
+function renderChosen() {
+  const el = $("#chosen"); if (!el) return;
+  const items = [...placed.values()];
+  if (!items.length) { el.hidden = true; el.innerHTML = ""; return; }
+  el.hidden = false;
+  el.innerHTML =
+    `<div class="ch-head"><span>In your bathroom</span><span class="ch-n">${items.length}</span></div>` +
+    items.map(r => {
+      const f = FINISHES[r.finishId] || {};
+      return `<div class="ch-row" data-uid="${r.uid}">
+        <button type="button" class="ch-go" data-go
+                aria-label="Show ${r.product.name} in the room">
+          <i style="background:${f.swatch || "#888"}"></i>
+          <span class="ch-nm">${r.product.name}</span>
+          <span class="ch-fin">${f.name || ""}</span>
+        </button>
+        <button type="button" class="ch-x" data-drop aria-label="Remove ${r.product.name}">×</button>
+      </div>`;
+    }).join("");
+  el.querySelectorAll("[data-go]").forEach(b => b.onclick = () => {
+    const uid = b.closest(".ch-row").dataset.uid;
+    const rec = placed.get(uid); if (!rec) return;
+    selectProduct(uid); focusOn(rec.mesh);
+  });
+  el.querySelectorAll("[data-drop]").forEach(b => b.onclick = () => {
+    const uid = b.closest(".ch-row").dataset.uid;
+    const rec = placed.get(uid); if (!rec) return;
+    const name = rec.product.name, undo = snapshot();
+    removeProduct(uid);
+    toast(`${name} removed`, { label: "Undo", run: () => restore(undo) });
+  });
+}
+
 function renderRail() {
   const acc = $("#catAccordion");
   let shown = 0, total = 0;
@@ -2730,6 +2770,7 @@ function renderRail() {
     add(p, cardFinish(p));
   });
   describeRoom();
+  renderChosen();
   if (typeof renderEmptyState === "function") renderEmptyState();
 }
 
@@ -2778,6 +2819,76 @@ function faceWall(wall) {
   if (!targets) return;
   animateCam(new THREE.Vector3(...targets.pos), new THREE.Vector3(...targets.tgt));
 }
+/* =========================================================================
+   SHARE A DESIGN AS A LINK
+   -------------------------------------------------------------------------
+   The single thing this tool was missing as a sales instrument: a customer who
+   has spent ten minutes choosing finishes had no way to send that room to a
+   spouse, an architect or the showroom — the PDF is a picture of a decision,
+   not the decision itself. The whole design rides in the URL fragment, so it
+   needs no backend and no database, and a consultant can reopen the customer's
+   exact room by pasting the link.
+   Format: #d=<theme>.<ceiling>.<vanity>~<code>:<finish>:<scale>~...
+   ========================================================================= */
+const productById = id => {
+  for (const cat in PRODUCTS) { const p = PRODUCTS[cat].find(x => x.id === id); if (p) return p; }
+  return null;
+};
+function designToHash() {
+  const room = [THEME.id, ceilingChoice, basinVisible ? 1 : 0].join(".");
+  const items = [...placed.values()].map(r =>
+    [r.product.id, r.finishId, (+baseScale(r.mesh)).toFixed(2)].join(":"));
+  return "d=" + room + (items.length ? "~" + items.join("~") : "");
+}
+function shareURL() {
+  return location.origin + location.pathname + "#" + designToHash();
+}
+/* Reopen a shared room. Returns true when it actually restored something, so
+   boot can tell "someone sent me this design" apart from a plain visit — a
+   plain visit still opens on a clean room, which is deliberate. */
+function applyHash(raw) {
+  const h = (raw || "").replace(/^#/, "");
+  if (!h.startsWith("d=")) return false;
+  const parts = h.slice(2).split("~");
+  const [themeId, ceilId, basin] = (parts.shift() || "").split(".");
+  if (themeId && THEMES[themeId]) applyTheme(themeId, true);
+  if (ceilId && CEILINGS.some(c => c.id === ceilId)) setCeiling(ceilId, true);
+  setBasin(basin !== "0");
+  let n = 0;
+  parts.filter(Boolean).forEach(chunk => {
+    const [pid, fin, scale] = chunk.split(":");
+    const p = productById(pid); if (!p) return;
+    const finish = (p.finishes || []).includes(fin) ? fin : p.defaultFinish;
+    const uid = placeProduct(p, finish, skuCfg(p).mount || "back", false);
+    const rec = placed.get(uid);
+    const sc = parseFloat(scale);
+    if (rec && sc > 0.3 && sc < 2) setBaseScale(rec.mesh, sc);
+    n++;
+  });
+  if (n) { deselect(); renderRail(); saveDesign(); }
+  return n > 0;
+}
+/* Keep the address bar in step, so the browser's own Copy Link and the back
+   button both do something sensible. replaceState, not pushState: choosing a
+   finish should not become a history entry to walk back through. */
+function syncHash() {
+  try { history.replaceState(null, "", "#" + designToHash()); } catch (_) { /* file:// */ }
+}
+function copyShareLink() {
+  if (!placed.size) { toast("Add a few fittings first, then share the room"); return; }
+  syncHash();
+  const url = shareURL();
+  const done = () => toast("Link copied — it reopens this exact room", {
+    label: "Email it", run: () => { window.location.href =
+      `mailto:?subject=${encodeURIComponent("My Stout bathroom design")}` +
+      `&body=${encodeURIComponent(designAsText() + "\n\n" + url)}`; },
+  });
+  try {
+    navigator.clipboard.writeText(url).then(done, () => { window.prompt("Copy this link:", url); });
+  } catch (_) { window.prompt("Copy this link:", url); }
+}
+if ($("#shareDesign")) $("#shareDesign").onclick = copyShareLink;
+
 /* ---- send the design on ------------------------------------------------
    No backend to post to yet, so this does what the 2D site does: opens the
    visitor's mail client with the design written out, and copies the same text
@@ -2795,6 +2906,8 @@ function designAsText() {
     ...lines,
     ``,
     `Please send me availability and a quotation for supplying and installing these.`,
+    ``,
+    `Reopen this exact room: ${shareURL()}`,
   ].join("\n");
 }
 if ($("#emailDesign")) $("#emailDesign").onclick = () => {
@@ -2987,6 +3100,12 @@ async function downloadSpecSheet() {
       doc.text("Finishes shown are indicative. Your Stout consultant will confirm availability and quote for supply and installation.", M, PH - 11);
       doc.text("Stout Sanitaryware  ·  skventuresdirect@gmail.com", M, PH - 7);
       doc.text(`Page ${p} / ${pages}`, PW - M, PH - 7, { align: "right" });
+      // the sheet is a picture of a decision; this line makes it the decision —
+      // whoever holds the paper can reopen the room and keep working on it
+      if (p === 1) {
+        doc.setFontSize(7); doc.setTextColor(150, 150, 154);
+        doc.text("Reopen this room: " + shareURL(), M, PH - 19.5, { maxWidth: PW - 2 * M });
+      }
     }
 
     doc.save("Stout-Bathroom-Design.pdf");
@@ -3034,6 +3153,9 @@ function autoArrange() {
 const STORE_KEY = "stout.3d.v5";   // bumped: discard old demo layouts so the room starts CLEAN (user adds products fresh)
 let restoring = false;
 function saveDesign() {
+  // the address bar is part of the design's state now: whatever the room holds,
+  // the URL in the bar reopens exactly that
+  if (typeof syncHash === "function" && !restoring) syncHash();
   if (restoring) return;
   try {
     const items = [...placed.values()].map(r => ({ pid: r.product.id, cat: r.product.catId, fin: r.finishId, wall: r.wall, scale: baseScale(r.mesh) }));
@@ -3428,7 +3550,18 @@ setBasin(true);   // vanity is part of the furnished room — shown by default
 // previous layout, so products never reappear on their own when the site is opened.
 // The user adds fittings fresh each visit; the "Auto-arrange" button still drops
 // the full demo shower set on demand, and "Clear" empties the room.
+// Read the incoming link BEFORE clearing: clearAll() saves, and saving rewrites
+// the address bar from the room's current (empty) state — which would wipe the
+// very design the visitor arrived on.
+const sharedHash = location.hash;
 clearAll();       // wipe any stale saved layout so nothing is resurrected on open
+// …unless the visitor arrived on a shared link. That is somebody deliberately
+// sending this room, which is the one case where products SHOULD be waiting.
+if (applyHash(sharedHash)) {
+  toast("Opened a shared design");
+  animateCam(heroPos(), heroTgt());
+}
+
 loop();
 console.log("%cStout 3D Planner — build 3d7 (themed rooms)", "color:#c6a15b;font-weight:bold");
 })();
