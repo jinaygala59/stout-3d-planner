@@ -17,15 +17,21 @@ const FINISHES = {
   gold:          { id: "gold",          name: "Gold",            swatch: "linear-gradient(135deg,#f6de9b,#d4af37 52%,#a9832b)",             tone: "#d4af37" },
   matteBlack:    { id: "matteBlack",    name: "Matte Black",     swatch: "linear-gradient(135deg,#2b2b2e,#141416)",                        tone: "#1d1d20" },
   roseGold:      { id: "roseGold",      name: "Rose Gold",       swatch: "linear-gradient(135deg,#e6c1b6,#cf9184 55%,#b4756a)",             tone: "#cf9a8c" },
-  // NOT IN THE CLIENT'S RANGE. The Drive folder's filenames use eight finish
-  // codes — BG, BRG, BV, CP, FG, GG, MB, RG — and neither antique gold nor
-  // brushed bronze is among them. No product offers either any more; these two
-  // stay defined only because the legacy 2D scene data below still names them.
-  // Do not put either on a product.
-  antiqueGold:   { id: "antiqueGold",   name: "Antique Gold",    swatch: "linear-gradient(135deg,#cdb079,#a9863f 55%,#7f6229)",             tone: "#b08d57" },
-  brushedBronze: { id: "brushedBronze", name: "Brushed Bronze",  swatch: "linear-gradient(135deg,#b79877,#8c6a4a 55%,#5f4630)",             tone: "#8c6a4a" },
-  brushedSteel:  { id: "brushedSteel",  name: "Brushed Steel",   swatch: "linear-gradient(135deg,#eaeef1,#b9c0c6 50%,#8b9298,#e2e6e9)",     tone: "#b9c0c6" },
-  white:         { id: "white",         name: "White",           swatch: "linear-gradient(135deg,#ffffff,#eef1f2 55%,#d9dde0)",             tone: "#f2f4f5" },
+  /* THIS TABLE IS THE CLIENT'S RANGE, AND ONLY IT (2026-09-05).
+     The Drive folder names every file by finish code — BG, BRG, BV, CP, FG, GG,
+     MB, RG (some carry a trailing G: BVG, CPG, MBG, QHG, RGG) — which is eight
+     colours, the eight below. Four others used to be defined here and are now
+     gone, because a swatch a client can pick and the factory cannot ship is
+     worse than no swatch at all:
+       antiqueGold, brushedBronze  no product offered either; only the dead 2D
+                                   scene presets still named them
+       white                       never on any product
+       brushedSteel                a mislabel, not a finish — the three Senza
+                                   hand showers carried it, and their renders
+                                   are plainly brushed rose gold, gun grey and
+                                   champagne. They now say so, and their artwork
+                                   is filed under those names.
+     Before adding a finish here, find its code in the Drive filenames. */
   // added with the 2026-09 Drive range — these are real finishes in the
   // photography (filename codes BRG / BV / GG) that had no entry here
   brushedRoseGold:{id: "brushedRoseGold",name: "Brushed Rose Gold",swatch: "linear-gradient(135deg,#f0cfc2,#d7a291 55%,#b87d6c)",            tone: "#d9a794" },
@@ -35,7 +41,7 @@ const FINISHES = {
 const ALL_FINISHES = Object.keys(FINISHES);
 const CORE_FINISHES = ["chrome", "brushedGold", "gold", "matteBlack"];
 // preferred display order (also decides each product's default finish)
-const FINISH_ORDER = ["chrome", "brushedSteel", "gunGrey", "brushedGold", "champagne", "gold", "roseGold", "brushedRoseGold", "matteBlack", "antiqueGold", "brushedBronze", "white"];
+const FINISH_ORDER = ["chrome", "gunGrey", "brushedGold", "champagne", "gold", "roseGold", "brushedRoseGold", "matteBlack"];
 
 /* ---- CATEGORIES ----------------------------------------------------------
    `anchor` = where a selected product composites onto the scene photo.
@@ -119,7 +125,7 @@ const RAW_PRODUCTS = [
   // ---- Thermostatic Control Trim (square dial) ----
   // Withdrawn from the list at the client's request (2026-09-05). It is left here
   // rather than deleted so it can come back with one edit if the range changes.
-  // Its finish, brushedSteel, stays defined — the Senza hand showers still use it.
+  // Its finish, brushedSteel, has since gone too — it was never in the range.
   // { code: "ST-TX-01", cat: "thermostatic", name: "Regale Thermostatic Control Trim", finishes: ["brushedSteel"] },
 
   // ---- Basin Mixers (tall vessel, single-lever) ----
@@ -161,9 +167,14 @@ const RAW_PRODUCTS = [
   { code: "ST-OP1",   cat: "health-faucet",name: "Cascada Jet Spray Health Faucet", finishes: ["chrome"] },   // artwork is chrome — the -brushedGold file was mislabelled
   // more hand showers
   { code: "ST-1034",  cat: "hand-shower",  name: "Aeon Round Hand Shower",      finishes: ["chrome"] },
-  { code: "ST-1037",  cat: "hand-shower",  name: "Senza Rail Hand Shower",      finishes: ["brushedSteel"] },
-  { code: "ST-1038",  cat: "hand-shower",  name: "Senza Hand Shower",           finishes: ["brushedSteel"] },
-  { code: "ST-1039",  cat: "hand-shower",  name: "Senza Slim Hand Shower",      finishes: ["brushedSteel"] },
+  /* All three were filed as "brushed steel", which is not a colour the factory
+     makes: the Drive ships them as ST-1037/1038/1039-N0000, with no finish code
+     in the name, so the code IS the finish. Look at the three renders and they
+     are brushed rose gold, gun grey and champagne — three finishes the client
+     really does sell. Relabelled, and their artwork renamed to match. */
+  { code: "ST-1037",  cat: "hand-shower",  name: "Senza Rail Hand Shower",      finishes: ["brushedRoseGold"] },
+  { code: "ST-1038",  cat: "hand-shower",  name: "Senza Hand Shower",           finishes: ["gunGrey"] },
+  { code: "ST-1039",  cat: "hand-shower",  name: "Senza Slim Hand Shower",      finishes: ["champagne"] },
   // basin mixers / taps
   // REMOVED (not a washroom fitting): angle valve — a concealed plumbing stopcock, not a visible fitting (it reads as a door handle in the rail)
   // { code: "ST-MN-AC", cat: "wall-tap",     name: "Monaco Angle Valve",          finishes: ["chrome","brushedGold","gold","roseGold","matteBlack","antiqueGold"], badge: "New" },
@@ -251,7 +262,7 @@ const SCENES = [
     place: { "rain-shower": { fx: 0.50, fy: 0.13, fw: 0.16 }, "thermostatic": { fx: 0.50, fy: 0.46, fw: 0.11 }, "diverter": { fx: 0.50, fy: 0.60, fw: 0.055 }, "bath-spout": { fx: 0.50, fy: 0.72, fw: 0.12 } },
     palette: { wall: "#efe9e0", wall2: "#e4ddd1", floor: "#d9d1c4", accent: "#c6a15b", niche: "#f5f1ea", glass: "#eef1f2", vein: "#cdbfa8", shadow: "rgba(70,55,30,.18)" } },
   { id: "travertine", name: "Sunlit Travertine", tone: "light", img: "assets/scenes/travertine.jpg", desc: "Sunlit travertine & brushed brass", ar: 1.4995,
-    finish: ["brushedGold", "antiqueGold", "brushedBronze", "gold"],
+    finish: ["brushedGold", "champagne", "gold"],          // was antiqueGold + brushedBronze: out of range
     place: { "rain-shower": { fx: 0.50, fy: 0.13, fw: 0.16 }, "thermostatic": { fx: 0.50, fy: 0.46, fw: 0.11 }, "diverter": { fx: 0.50, fy: 0.60, fw: 0.055 }, "bath-spout": { fx: 0.50, fy: 0.72, fw: 0.12 } },
     palette: { wall: "#e7dccb", wall2: "#dccbb2", floor: "#c9a877", accent: "#b98b4e", niche: "#efe7d8", glass: "#eaf0ee", vein: "#c4a983", shadow: "rgba(80,55,25,.2)" } },
   { id: "pearl", name: "Azure Marble",         tone: "light", img: "assets/scenes/pearl.jpg",      desc: "Blue-grey marble & warm brass", ar: 1.4995,
@@ -267,7 +278,7 @@ const SCENES = [
     place: { "rain-shower": { fx: 0.50, fy: 0.14, fw: 0.12 }, "thermostatic": { fx: 0.50, fy: 0.32, fw: 0.09 }, "diverter": { fx: 0.50, fy: 0.50, fw: 0.045 }, "bath-spout": { fx: 0.50, fy: 0.66, fw: 0.10 } },
     palette: { wall: "#173028", wall2: "#0d1a13", floor: "#1a2b22", accent: "#cbb06a", niche: "#243b33", glass: "#2c423b", vein: "#3c5b4d", shadow: "rgba(0,0,0,.5)" } },
   { id: "espresso", name: "Espresso Walnut",   tone: "dark", img: "assets/scenes/espresso.jpg",    desc: "Dark stone, walnut & warm bronze", ar: 1.4995,
-    finish: ["brushedBronze", "antiqueGold", "brushedGold", "gold"],
+    finish: ["brushedGold", "champagne", "gold"],          // was brushedBronze + antiqueGold: out of range
     place: { "rain-shower": { fx: 0.47, fy: 0.11, fw: 0.13 }, "thermostatic": { fx: 0.47, fy: 0.33, fw: 0.10 }, "diverter": { fx: 0.47, fy: 0.55, fw: 0.05 }, "bath-spout": { fx: 0.47, fy: 0.78, fw: 0.11 } },
     palette: { wall: "#2a2320", wall2: "#171210", floor: "#33291f", accent: "#b98b4e", niche: "#3a3025", glass: "#3a352c", vein: "#4a3b2c", shadow: "rgba(0,0,0,.5)" } },
 ];
