@@ -49,6 +49,10 @@ real gold we already have and reports the error against it (see --check).
 import os, sys, glob, colorsys
 from PIL import Image
 
+THUMB_W = 220   # the rail, the tool's finish preview and the spec sheet all read
+                # assets/products/thumb/ — a finish without thumbnails shows as a
+                # broken tile the moment it is a product's default
+
 PROD = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", "products")
 REF = "ST-C1008-gold.png"      # the client's own polished-gold render (matches their reference shot)
 BINS = 256
@@ -191,6 +195,16 @@ def donor_for(sku, fins):
             return d
     return None
 
+def thumb(path):
+    """A 220px-wide copy under thumb/, matching the rest of the range."""
+    os.makedirs("thumb", exist_ok=True)
+    im = Image.open(path).convert("RGBA")
+    h = max(1, round(im.height * THUMB_W / im.width))
+    t = im.resize((THUMB_W, h), Image.LANCZOS)
+    base = os.path.join("thumb", os.path.basename(path).rsplit(".", 1)[0])
+    t.save(base + ".png")
+    t.save(base + ".webp", quality=92, method=6)
+
 def main():
     os.chdir(PROD)
     curve = fit(REF)
@@ -218,6 +232,7 @@ def main():
             src, dst = f"{sku}-gold.{ext}", f"{sku}-{NEW}.{ext}"
             Image.open(src).save(dst, **({"quality": 92, "method": 6} if ext == "webp" else {}))
             print("  copied  ", dst)
+        thumb(f"{sku}-{NEW}.png")
     for sku, fins in showers():
         if sku in HAVE_REAL: continue
         d = donor_for(sku, fins)
@@ -226,6 +241,7 @@ def main():
         out = apply_curve(src, curve, toner(src))
         out.save(f"{sku}-{NEW}.png")
         out.save(f"{sku}-{NEW}.webp", quality=92, method=6)
+        thumb(f"{sku}-{NEW}.png")
         print("  generated %-14s from %s" % (sku + "-" + NEW, d))
 
 if __name__ == "__main__":
