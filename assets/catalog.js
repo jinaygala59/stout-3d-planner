@@ -37,11 +37,27 @@ const FINISHES = {
   brushedRoseGold:{id: "brushedRoseGold",name: "Brushed Rose Gold",swatch: "linear-gradient(135deg,#f0cfc2,#d7a291 55%,#b87d6c)",            tone: "#d9a794" },
   champagne:     { id: "champagne",     name: "Champagne",       swatch: "linear-gradient(135deg,#eee0c2,#d8c69c 55%,#b8a377)",             tone: "#d8c69c" },
   gunGrey:       { id: "gunGrey",       name: "Gun Grey",        swatch: "linear-gradient(135deg,#d5d6d2,#a9aaa5 52%,#7d7e7a)",             tone: "#a9aaa5" },
+  /* POLISHED GOLD (2026-09-08, asked for directly: "this is the colour in all
+     the showers instead of that typical yellow").
+     `gold` is the folder's FG render, and on the overhead showers it is the
+     typical yellow: its value is blown to 1.0 with a specular range of 0.47,
+     so it reads as flat pale lemon rather than metal. The range's real gold is
+     the deep warm one in the client's own renders of ST-C1001/C1002/C1008/C1010
+     — hue 42.7 deg, saturation 0.40, value 0.87, specular range 0.92 — and
+     these three stops are that render's own 15th, 50th and 90th luminance
+     percentiles, so the swatch is the photograph's colour and not a guess.
+     Offered on the showers only: tools_finish.py builds each SKU's artwork from
+     that SKU's own neutral render against a curve fitted to the reference, and
+     the four SKUs above simply wear the client's file. */
+  polishedGold:  { id: "polishedGold",  name: "Polished Gold",   swatch: "linear-gradient(135deg,#f9e4b1,#d8bd7c 52%,#ba9c53)",             tone: "#d8bd7c" },
 };
 const ALL_FINISHES = Object.keys(FINISHES);
 const CORE_FINISHES = ["chrome", "brushedGold", "gold", "matteBlack"];
 // preferred display order (also decides each product's default finish)
-const FINISH_ORDER = ["chrome", "gunGrey", "brushedGold", "champagne", "gold", "roseGold", "brushedRoseGold", "matteBlack"];
+// polishedGold sits after gold deliberately: FINISH_ORDER also decides a
+// product's DEFAULT finish (buildProducts sorts by it), and putting a new
+// colour any earlier would silently re-default half the catalogue.
+const FINISH_ORDER = ["chrome", "gunGrey", "brushedGold", "champagne", "gold", "polishedGold", "roseGold", "brushedRoseGold", "matteBlack"];
 
 /* ---- CATEGORIES ----------------------------------------------------------
    `anchor` = where a selected product composites onto the scene photo.
@@ -86,23 +102,23 @@ const CATEGORIES = [
    whichever is off. */
 const RAW_PRODUCTS = [
   // ---- Overhead / Rain Showers (C-series) ----
-  { code: "ST-C1012", cat: "rain-shower", name: "Cascada Square Rain Shower",  finishes: ["gunGrey","brushedRoseGold"],                                   badge: "Signature", variant: "waterfall blades + LED strips" },
-  { code: "ST-C1013", cat: "rain-shower", name: "Cascada Slim Rain Shower",    finishes: ["gunGrey","brushedRoseGold"], variant: "hex plate · 6 jets" },
-  { code: "ST-C1014", cat: "rain-shower", name: "Cascada Grande Rain Shower",  finishes: ["gunGrey","brushedRoseGold"], variant: "hex plate · LED strips" },
-  { code: "ST-C1015", cat: "rain-shower", name: "Cascada Maxima Rain Shower",  finishes: ["gunGrey","brushedRoseGold"], variant: "hex plate · LED strips + 5 jets" },
-  { code: "ST-C1016", cat: "rain-shower", name: "Lumina Rain Shower",          finishes: ["chrome"], variant: "square plate · plain" },
-  { code: "ST-C1017", cat: "rain-shower", name: "Lumina Edge Rain Shower",     finishes: ["chrome"], variant: "square plate · centre slot" },
-  { code: "ST-C1018", cat: "rain-shower", name: "Lumina Matrix Rain Shower",   finishes: ["chrome"], variant: "square plate · 4 jets" },
-  { code: "ST-C1019", cat: "rain-shower", name: "Aeon Rain Shower",            finishes: ["chrome","gunGrey","gold","roseGold","brushedRoseGold","matteBlack"], badge: "Bestseller", variant: "wide plate · plain, slim edge" },
+  { code: "ST-C1012", cat: "rain-shower", name: "Cascada Square Rain Shower",  finishes: ["gunGrey","brushedRoseGold","polishedGold"],                                   badge: "Signature", variant: "waterfall blades + LED strips" },
+  { code: "ST-C1013", cat: "rain-shower", name: "Cascada Slim Rain Shower",    finishes: ["gunGrey","brushedRoseGold","polishedGold"], variant: "hex plate · 6 jets" },
+  { code: "ST-C1014", cat: "rain-shower", name: "Cascada Grande Rain Shower",  finishes: ["gunGrey","brushedRoseGold","polishedGold"], variant: "hex plate · LED strips" },
+  { code: "ST-C1015", cat: "rain-shower", name: "Cascada Maxima Rain Shower",  finishes: ["gunGrey","brushedRoseGold","polishedGold"], variant: "hex plate · LED strips + 5 jets" },
+  { code: "ST-C1016", cat: "rain-shower", name: "Lumina Rain Shower",          finishes: ["chrome","polishedGold"], variant: "square plate · plain" },
+  { code: "ST-C1017", cat: "rain-shower", name: "Lumina Edge Rain Shower",     finishes: ["chrome","polishedGold"], variant: "square plate · centre slot" },
+  { code: "ST-C1018", cat: "rain-shower", name: "Lumina Matrix Rain Shower",   finishes: ["chrome","polishedGold"], variant: "square plate · 4 jets" },
+  { code: "ST-C1019", cat: "rain-shower", name: "Aeon Rain Shower",            finishes: ["chrome","gunGrey","gold","roseGold","brushedRoseGold","matteBlack","polishedGold"], badge: "Bestseller", variant: "wide plate · plain, slim edge" },
   // Added from the Stout asset library (2026-07-10) — descriptive names, rename to real SKU names anytime
-  { code: "ST-C1001", cat: "rain-shower", name: "Cascada Rainfall Panel",      finishes: ["gunGrey","gold","roseGold","brushedRoseGold","matteBlack"], variant: "wide plate · LED strip" },
-  { code: "ST-C1002", cat: "rain-shower", name: "Cascada Slimline Panel",      finishes: ["gunGrey","gold","roseGold","brushedRoseGold","matteBlack"], variant: "wide plate · 4 jets" },
-  { code: "ST-C1003", cat: "rain-shower", name: "Cascada Waterfall Panel",     finishes: ["chrome","gunGrey","gold","roseGold","brushedRoseGold","matteBlack"], variant: "slim plate · LED strip" },
-  { code: "ST-C1004", cat: "rain-shower", name: "Cascada Duo Rainfall Panel",  finishes: ["chrome","gunGrey","gold","roseGold","brushedRoseGold","matteBlack"], variant: "slim plate · 2 jets" },
-  { code: "ST-C1007", cat: "rain-shower", name: "Lumina Slim Panel",           finishes: ["chrome"], variant: "slim plate · LED strip + 4 jets" },
-  { code: "ST-C1008", cat: "rain-shower", name: "Cascada Compact Panel",       finishes: ["gunGrey","gold","roseGold","brushedRoseGold","matteBlack"], variant: "wide plate · LED strip + 4 jets" },
-  { code: "ST-C1010", cat: "rain-shower", name: "Cascada Grande Panel",        finishes: ["gunGrey","gold","roseGold","brushedRoseGold","matteBlack"], variant: "wide plate · plain" },
-  { code: "ST-C1011", cat: "rain-shower", name: "Cascada Maxima Panel",        finishes: ["gunGrey","brushedRoseGold"], variant: "waterfall blades + LED + centre jet" },
+  { code: "ST-C1001", cat: "rain-shower", name: "Cascada Rainfall Panel",      finishes: ["gunGrey","gold","roseGold","brushedRoseGold","matteBlack","polishedGold"], variant: "wide plate · LED strip" },
+  { code: "ST-C1002", cat: "rain-shower", name: "Cascada Slimline Panel",      finishes: ["gunGrey","gold","roseGold","brushedRoseGold","matteBlack","polishedGold"], variant: "wide plate · 4 jets" },
+  { code: "ST-C1003", cat: "rain-shower", name: "Cascada Waterfall Panel",     finishes: ["chrome","gunGrey","gold","roseGold","brushedRoseGold","matteBlack","polishedGold"], variant: "slim plate · LED strip" },
+  { code: "ST-C1004", cat: "rain-shower", name: "Cascada Duo Rainfall Panel",  finishes: ["chrome","gunGrey","gold","roseGold","brushedRoseGold","matteBlack","polishedGold"], variant: "slim plate · 2 jets" },
+  { code: "ST-C1007", cat: "rain-shower", name: "Lumina Slim Panel",           finishes: ["chrome","polishedGold"], variant: "slim plate · LED strip + 4 jets" },
+  { code: "ST-C1008", cat: "rain-shower", name: "Cascada Compact Panel",       finishes: ["gunGrey","gold","roseGold","brushedRoseGold","matteBlack","polishedGold"], variant: "wide plate · LED strip + 4 jets" },
+  { code: "ST-C1010", cat: "rain-shower", name: "Cascada Grande Panel",        finishes: ["gunGrey","gold","roseGold","brushedRoseGold","matteBlack","polishedGold"], variant: "wide plate · plain" },
+  { code: "ST-C1011", cat: "rain-shower", name: "Cascada Maxima Panel",        finishes: ["gunGrey","brushedRoseGold","polishedGold"], variant: "waterfall blades + LED + centre jet" },
 
   // ---- Concealed Diverter (single-lever) ----
   { code: "ST-D5017", cat: "diverter",    name: "Regale Concealed Diverter",   finishes: ["chrome","gunGrey","champagne","brushedRoseGold","matteBlack"],                                          badge: "Signature" },
@@ -157,7 +173,7 @@ const RAW_PRODUCTS = [
      cannot picture. */
   { code: "ST-BJ3F",  cat: "body-jet",    name: "Aqua 3-Function Body Jet",   finishes: ["roseGold"], badge: "New", variant: "square escutcheon · 3 jets" },
   { code: "ST-BJ-02", cat: "body-jet",    name: "Aqua Single-Flow Body Jet",   finishes: ["gunGrey","brushedGold","roseGold","matteBlack"] },
-  { code: "ST-1030",  cat: "rain-shower", name: "Aqua Square Rain Shower",     finishes: ["matteBlack"], variant: "square plate · waterfall blades + jets" },   // filed as a body jet; its render is a full overhead plate
+  { code: "ST-1030",  cat: "rain-shower", name: "Aqua Square Rain Shower",     finishes: ["matteBlack","polishedGold"], defaultFinish: "matteBlack", variant: "square plate · waterfall blades + jets" },   // filed as a body jet; its render is a full overhead plate
 
   // ---- Wall Taps (single-lever wall bib tap) ----
   { code: "ST-SZ-01", cat: "wall-tap",    name: "Senza Wall Bib Tap",          finishes: ["chrome","matteBlack"],                                  badge: "New" },
@@ -168,9 +184,9 @@ const RAW_PRODUCTS = [
 
   // ============ Added from the Stout asset library (2026-07-10) — descriptive placeholder names ============
   // fixed shower heads / arms
-  { code: "ST-1017",  cat: "rain-shower",  name: "Regale Wall Shower Head",     finishes: ["gold","roseGold","matteBlack"] },
-  { code: "ST-1027",  cat: "rain-shower",  name: "Aeon Round Shower Head",      finishes: ["chrome"] },
-  { code: "ST-1033",  cat: "rain-shower",  name: "Aeon Slim Round Head",        finishes: ["chrome"] },
+  { code: "ST-1017",  cat: "rain-shower",  name: "Regale Wall Shower Head",     finishes: ["gold","roseGold","matteBlack","polishedGold"] },
+  { code: "ST-1027",  cat: "rain-shower",  name: "Aeon Round Shower Head",      finishes: ["chrome","polishedGold"] },
+  { code: "ST-1033",  cat: "rain-shower",  name: "Aeon Slim Round Head",        finishes: ["chrome","polishedGold"] },
   { code: "ST-OP1",   cat: "health-faucet",name: "Cascada Jet Spray Health Faucet", finishes: ["chrome"] },   // artwork is chrome — the -brushedGold file was mislabelled
   // more hand showers
   { code: "ST-1034",  cat: "hand-shower",  name: "Aeon Round Hand Shower",      finishes: ["chrome"] },
@@ -195,11 +211,41 @@ const RAW_PRODUCTS = [
   { code: "ST-J06",   cat: "body-jet",     name: "Axis Round Body Jet",          finishes: ["chrome"] },
   // the one genuine spout in the range: a spout and a flange, no handle on it
   { code: "ST-PLAIN", cat: "bath-spout",   name: "Axis Plain Wall Spout",       finishes: ["gunGrey","champagne","brushedRoseGold"] },
+  /* 2026-09-08, off the client's own upload. The Drive folder has it as
+     SHOWER_ARM in six finishes — BRG / BV / FG / GG / MB / RG — and NO chrome,
+     so chrome is not listed: a swatch the factory has not shot is worse than
+     none (see the FINISHES note). Filed as `bath-spout` because that is the
+     category the Spouts list is built from and the client asked for it there;
+     it is a shower arm, so it takes a per-SKU mount high on the back wall
+     rather than the category's filler height (see SKU3D in planner.js).
+     ST-SARM is a PLACEHOLDER code until the real catalogue number arrives. */
+  { code: "ST-SARM",  cat: "bath-spout",   name: "Axis Square Shower Arm",      finishes: ["gunGrey","champagne","gold","roseGold","brushedRoseGold","matteBlack"], badge: "New", variant: "wall arm \u00b7 square section" },
+  /* 2026-09-08, the client's second upload. Identified as the Drive group
+     "2513" — and the identification is NOT certain: groups "54" and "53" are
+     the same family and one of them is arguably a closer body shape. "2513" is
+     what ships because it is the only one of the three the factory has shot in
+     more than one colour (seven finishes, no brushed gold), and the client's
+     instruction was that these come in the whole range. If it turns out to be
+     the wrong one, the fix is this line plus its import_map entry — nothing
+     else references it. Code from the folder's own name, as ST-AZBS was. */
+  { code: "ST-2513",  cat: "bath-spout",   name: "Axis Single-Lever Wall Mixer", finishes: ["chrome","gunGrey","champagne","gold","roseGold","brushedRoseGold","matteBlack"], badge: "New", variant: "square plate \u00b7 lever \u00b7 hand-shower outlet" },
+  /* PLACEHOLDER ARTWORK, at the client's instruction ("use the plain spout for
+     now"). This is the square spout with the cube diverter handle from their
+     third upload; nothing in the 184-group Drive library matches it, so it
+     borrows ST-PLAIN's renders via `art` until its own arrive. Consequences to
+     undo on that day: drop `art`, and extend `finishes` — the list here is
+     ST-PLAIN's three, not this product's real range, because a borrowed photo
+     can only be shown in the colours the stand-in was shot in. */
+  { code: "ST-BSDV",  cat: "bath-spout",   name: "Axis Wall Spout with Diverter", art: "ST-PLAIN", finishes: ["gunGrey","champagne","brushedRoseGold"], badge: "New", variant: "square spout \u00b7 cube diverter handle \u00b7 artwork pending" },
   // health faucet (new category)
   /* "gold" is dropped: ST-SS304-gold.png is a flat neon yellow (hue 56), not a
      finish the factory makes — every real gold in the range sits at hue 30-44.
      It was the only artwork in the whole set like it. */
-  { code: "ST-SS304", cat: "rain-shower",  name: "Aqua Square Rain Plate",          finishes: ["gold","roseGold","matteBlack"], badge: "New", variant: "square plate · square nozzles" },
+  /* NOT `gold`. That render measures hue 55 deg at saturation 0.55 — a neon
+     lemon, not a metal — and the client has struck it once before ("this colour
+     doesn't exist, remove it"); it came back with a later import. It is the
+     Polished Gold below that this plate is actually offered in. */
+  { code: "ST-SS304", cat: "rain-shower",  name: "Aqua Square Rain Plate",          finishes: ["roseGold","matteBlack","polishedGold"], badge: "New", variant: "square plate · square nozzles" },
   // waste
   { code: "ST-SZ1",   cat: "wall-tap",     name: "Senza Bib Tap",     finishes: ["chrome"] },
   // concealed thermostatic panels
@@ -214,10 +260,18 @@ const RAW_PRODUCTS = [
 
   /* ---- 2026-09 Drive range: showers, diverters, spouts and body jets, each
      with the full set of finishes from the factory photography ---- */
-  { code: "ST-FDP", cat: "rain-shower", name: "Cascada Flow Rain Panel", finishes: ["chrome","gunGrey","champagne","brushedRoseGold","matteBlack"], variant: "wide plate · centre waterfall slot" },
+  { code: "ST-FDP", cat: "rain-shower", name: "Cascada Flow Rain Panel", finishes: ["chrome","gunGrey","champagne","brushedRoseGold","matteBlack","polishedGold"], variant: "wide plate · centre waterfall slot" },
   { code: "ST-CP25", cat: "thermostatic", name: "Regale Digital Thermostatic Panel", finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "digital · dial + 4 function keys" },
   { code: "ST-MB2", cat: "thermostatic", name: "Regale Smart Control Panel", finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "digital · dial + 6 function keys" },
   { code: "ST-CJ1", cat: "thermostatic", name: "Regale Touch Control Panel", finishes: ["chrome","gunGrey","champagne","roseGold","matteBlack"], variant: "digital · touch keys + temp dial" },
+  /* The round concealed mixer the client sent on 2026-09-08. Its renders are the
+     only ones in the Drive with no SKU in the filename — 55__1_ / 55__2_ for the
+     rose gold and gold, AZBS1 / AZBS2 for the chrome and matte black — so the
+     code is taken from the folder's own name for it rather than invented.
+     The client says it ships in the whole range; the folder holds four of the
+     eight, and a finish is only listed here when there is a photograph of the
+     product in it. The other four go in the day their renders arrive. */
+  { code: "ST-AZBS", cat: "diverter", name: "Regale Round Concealed Mixer", finishes: ["chrome","matteBlack","roseGold","gold"], variant: "round plate · single lever", badge: "New" },
   { code: "ST-D5001", cat: "diverter", name: "Regale Round Concealed Diverter", finishes: ["chrome"], variant: "round plate · single lever" },
   { code: "ST-D5002", cat: "diverter", name: "Regale Square Lever Diverter", finishes: ["chrome"], variant: "square plate · single lever" },
   { code: "ST-D5003", cat: "diverter", name: "Regale 3-Way Concealed Diverter", finishes: ["chrome"], variant: "square plate · 3 buttons" },
@@ -239,7 +293,13 @@ function buildProducts() {
     // WebP: the source renders are ~200-550 KB each as PNG-24 and 20-30 KB as
     // WebP at q0.9 — 23 MB down to 2.4 MB across the catalogue. The PNGs stay in
     // the repo as the masters; only the WebP copies ship.
-    finishes.forEach(f => (images[f] = `assets/products/${rp.code}-${f}.webp`));
+    /* `art` lets a SKU wear ANOTHER SKU's renders. It exists for a product the
+       client has named but whose photography has not arrived: the card, the
+       code and the name are real and the picture is borrowed, which is honest
+       as long as the entry says so. A product with its own renders never sets
+       it. Note the finish list is then limited to what the BORROWED art has —
+       there is no file to show for a finish the stand-in was not shot in. */
+    finishes.forEach(f => (images[f] = `assets/products/${rp.art || rp.code}-${f}.webp`));
     byCat[rp.cat].push({
       id: rp.code,
       catId: rp.cat,
@@ -249,7 +309,12 @@ function buildProducts() {
       images,                  // { finishId: pngPath }
       img: images[finishes[0]],
       finishes,
-      defaultFinish: finishes[0],
+      /* The finish a product opens in. Normally the first one in FINISH_ORDER,
+         but a row may name its own: adding Polished Gold to the showers would
+         otherwise have re-defaulted ST-1030, whose only real render is the matte
+         black one and whose gold is derived from it. A default should be the
+         finish the client's own photograph shows. */
+      defaultFinish: (rp.defaultFinish && finishes.includes(rp.defaultFinish)) ? rp.defaultFinish : finishes[0],
       badge: rp.badge || null,
       variant: rp.variant || null,   // what tells near-identical plates apart
     });
