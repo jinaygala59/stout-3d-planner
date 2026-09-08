@@ -93,7 +93,36 @@ const CAT3D = {
      blades, where a body jet is actually plumbed.
      0.11 m is what one of these plates measures. It was 0.15 — half again life
      size, four of them, and it looked it. */
-  "body-jet":     { mount: "right", width: 0.11, z: -0.25, y: 1.34, billboard: false },
+  /* NO SWING, AND NO DE-SKEW. Both were attempts to get a three-quarter render
+     to read square-on, and both cost more than they bought:
+
+       `billboard: true` yawed each jet toward the camera. Four jets then held
+       four DIFFERENT orientations, recomputed every frame from the eye position
+       — a fixture inheriting the camera angle, which is not an installation.
+       Off, permanently.
+
+       `faceOn` swapped in a homography-rectified copy of the photograph. On a
+       flat plate that is correct. On a PROTRUDING jet it is destruction: the
+       escutcheon, the neck barrel and the proud spray head are warped into a
+       flat square of nubs. The note on ST-BJ3F below already said no homography
+       can do this — it was applied to its two twins anyway.
+
+     A jet's designed pose lives in its photograph. Pinning the cutout flat and
+     leaving the artwork alone is what preserves it: the plate sits flush on the
+     tile, and the neck and head still project at the angle they were shot at,
+     because that angle is in the pixels. All four jets are then identical, and
+     nothing about them depends on where the camera is.
+
+     Worth recording, because the swing was turned ON here for a while to answer
+     the client's "not properly attached to the wall": it was not what fixed
+     that. The BOSS was. BJ3F had no SKU entry at all, so its wall union went to
+     the default — the centre of a three-quarter frame, which on that render is
+     mid-barrel, thin air between plate and head. The jet was pegged to the tile
+     through its own neck with the escutcheon floating clear. Put the boss back
+     under the plate and the piece reads mounted with the swing OFF, which is
+     the version to keep: same fix, and the four jets stop disagreeing with each
+     other about where the camera is. */
+  "body-jet":     { mount: "right", width: 0.15, z: -0.25, y: 1.34, billboard: false },
   /* THE SPOUT SITS UNDER THE VALVE (asked for directly). It was on its own lane
      at z -0.72, a third of a metre behind the jets — read as a separate fitting
      on a separate part of the wall rather than the bottom of one column. On the
@@ -192,39 +221,43 @@ const SKU3D = {
   // not a rain head at all — it is a handset, so it hangs on a wall outlet + hose
   "ST-OP1":  { width: 0.18, mount: "right", y: 0.75, z: 0.52, hose: true },   // beside the WC, where a jet spray actually goes
   // --- thermostatic trims / panels ---
-  /* The three wide thermostatic bars are photographed running UPHILL to the
-     right — 4.8 deg on the two Regale panels, 7.1 deg on the Compact. Laid flat
-     on the tiles that is a bar mounted visibly crooked, and it shows badly
-     because these sit right next to vertical grout lines. `roll` counter-rotates
-     the cutout in its own plane and levels them, exactly as it does for the
-     spouts (see placeProduct). The angles are measured off each render's own
-     silhouette rather than guessed: the top and bottom edges are least-squares
-     fitted across the frame and averaged, because the two disagree (-4.9 and
-     -6.9 on the Grande) — the bar is slightly tapered as well as tilted, so its
-     axis is the mean of the two. All three come out at the same -5.8 deg, which
-     is what you would expect of one product family shot on one rig.
-     The tall plates in this group measure 0.00 and are left alone. */
-  "ST-D5018": { width: 0.55 },
-  "ST-D5019": { width: 0.52 },
-  "ST-D5020": { width: 0.44 },
+  /* WIDTHS ONLY — these three were the last of the hand-typed `roll` angles to
+     go. A silhouette fit called the Grande 5.8 deg uphill and the cutout was
+     counter-rotated to answer it: on a 56 cm bar beside vertical grout lines
+     that is 6 cm of drop end to end, and it is the first thing you see. There
+     was no tilt to correct. The bar is TAPERED, so the top and bottom edges of
+     the frame disagree (-4.9 and -6.9) and their mean is not an axis, it is the
+     taper. A rectangle with a dial and a row of buttons is already square in
+     frame. Hangs as photographed, like everything else — see rollFor. */
+  /* THE THREE WIDE BARS ARE DE-SKEWED, and unlike a jet they SHOULD be. These
+     are flat plates: parallel to the wall in reality, so any slope in the
+     picture is a fixture screwed on crooked. And the distortion is projective,
+     not angular — measured off the renders, the top edge runs -4 deg, the bottom
+     -6.5 deg, and the right side is 14% shorter than the left. No `roll` can fix
+     that; turning the frame tips the plate's vertical edges over instead, which
+     is why the roll this once carried was removed rather than retuned.
+     tools_deskew.py maps each plate's own alpha quad onto an axis-aligned
+     rectangle, so the long edge is horizontal, the taper is gone, and the panel
+     reads as [ dial ][ key ][ key ][ key ]... square to the tile. */
+  "ST-D5018": { width: 0.55, faceOn: true },
+  "ST-D5019": { width: 0.52, faceOn: true },
+  "ST-D5020": { width: 0.44, faceOn: true },
   "ST-TX-01": { width: 0.22 },
   // 211x637 plates: a three-outlet column trim is ~0.16 wide, not 0.26. At 0.26
   // it wanted to be 0.79 m tall, which is what the old cap was there to stop —
   // and stopping it that way is what made it 12 cm wide. Right width, right cap.
   "ST-TD3":   { width: 0.16 }, "ST-TD4": { width: 0.16 },
-  /* --- spouts + wall mixers: `roll` is MEASURED, never guessed. Fit the body's
-     centreline through the artwork's alpha channel by least squares, take the
-     angle, negate it. Every one of these three was set by eye first and every
-     one was wrong — two of them in SIGN, so the piece was rolled further
-     downhill and hung on the wall at a diagonal. If you change a roll, measure
-     it: eyeballing a 3/4 product shot does not work. --- */
-  "ST-PLAIN":  { width: 0.24 },   // artwork body slopes -22.4°
+  /* --- spouts + wall mixers: WIDTHS ONLY, and they must not be given a `roll`.
+     A projecting spout is photographed with its plate square and its body
+     running downhill across the frame — which is exactly how the client's own
+     reference shot of this range sits on the wall. Rolling the frame to level
+     that body is what cocks the plate. See rollFor for the argument. --- */
+  "ST-PLAIN":  { width: 0.24 },   // body falls 22.3° across the frame: perspective, not tilt
   // --- basin mixers. WM-001 and WM-002 are the WALL-mounted pair: both were
-  //     filed as spouts and neither is one — see catalog.js. Their roll is
-  //     measured the same way; it is a property of the photograph, not the
-  //     category, so it travels with the SKU. ---
-  "ST-WM-001": { width: 0.28 },   // measured -19.2°
-  "ST-WM-002": { width: 0.26 },    // measured  +4.6° — nearly level already
+  //     filed as spouts and neither is one — see catalog.js. Like the spout
+  //     above, they hang as photographed, on their plates. ---
+  "ST-WM-001": { width: 0.28 },
+  "ST-WM-002": { width: 0.26 },
   "ST-BM-001": { width: 0.16, mount: "counter" }, "ST-OB-D94": { width: 0.20, mount: "counter" },
   // wall taps + angle valves: low on the wall, where a bib tap actually goes
   "ST-SZ-01": { width: 0.20 }, "ST-SZ1": { width: 0.20 },
@@ -244,12 +277,49 @@ const SKU3D = {
      across the right of the frame. There is no square-on face in those pixels to
      recover, so it keeps its swing and its off-centre boss — it cannot be made
      to hang at 90 degrees without a new render from the factory. The two SQUARE
-     jets below can, and are. */
-  "ST-J06":   { width: 0.14, bossX: -0.15, bossY: 0.12, billboard: true },   // round jet: the frame carries its body as well as its face.
+     jets below can, and are.
+
+     IT DOES CARRY THE ONE HAND-SET `roll` IN THE RANGE, and it is the exception
+     that proves the rule in rollFor. The studio camera sat below this jet's
+     axis, so the assembly runs 11 degrees UPHILL to the wall across the frame,
+     and on the tiles that is four heads all leaning the same way — the client
+     called it, and their own reference shot has these jets dead level.
+     Rolling it costs nothing, which is the whole point: the datum here is a
+     CIRCLE. A round flange has no square edge to be knocked off, so turning the
+     frame cannot cock the plate against a grout line the way it would on the
+     square-plated spout. Where a piece has a square plate, that plate wins and
+     `roll` stays 0; where it has a round one, the axis is all there is to read,
+     and this levels it. Measured off the disc centres, not eyeballed: nozzle
+     face and wall flange, -10.8 deg, taken to -0.19 rad. */
+  // round jet: the frame carries its body as well as its face. No swing, for the
+  // reason in the body-jet note — but it KEEPS its roll. "A roll tips the
+  // escutcheon over with it" is true of every other fitting in the range and not
+  // of this one: a circle has no square edge to tip. See above.
+  "ST-J06":   { width: 0.16, roll: -0.19, bossX: -0.15, bossY: 0.12 },
                                           // Plumbed as a flanking set of four, like every jet that is not a panel.
   // BJ-02 is photographed from the OTHER side: its plate already sits on the wall
   // side of the frame, so mirroring it would turn the nozzle back into the corner
   "ST-BJ-02": { width: 0.15, flip: false, bossX: -0.22, bossY: 0.07 },
+  /* BJ3F ARRIVED WITH NO ENTRY AT ALL, which is why it hung worst of the lot: it
+     took the category width and, more to the point, the DEFAULT BOSS. With no
+     bossX/bossY the standoff goes to the frame centre — and on this render the
+     frame centre is the middle of the barrel, thin air between the plate and the
+     head. So the piece was pegged to the tile through its own neck and the
+     escutcheon floated clear of the wall: "not properly attached" is exactly
+     what it was. These two numbers put the standoff back under the plate.
+     Measured off the silhouette, not guessed: the escutcheon owns x 0.10-0.45 of
+     the frame and the head x 0.62-0.97, either side of the barrel's waist at
+     0.50, and the plate's centre lands 0.23 of the width left of centre and
+     0.05 of the height above it. Same reading gives the width: the plate is 315
+     of 900 px, so a 52 mm escutcheon makes the whole cutout 0.15 — which is what
+     BJ-02, its twin in this range, already measures.
+     No `roll`. Its plate is SQUARE, so by the rule in rollFor the plate is the
+     datum; the 10 deg its top and bottom edges run off is a SHEAR from the
+     oblique camera, not a rotation, and turning the frame would only tip the
+     plate's vertical edges over too. Nor `faceOn`: on a protruding jet a
+     square-on plate means the head sits concentric ON it, and no homography can
+     walk the head back over its own plate. That is why this one swings. */
+  "ST-BJ3F":  { width: 0.15, flip: false, bossX: -0.23, bossY: 0.05 },
   "ST-1030":  { width: 0.50 },                      // re-filed: it is an overhead plate, not a jet
   // --- 2026-09 Drive range ---
   "ST-FDP":   { width: 0.60 },                                   // wide overhead plate
@@ -270,18 +340,18 @@ const SKU3D = {
      bottom pair of jets instead of in the middle of all four. Every trim takes
      the category anchor now, which is what puts it in the middle. */
   "ST-D5009": { width: 0.17 }, "ST-D5010": { width: 0.17 },
-  /* Square jets, hung SQUARE. `faceOn` swaps in the de-skewed copy of the same
-     photograph (roomArt), which makes three things fall out at once: the plate
-     is a true square so the artwork's aspect is 1:1 and it can't render as a
-     leaning parallelogram; the escutcheon is dead centre of the frame, so the
-     boss goes back to the origin (0 is falsy — wallBoss reads that as centred)
-     and no longer has to be nudged per SKU; and there is nothing left to mirror,
-     because a face-on plate has no side to be shot from. `billboard: false`
-     keeps them flush: these are recessed plates, and a plate that swings to
-     follow the camera is a plate that is no longer in the wall.
-     0.11 m is the real plate; 0.15 was a jet the size of a side plate. */
-  "ST-BJ21F": { width: 0.11, faceOn: true, billboard: false, flip: false, bossX: 0, bossY: 0 },
-  "ST-2FBJ":  { width: 0.11, faceOn: true, billboard: false, flip: false, bossX: 0, bossY: 0 },
+  /* THE TWO SQUARE JETS, BACK ON THEIR OWN RENDERS. `faceOn` is gone (see the
+     body-jet note above for why a homography cannot rectify a protruding jet),
+     which means the three things it stood in for have to be stated again:
+       flip   — both are shot from the plate's right, so unmirrored the neck
+                projects toward the back corner instead of into the room
+       bossX/bossY — the escutcheon is NOT the centre of a three-quarter frame,
+                it is off to one side and up; the wall union goes under the
+                PLATE, not under the middle of the picture
+       width  — 0.11 was the bare plate. The frame carries plate, neck and head,
+                so the cutout that puts a 52 mm escutcheon on the wall is 0.15. */
+  "ST-BJ21F": { width: 0.15, flip: true, bossX: -0.17, bossY: 0.09 },
+  "ST-2FBJ":  { width: 0.15, flip: true, bossX: -0.23, bossY: 0.14 },
   // --- wastes + the re-filed square rain plate ---
   "ST-TXSQ-01": { width: 0.09 }, "ST-TSQ": { width: 0.09 }, "ST-SS304": { width: 0.50 },
   // --- concealed diverter: a tall trim plate (232x735 artwork), so it takes the
@@ -823,8 +893,46 @@ let cornerBasinUnit = null, bathroomDetails = null;
 let ceilMesh = null, pelmetMesh = null;        // repainted in place by setCeiling()
 let basinVisible = true;
 
+/* THE ENVIRONMENT A FITTING REFLECTS. scene.environment is a soft three-stop
+   gradient tuned so the ROOM's matte surfaces read right. Reflected in a mirror
+   finish it is a featureless bright field, and chrome, gold and gun-metal all
+   come out as the same pale block — exactly what the earlier OBJ pass was
+   rejected for. Polished metal is read by what it reflects, so the fittings get
+   a studio of their own: dark floor, a mid horizon broken by dark verticals, a
+   bright ceiling with three soft-box strips. Built once; a theme only changes
+   how strongly it comes through (fittingEnvI), the way the artwork is exposed
+   for the room it hangs in. */
+let _fitEnv = null;
+function fittingEnv() {
+  if (_fitEnv) return _fitEnv;
+  const W = 256, H = 128, c = mkCanvas(W, H), x = c.getContext("2d");
+  const g = x.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0.00, "#e2e2df"); g.addColorStop(0.30, "#b4b4b1"); g.addColorStop(0.50, "#666a70");
+  g.addColorStop(0.53, "#34353a"); g.addColorStop(1.00, "#121316");
+  x.fillStyle = g; x.fillRect(0, 0, W, H);
+  x.fillStyle = "rgba(255,255,255,0.96)";                       // soft-boxes overhead
+  [[0.10, 0.10, 0.22, 0.13], [0.45, 0.06, 0.18, 0.12], [0.74, 0.12, 0.20, 0.11]]
+    .forEach(([u, v, w, h]) => x.fillRect(u * W, v * H, w * W, h * H));
+  x.fillStyle = "rgba(18,18,22,0.85)";                          // dark verticals on the horizon: what gives a reflection shape
+  [0.05, 0.33, 0.62, 0.88].forEach(u => x.fillRect(u * W, H * 0.30, W * 0.018, H * 0.30));
+  const eq = canvasTex(c, false);
+  eq.mapping = THREE.EquirectangularReflectionMapping;
+  const pm = new THREE.PMREMGenerator(renderer);
+  _fitEnv = pm.fromEquirectangular(eq).texture;
+  eq.dispose(); pm.dispose();
+  return _fitEnv;
+}
+const fittingEnvI = () => 0.50 + 0.40 * (THEME && THEME.art != null ? THEME.art : 1);
+/* how polished each finish is — a brushed metal and a matte black cannot share
+   the mirror roughness a chrome needs, or they read as chrome in another colour */
+const FINISH_ROUGH = { chrome: 0.10, gold: 0.16, roseGold: 0.16, champagne: 0.20, brushedGold: 0.38,
+                       brushedRoseGold: 0.38, gunGrey: 0.30, matteBlack: 0.60, brushedSteel: 0.40 };
+const finishRough = fid => FINISH_ROUGH[fid] == null ? 0.20 : FINISH_ROUGH[fid];
 function metalMat(hex, rough) {
-  return new THREE.MeshStandardMaterial({ color: hex, metalness: 1.0, roughness: rough == null ? 0.18 : rough * 0.8, envMapIntensity: 1.5 });
+  const m = new THREE.MeshStandardMaterial({ color: hex, metalness: 1.0, roughness: rough == null ? 0.18 : rough * 0.8,
+                                             envMap: fittingEnv(), envMapIntensity: fittingEnvI() });
+  m.userData.fittingEnv = true;
+  return m;
 }
 function disposeTree(obj) {
   obj.traverse(o => {
@@ -1356,109 +1464,505 @@ let uidSeq = 1;
 
 // math planes for drag, per wall (normal points INTO the room)
 const WALLS = {
-  back:    { plane: new THREE.Plane(new THREE.Vector3(0, 0, 1), HZ), fix: "z", val: -HZ + OFF, rot: { x: 0, y: 0 } },
-  left:    { plane: new THREE.Plane(new THREE.Vector3(1, 0, 0), HX), fix: "x", val: -HX + OFF, rot: { x: 0, y: Math.PI / 2 } },
-  right:   { plane: new THREE.Plane(new THREE.Vector3(-1, 0, 0), HX), fix: "x", val: HX - OFF, rot: { x: 0, y: -Math.PI / 2 } },
+  back:    { plane: new THREE.Plane(new THREE.Vector3(0, 0, 1), HZ), fix: "z", val: -HZ + OFF },
+  left:    { plane: new THREE.Plane(new THREE.Vector3(1, 0, 0), HX), fix: "x", val: -HX + OFF },
+  right:   { plane: new THREE.Plane(new THREE.Vector3(-1, 0, 0), HX), fix: "x", val: HX - OFF },
   // A ceiling fitting is FLUSH: its mount plane is the slab itself, not OFF below
   // it. The 2.5 cm standoff every wall gets to avoid z-fighting left overhead
   // plates hanging under the ceiling with daylight above them — from any eye-level
   // angle you saw the gap and the piece read as floating. Ceiling pieces instead
   // sit AT y = RH and bury their housing up into the slab (see placeProduct).
-  ceiling: { plane: new THREE.Plane(new THREE.Vector3(0, -1, 0), RH), fix: "y", val: RH, rot: { x: Math.PI / 2, y: 0 } },
+  ceiling: { plane: new THREE.Plane(new THREE.Vector3(0, -1, 0), RH), fix: "y", val: RH },
   // not a wall: deck-mounted mixers STAND on the vanity counter, facing the room
-  counter: { plane: new THREE.Plane(new THREE.Vector3(0, 1, 0), 0), fix: "y", val: 0, rot: { x: 0, y: 0 } },
+  counter: { plane: new THREE.Plane(new THREE.Vector3(0, 1, 0), 0), fix: "y", val: 0 },
 };
 
 /* =============================================================================
-   HOW LEVEL A PRODUCT HANGS IS MEASURED, NOT TYPED.
+   PRODUCT INSTALLATION SYSTEM
+   -----------------------------------------------------------------------------
+   ONE place decides how a fitting is installed. Nothing else in this file may
+   write a rotation onto a placed product.
 
-   Every product render in the range is a studio 3/4 shot, so the body in the
-   photograph slopes — a wall spout by 22 degrees, a thermostatic bar by 6. Laid
-   flat on the tiles that slope is what the client sees, and the piece reads as
-   stuck on crooked. `roll` counter-rotates the cutout to cancel it.
+   THE PROBLEM THIS REPLACES. Orientation used to be a hand-typed Euler pair per
+   wall, stored as data (WALLS[wall].rot = {x, y}) and applied with
+   mesh.rotation.set(...). That had four failure modes:
 
-   That number used to be typed in by eye, one SKU at a time, and by eye it was
-   wrong: of the ten set that way, two had the wrong SIGN — which does not
-   half-fix the tilt, it doubles it. The catalogue is 60-odd products and each
-   one has three finishes shot separately, so eyeballing does not scale and
-   never converges.
+     1. It only works for walls that are axis-aligned about Y. A wall at any
+        other angle has no entry, so there is nothing to type.
+     2. It was duplicated. MODEL_WALL_YROT held a second copy for the OBJ path
+        and cutoutFallback() a third, and they could disagree.
+     3. Position was the piece's ORIGIN snapped onto a pre-offset plane, or (on
+        the OBJ path) its BOUNDING-BOX half-extent. Neither is where a fitting
+        actually touches a wall, so every product type then compensated for the
+        error separately.
+     4. Nothing anywhere declared which way a product FACES, so "facing the
+        room" was an accident of the artwork rather than a property of the piece.
 
-   So the app measures it. Fit the body's centreline through the artwork's own
-   alpha channel by least squares and take that angle. Two details matter:
+   WHAT REPLACES IT. A surface is described the way architecture describes one:
+   a point on it, and the direction it faces INTO the room. Everything else -
+   in-plane up, in-plane right, and the rotation that carries a product from its
+   own canonical axes onto that surface - is DERIVED, by quaternion, from the
+   surface normal and the product's declared axes. Add a wall at 37 degrees and
+   every fitting installs on it correctly with no new numbers.
 
-     - Fit the WHOLE silhouette, not just the slender part of it. Filtering to
-       the thin columns to keep a flange or a lever out of the fit sounds right
-       and renders wrong: on the plain wall spout it returned 17.9 deg where the
-       piece needs 22.4, and it hung visibly downhill. The tapering body means
-       the tube's own centreline is not the axis the eye levels against — the
-       whole outline is. Checked on screen, piece by piece, at each value.
-     - Only for pieces whose photograph is wider than it is tall. A tall trim
-       plate has no horizontal body to level, and fitting one returns noise.
+   CANONICAL PRODUCT CONVENTION (all products, all render paths):
+     +Y  up
+     +Z  front / functional-outward  (the face that looks at the bather)
+     -Z  mount   (the face that touches the wall)
+     +X  the product's own right, seen from the front
 
-   Anything unmeasurable hangs straight, which is the safe failure. A `roll` in
-   SKU3D still wins if a product ever genuinely needs a hand-set angle.
+   The derived basis reproduces every one of the old hand-typed Eulers exactly -
+   back (0,0), left (0,+90), right (0,-90), ceiling (+90,0), counter (0,0) - so
+   this is a refactor of how the numbers are ARRIVED AT, not a change to where
+   anything currently sits.
    ============================================================================= */
-const _rollCache = new Map();
-function measuredRoll(img, src) {
-  if (_rollCache.has(src)) return _rollCache.get(src);
-  let roll = 0;
-  try {
-    const W = 220, H = Math.max(8, Math.round(W * img.naturalHeight / img.naturalWidth));
-    if (H / W <= 1.35) {
-      const c = mkCanvas(W, H), x = c.getContext("2d");
-      x.drawImage(img, 0, 0, W, H);
-      const d = x.getImageData(0, 0, W, H).data;
-      const col = [];
-      for (let X = 0; X < W; X++) {
-        let sum = 0, cnt = 0;
-        for (let Y = 0; Y < H; Y++) if (d[(Y * W + X) * 4 + 3] > 128) { sum += Y; cnt++; }
-        if (cnt > 1) col.push({ x: X, y: sum / cnt, n: cnt });
-      }
-      if (col.length > 24) {
-        // trim the ends: the extreme columns are the nozzle tip and the outer
-        // edge of the flange, both of which curve away from the body's axis
-        const seg = col.slice(Math.floor(col.length * 0.10), Math.ceil(col.length * 0.90));
-        const N = seg.length;
-        let sx = 0, sy = 0, sxy = 0, sxx = 0;
-        seg.forEach(q => { sx += q.x; sy += q.y; sxy += q.x * q.y; sxx += q.x * q.x; });
-        const den = N * sxx - sx * sx;
-        if (N > 8 && Math.abs(den) > 1e-6) {
-          const a = Math.atan((N * sxy - sx * sy) / den);
-          if (Math.abs(a) < 0.7) roll = a;     // past ~40° the fit has found something that is not the body
-        }
+const WORLD_UP = new THREE.Vector3(0, 1, 0);
+const ROOM_FRONT = new THREE.Vector3(0, 0, 1);      // +Z is out of the room's mouth
+
+/* THE ONE ROTATION FUNCTION.
+   Carries the canonical convention above onto a pair of world directions:
+   forward is where +Z must end up, up is where +Y must end up. Built as an
+   orthonormal basis and returned as a quaternion - no Eulers, so no gimbal lock
+   and no order-of-application surprises when a surface is not axis-aligned. */
+function orientFrom(forward, up) {
+  const z = forward.clone().normalize();
+  let y = (up || WORLD_UP).clone().normalize();
+  const x = new THREE.Vector3().crossVectors(y, z);
+  if (x.lengthSq() < 1e-8) {
+    // forward is parallel to up (a ceiling or floor fitting): world up cannot be
+    // the in-plane up there, so take the room's depth axis instead
+    y = Math.abs(z.y) > 0.9 ? ROOM_FRONT.clone() : WORLD_UP.clone();
+    x.crossVectors(y, z);
+  }
+  x.normalize();
+  y.crossVectors(z, x).normalize();
+  return new THREE.Quaternion().setFromRotationMatrix(
+    new THREE.Matrix4().makeBasis(x, y, z));
+}
+
+/* A mounting surface. normal points INTO the room, kind says what you can do on
+   it. Nothing here is a rotation. */
+const SURFACE_KIND = {
+  back: "wall", left: "wall", right: "wall", ceiling: "ceiling", counter: "deck",
+};
+const SURFACE_NORMAL = {
+  back:    [0, 0, 1],
+  left:    [1, 0, 0],
+  right:   [-1, 0, 0],
+  ceiling: [0, -1, 0],
+  counter: [0, 1, 0],
+};
+/* Each surface carries an explicit POINT ON IT. It used to be derived from the
+   THREE.Plane in WALLS, and for the counter that plane is y = 0 — the FLOOR, not
+   the deck — because nothing had ever projected onto it: the old seater
+   hard-coded COUNTER.y in a `wall === "counter"` branch instead. A deck mixer
+   seated against y = 0 lands on the floor tiles. Stating the point removes the
+   whole class of problem. */
+function surfaceOf(name) {
+  const w = WALLS[name], n = SURFACE_NORMAL[name];
+  if (!w || !n) return null;
+  const point = {
+    back:    new THREE.Vector3(0, 0, w.val),
+    left:    new THREE.Vector3(w.val, 0, 0),
+    right:   new THREE.Vector3(w.val, 0, 0),
+    ceiling: new THREE.Vector3(0, w.val, 0),
+    counter: new THREE.Vector3(COUNTER.x, COUNTER.y, COUNTER.z),
+  }[name];
+  const normal = new THREE.Vector3(n[0], n[1], n[2]);
+  /* `point` is the ANCHOR plane — OFF (2.5 cm) clear of a wall, where a flat
+     photograph hangs so it cannot z-fight the tiles. `tile` is the wall itself.
+     Solid geometry seats on the tile: a spout's flange or a jet's escutcheon
+     actually touching the wall is the whole point of having the geometry. */
+  const tile = point.clone().addScaledVector(normal, -(SURFACE_KIND[name] === "wall" ? OFF : 0));
+  return { name, kind: SURFACE_KIND[name], normal, point, tile, plane: w.plane, val: w.val };
+}
+/* A surface from a RAYCAST HIT instead of a named wall, so the same installer
+   works for click-to-place on arbitrary geometry. normal must already be in
+   world space and point away from the surface into the room. */
+function surfaceFromHit(hit) {
+  const n = hit.normal.clone().normalize();
+  const kind = n.y > 0.7 ? "deck" : (n.y < -0.7 ? "ceiling" : "wall");
+  return { name: hit.surfaceName || null, kind, normal: n, point: hit.position.clone() };
+}
+
+/* -----------------------------------------------------------------------------
+   INSTALLATION RULES, BY PRODUCT CATEGORY
+   What a category IS, architecturally. Not how it is drawn, and never inside a
+   product card or a UI component.
+
+     surface        which kind of surface it belongs on
+     face           where its functional front points:
+                      "outward"  along the surface normal, into the room
+                      "roomward" horizontal, into the room (deck fittings, whose
+                                 MOUNT face is down but whose front is not up)
+     worldUp        keep +Y on world vertical, so the piece can never roll
+     outlet         which way water actually leaves it - declared so it can be
+                    validated and drawn in debug (see installDebug)
+     mountPlane     which plane of the piece touches the surface:
+                      "anchor" the piece is BUILT around local z = 0 (the cutout
+                              and procedural paths do this, and deliberately run
+                              their bodies back THROUGH it into the wall)
+                      "boxMin" the back of the model's own bounding box (imported
+                              geometry, whose origin is wherever it was exported)
+   -------------------------------------------------------------------------- */
+const INSTALL_RULES = {
+  "bath-spout":    { surface: "wall",    face: "outward",  worldUp: true,  outlet: "down",    mountPlane: "anchor" },
+  "wall-tap":      { surface: "wall",    face: "outward",  worldUp: true,  outlet: "down",    mountPlane: "anchor" },
+  "thermostatic":  { surface: "wall",    face: "outward",  worldUp: true,  outlet: null,      mountPlane: "anchor" },
+  "diverter":      { surface: "wall",    face: "outward",  worldUp: true,  outlet: null,      mountPlane: "anchor" },
+  "body-jet":      { surface: "wall",    face: "outward",  worldUp: true,  outlet: "outward", mountPlane: "anchor" },
+  "hand-shower":   { surface: "wall",    face: "outward",  worldUp: true,  outlet: "down",    mountPlane: "anchor" },
+  "health-faucet": { surface: "wall",    face: "outward",  worldUp: true,  outlet: "down",    mountPlane: "anchor" },
+  "rain-shower":   { surface: "ceiling", face: "outward",  worldUp: false, outlet: "down",    mountPlane: "anchor" },
+  // a deck mixer's BASE is what sits on the surface, but its spout looks at the
+  // room - the one category where mount face and front face are perpendicular
+  "basin-mixer":   { surface: "deck",    face: "roomward", worldUp: false, outlet: "down",    mountPlane: "anchor" },
+  "waste":         { surface: "wall",    face: "outward",  worldUp: true,  outlet: null,      mountPlane: "anchor" },
+};
+const DEFAULT_RULE = { surface: "wall", outlet: null, mountPlane: "anchor" };
+
+/* HOW A SURFACE KIND IS BUILT ON. `face` and `worldUp` are properties of the
+   SURFACE, not of the catalogue entry, so they are derived rather than typed:
+
+     wall     front along the normal, +Y locked to world vertical
+     ceiling  front along the normal (downward); world up cannot be in-plane
+     deck     MOUNT face down onto the surface, front horizontal into the room
+
+   This matters because a category is not always one mounting type. "basin-mixer"
+   holds both wall-hung mixers (mounted on the tiles above the basin) and
+   deck-mounted ones that stand on the counter — the same category, two different
+   installations, told apart per SKU by `mount: "counter"`. A `face` typed once
+   per category got one of the two wrong whichever value it held, and the sweep
+   caught it: ST-WM-001 and ST-WM-002 are wall mixers being scored as deck ones.
+   Derive it from the surface the product is actually on and the question
+   disappears. */
+const KIND_FACING = {
+  wall:    { face: "outward",  worldUp: true },
+  ceiling: { face: "outward",  worldUp: false },
+  deck:    { face: "roomward", worldUp: false },
+};
+function ruleFor(product, wall) {
+  const base = INSTALL_RULES[product && product.catId] || DEFAULT_RULE;
+  // the surface it is really being installed on wins over the category default
+  const kind = (wall && SURFACE_KIND[wall]) || base.surface || "wall";
+  return Object.assign({}, base, KIND_FACING[kind] || KIND_FACING.wall, { kind });
+}
+
+/* The quaternion a product wears on a given surface. This is the ONLY place a
+   placed product's orientation is decided. */
+function installQuat(surface, rule, roll) {
+  let forward, up;
+  if (rule.face === "roomward") {
+    // deck: mount face down onto the surface, front horizontal into the room
+    up = surface.normal.clone();
+    forward = ROOM_FRONT.clone();
+  } else {
+    forward = surface.normal.clone();
+    up = rule.worldUp ? WORLD_UP.clone() : null;
+  }
+  const q = orientFrom(forward, up);
+  /* roll is NOT an installation angle - it is the hand correction for a render
+     that was shot off-square (see rollFor; nothing in the range sets one). It
+     therefore turns the piece about its OWN forward axis, after installation,
+     and is the one thing allowed to. */
+  if (roll) q.multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), roll));
+  return q;
+}
+
+/* SEAT IT. Move the root along the surface normal until the product's declared
+   MOUNT PLANE lies on the surface - never using the bounding-box centre, and
+   using the box only where a model has no anchor to declare (mountPlane
+   "boxMin", for imported geometry whose origin is arbitrary).
+   spot is where on the surface it goes; the normal component of spot is
+   overwritten, because that is what this function is for. */
+function seatOnSurface(root, surface, rule, spot, eps) {
+  root.updateMatrixWorld(true);
+  /* WHICH LOCAL AXIS TOUCHES THE SURFACE. For a wall or ceiling fitting the
+     mount face is the back of the piece, local -Z. For a DECK fitting it is the
+     bottom, local -Y: its base sits on the counter while its spout still looks
+     at the room, which is the whole reason `face: "roomward"` exists. Assuming
+     -Z for everything seated a basin mixer by the back of its box instead of by
+     its footprint. */
+  const onY = rule.face === "roomward";
+  let along = 0;                     // distance from the origin to the mount plane
+  if (rule.mountPlane === "boxMin") {
+    const b = localBox(root);
+    if (!b.isEmpty()) along = onY ? b.min.y : b.min.z;
+  }
+  const n = surface.normal;
+  const target = spot.clone();
+  // put it exactly on the surface plane first, whichever way the plane is given —
+  // the tile itself for solid geometry (rule.onTile), the artwork anchor otherwise
+  const ref = rule.onTile && surface.tile ? surface.tile : surface.point;
+  const d = ref
+    ? n.dot(target.clone().sub(ref))
+    : n.dot(target) + (surface.plane ? surface.plane.constant : 0);
+  target.addScaledVector(n, -d);
+  target.addScaledVector(n, (eps || 0) - along);    // then the mount plane lands on it
+  root.position.copy(target);
+}
+
+/* -----------------------------------------------------------------------------
+   DEBUG MODE. installDebug(true) draws, for every placed fitting:
+     RED    the surface normal it was installed against
+     GREEN  the product's up axis
+     BLUE   the product's forward / functional axis
+     YELLOW the product's MOUNT normal (must oppose the surface normal)
+     CYAN   its declared outlet direction
+   plus the mount anchor (magenta), the product origin (white) and the oriented
+   bounding box. Off by default; it adds nothing to the scene when off.
+   From the console: installDebug(true) / installDebug(false)
+   -------------------------------------------------------------------------- */
+let INSTALL_DEBUG = false;
+const DEBUG_NAME = "__installDebug";
+function clearInstallDebug(rec) {
+  const old = rec.mesh.getObjectByName(DEBUG_NAME);
+  if (old) { rec.mesh.remove(old); disposeTree(old); }
+}
+function drawInstallDebug(rec) {
+  clearInstallDebug(rec);
+  if (!INSTALL_DEBUG) return;
+  const g = new THREE.Group(); g.name = DEBUG_NAME;
+  const L = 0.22;
+  const arrow = (dir, hex) => g.add(new THREE.ArrowHelper(
+    dir.clone().normalize(), new THREE.Vector3(), L, hex, L * 0.28, L * 0.14));
+  // drawn in the product's OWN space, so they show the installed axes directly
+  arrow(new THREE.Vector3(0, 0, 1), 0x2b7fff);        // forward = BLUE
+  arrow(new THREE.Vector3(0, 1, 0), 0x22cc55);        // up      = GREEN
+  const inv = rec.mesh.getWorldQuaternion(new THREE.Quaternion()).invert();
+  const surf = rec.surface || surfaceOf(rec.wall);
+  if (surf) arrow(surf.normal.clone().applyQuaternion(inv), 0xff3020);   // normal = RED
+  arrow(new THREE.Vector3(0, 0, -1), 0xffd400);        // mount normal = YELLOW
+  const rule = rec.rule || ruleFor(rec.product, rec.wall);
+  if (rule.outlet === "down") arrow(WORLD_UP.clone().negate().applyQuaternion(inv), 0x00d5d5);   // outlet = CYAN
+  else if (rule.outlet === "outward") arrow(new THREE.Vector3(0, 0, 1), 0x00d5d5);
+  const dot = (v, hex, r) => {
+    const m = new THREE.Mesh(new THREE.SphereGeometry(r, 10, 8),
+      new THREE.MeshBasicMaterial({ color: hex, depthTest: false }));
+    m.position.copy(v); m.renderOrder = 999; g.add(m);
+  };
+  const b = localBox(rec.mesh);
+  dot(new THREE.Vector3(), 0xffffff, 0.008);
+  dot(new THREE.Vector3(0, 0, rule.mountPlane === "boxMin" && !b.isEmpty() ? b.min.z : 0), 0xff00ff, 0.010);
+  if (!b.isEmpty()) {
+    const box = new THREE.Box3Helper(b, 0x8888ff);
+    box.material.depthTest = false; box.renderOrder = 998; g.add(box);
+  }
+  rec.mesh.add(g);
+}
+function installDebug(on) {
+  INSTALL_DEBUG = !!on;
+  placed.forEach(rec => drawInstallDebug(rec));
+  return INSTALL_DEBUG ? "installation debug ON" : "installation debug off";
+}
+window.installDebug = installDebug;
+
+/* VALIDATION. After orientation and seating, confirm the fitting actually meets
+   its surface: the mount side touching it, the body outside it, no float and no
+   burial. installDebug(true) plus this is what makes an orientation error
+   obvious instead of a thing you squint at.
+   From the console: validateInstall() */
+function validateOne(rec) {
+  const surf = rec.surface || surfaceOf(rec.wall);
+  if (!surf) return { sku: rec.product.code, ok: true, note: "no surface" };
+  rec.mesh.updateMatrixWorld(true);
+  const b = localBox(rec.mesh);
+  if (b.isEmpty()) return { sku: rec.product.code, ok: true, note: "no geometry yet" };
+  // +Z is always the outward face by convention, so depth along the surface
+  // normal is just the local Z extent
+  const s = rec.mesh.scale.x || 1;
+  // depth is measured along whichever local axis faces the surface (see seatOnSurface)
+  const onY = (rec.rule || ruleFor(rec.product, rec.wall)).face === "roomward";
+  // measured from the SURFACE. Artwork is anchored OFF clear of a wall, so its
+  // local origin is not the tile; solid geometry (rec.onTile) is seated on it.
+  const off = (surf.kind === "wall" && !rec.onTile) ? OFF : 0;
+  const proud = (onY ? b.max.y : b.max.z) * s + off;
+  const buried = -(onY ? b.min.y : b.min.z) * s - off;
+  const ok = proud > 0.002 && buried > -0.003 && buried < 0.14;
+  return { sku: rec.product.code, wall: rec.wall, proudM: +proud.toFixed(4),
+           buriedM: +buried.toFixed(4), ok,
+           note: ok ? "" : (proud <= 0.002 ? "nothing proud of the surface"
+                          : buried <= -0.003 ? "floating off the surface" : "buried too deep") };
+}
+function validateInstallAll() {
+  const out = [];
+  placed.forEach(rec => out.push(validateOne(rec)));
+  return out;
+}
+window.validateInstall = validateInstallAll;
+
+/* DEV HOOK for the cross-wall tests. The UI installs a fitting on the wall its
+   category belongs to, which is right for a client but means the "same spout on
+   three different walls" check cannot be driven from the interface. This forces
+   a SKU onto a named surface and reports what happened, so the installer can be
+   exercised on every wall it claims to support.
+     installTest("ST-PLAIN", "left")   -> { sku, wall, proudM, buriedM, ok }
+   Console only; nothing in the app calls it. */
+window.installTest = (code, wall, settleMs) => {
+  // PRODUCTS is keyed by category, not a flat array
+  const prod = Object.values(PRODUCTS).flat().find(x => x.code === code);
+  if (!prod) return "no such SKU: " + code;
+  const uid = placeProduct(prod, prod.defaultFinish, wall || null, false);
+  const rec = placed.get(uid);
+  if (!rec) return "placement failed";
+  return new Promise(res => setTimeout(() => {
+    const r = validateOne(rec);
+    const q = rec.mesh.quaternion;
+    const fwd = new THREE.Vector3(0, 0, 1).applyQuaternion(q);
+    const up = new THREE.Vector3(0, 1, 0).applyQuaternion(q);
+    const surf = rec.surface || surfaceOf(rec.wall);
+    /* A wall fitting must put +Z on the surface normal and +Y on world up. A
+       DECK fitting must not: its front is horizontal and its UP is the normal,
+       so it is scored against that instead — otherwise a correctly installed
+       basin mixer reports as a failure. */
+    const roomward = (rec.rule || ruleFor(rec.product, rec.wall)).face === "roomward";
+    res(Object.assign(r, {
+      facesCorrectly: +(roomward ? up.dot(surf.normal) : fwd.dot(surf.normal)).toFixed(6),
+      uprightness: +(roomward ? up.dot(WORLD_UP) : up.dot(WORLD_UP)).toFixed(6),
+      pos: [+rec.mesh.position.x.toFixed(3), +rec.mesh.position.y.toFixed(3), +rec.mesh.position.z.toFixed(3)],
+    }));
+  }, settleMs == null ? 900 : settleMs));
+};
+
+/* Sweep the WHOLE catalogue through the installer and report only what fails.
+   `installSweep()` puts every SKU on its own category surface; pass a wall name
+   to force every wall-mounted SKU onto that wall instead, which is how the
+   "same product on every wall" requirement is actually checked at scale. */
+/* NUMERICAL ASSERTIONS, not "visually close".
+   Three things have to hold for every wall fitting, on every wall:
+
+     dot(productUp,  WORLD_UP)      == 1   the piece cannot be tilted
+     dot(productMount, -wallNormal) == 1   the backplate faces the wall
+     child local quaternions UNCHANGED by placement
+
+   The third is the one that catches the class of bug this was written for: a
+   product's designed internal pose (a jet's neck and head angle) must survive
+   installation untouched. The installer writes to the ProductRoot only, so a
+   child that moves means something reached inside the model.
+   From the console: assertInstall("ST-D5018") / assertInstall() for the lot. */
+/* THE CHECKLIST, ON WHATEVER IS CURRENTLY ON THE WALL.
+   Per fitting: is it upright, is its backplate on the wall, and — for a set —
+   do all four members hold the SAME orientation (they must; nothing may be
+   rotated individually). From the console: installReport() */
+window.installReport = () => {
+  const rows = [];
+  placed.forEach(rec => {
+    const surf = rec.surface || surfaceOf(rec.wall);
+    if (!surf) return;
+    const q = rec.mesh.quaternion;
+    const up = new THREE.Vector3(0, 1, 0).applyQuaternion(q);
+    const mount = new THREE.Vector3(0, 0, -1).applyQuaternion(q);
+    const row = {
+      sku: rec.product.code, wall: rec.wall,
+      upVsWorldUp: +up.dot(WORLD_UP).toFixed(6),
+      mountVsWall: +mount.dot(surf.normal.clone().negate()).toFixed(6),
+    };
+    const members = rec.mesh.children.filter(c => c.userData.jet);
+    if (members.length) {
+      const q0 = members[0].quaternion;
+      row.members = members.length;
+      row.maxSpreadDeg = +(Math.max(...members.map(m => q0.angleTo(m.quaternion))) * 180 / Math.PI).toFixed(6);
+    }
+    rows.push(row);
+  });
+  return rows;
+};
+window.installClear = () => { [...placed.keys()].forEach(removeProduct); return "cleared"; };
+
+window.assertInstall = async (code, walls) => {
+  const all = Object.values(PRODUCTS).flat();
+  const list = code ? all.filter(p => p.code === code) : all;
+  const onWalls = walls || ["back", "left", "right"];
+  const EPS = 1e-3;
+  const fails = [];
+  let checks = 0;
+  for (const prod of list) {
+    for (const wall of onWalls) {
+      const surf = surfaceOf(wall);
+      if (!surf || surf.kind !== "wall") continue;
+      const uid = placeProduct(prod, prod.defaultFinish, wall, false);
+      const rec = placed.get(uid);
+      if (!rec) { fails.push(`${prod.code}@${wall}: not placed`); continue; }
+      // child local poses BEFORE the artwork settles and re-runs the build
+      const before = [];
+      rec.mesh.traverse(o => { if (o !== rec.mesh) before.push([o, o.quaternion.clone()]); });
+      await new Promise(r => setTimeout(r, 700));
+      const q = rec.mesh.quaternion;
+      const up = new THREE.Vector3(0, 1, 0).applyQuaternion(q);
+      const mount = new THREE.Vector3(0, 0, -1).applyQuaternion(q);   // -Z is the mount face
+      const dUp = up.dot(WORLD_UP);
+      const dMount = mount.dot(surf.normal.clone().negate());
+      checks += 2;
+      if (Math.abs(dUp - 1) > EPS) fails.push(`${prod.code}@${wall}: TILTED, dot(up,WORLD_UP)=${dUp.toFixed(6)}`);
+      if (Math.abs(dMount - 1) > EPS) fails.push(`${prod.code}@${wall}: backplate not on wall, dot(mount,-n)=${dMount.toFixed(6)}`);
+      // and nothing reached inside the model
+      for (const [o, q0] of before) {
+        if (!o.parent) continue;                       // rebuilt/removed by the artwork pass
+        checks++;
+        const moved = q0.angleTo(o.quaternion);
+        if (moved > 1e-6) fails.push(`${prod.code}@${wall}: child "${o.name || o.type}" ROTATED by placement, ${(moved * 180 / Math.PI).toFixed(3)} deg`);
       }
     }
-  } catch (_) { roll = 0; }                    // unreadable pixels — hang it straight
-  _rollCache.set(src, roll);
-  return roll;
-}
-/* WHICH products get levelled at all. Opt-in, because "level" only means
-   something for a piece with a horizontal body — a spout, a mixer, a control
-   bar. It is meaningless or actively wrong elsewhere, and the audit caught both
-   cases: an overhead plate seen from below is symmetric and measures 0 (no
-   harm), but a WALL shower head carries its own arm in the photograph, and
-   measuring that silhouette asked for -31 degrees, which would have hung the
-   whole head and arm off at an angle. A handset is vertical and is skipped by
-   the aspect test anyway.
-   A hand-set `roll` in SKU3D still overrides, for a product that needs one. */
-const LEVEL_CATS = new Set(["bath-spout", "basin-mixer",
-                            "wall-tap", "health-faucet"]);
-/* body-jet, thermostatic and diverter are deliberately NOT levelled. By the rule
-   above, `roll` is only meaningful for a piece photographed at an angle with a
-   horizontal BODY to find — a spout, a tap, a mixer. It is meaningless, and
-   actively harmful, on a flat plate shot square-on.
-   A jet is a square plate with a nozzle on it: the fit found no body and
-   returned ~3 degrees off the escutcheon's corner, and four jets each tilted
-   3 degrees is exactly what reads as a grid that will not line up.
-   A thermostatic panel or diverter trim is the same mistake at a larger size.
-   The Grande panel came out 5.9 degrees off — on a 56 cm bar that is 6 cm of
-   drop end to end, hung against tile joints that are dead level, and it is the
-   first thing you see. There is no body in that photograph either: it is a
-   rectangle with a dial and a row of buttons, already square in frame. These
-   three hang level, which is how they are installed. */
-const rollFor = (product, cfg, img, src) =>
-  cfg.roll != null ? cfg.roll
-                   : (LEVEL_CATS.has(product.catId) ? measuredRoll(img, src) : 0);
+  }
+  return { checks, failures: fails.length, fails };
+};
+
+window.installSweep = async (wall, from, to, settleMs) => {
+  const all = Object.values(PRODUCTS).flat();
+  const slice = all.slice(from || 0, to == null ? all.length : to);
+  const out = [];
+  for (const p of slice) {
+    const r = await window.installTest(p.code, wall || null, settleMs == null ? 200 : settleMs);
+    out.push(Object.assign({ code: p.code, cat: p.catId }, r));
+  }
+  const bad = out.filter(r => !r.ok || Math.abs(r.facesCorrectly - 1) > 1e-6);
+  return { tested: out.length, failures: bad.length, bad };
+};
+
+/* =============================================================================
+   A WALL FITTING HANGS AS IT WAS PHOTOGRAPHED. THE PLATE IS THE DATUM.
+
+   This used to do the opposite, and the client's own reference shot is what
+   settled it. Every fitting in the range is a studio 3/4 render, so the BODY in
+   the frame slopes — the plain wall spout by 22.3 degrees, the angle valve by
+   35.9. That slope was read as a photographic defect to be cancelled: `roll`
+   turned each cutout by the angle its own body measured, meaning to sit the
+   body level on the tiles. It never even did that. The fit runs in IMAGE
+   coordinates, where y counts DOWNWARD, and handed its answer straight to
+   rotation.z, where y counts UP — so the correction arrived sign-reversed and
+   drove the nose further down instead of lifting it. The spout hung at 44.7
+   degrees, twice the slope of its own photograph.
+
+   That is the wrong datum. On a projecting fitting the body's slope is not tilt,
+   it is PERSPECTIVE — a spout pointing out of the wall MUST run downhill across
+   the frame, and the client's photograph of these very fittings shows exactly
+   that: escutcheon dead square to the tile joints, body falling away to the
+   nozzle. The one part that is square in the render is the plate, and the plate
+   is the part that touches the wall. Rotating the frame to level the body
+   therefore takes the PLATE off square by that same 22 or 36 degrees, and a
+   plate cocked against a grout line is the one thing that cannot be read as
+   perspective. And fixing the sign would only have halved the damage: a spout
+   whose plate is square AND whose body is level is a spout that projects
+   nowhere.
+
+   So the artwork hangs as shot, on its plate, and `roll` is now only a hand
+   escape hatch — for a fitting whose datum is NOT a square plate. Exactly one
+   in the range qualifies: ST-J06, the round body jet, whose flange is a circle.
+   A circle has no square edge to knock off level, so there is nothing for a
+   roll to spoil and the barrel's axis becomes the only thing left to read — see
+   its note in SKU3D. That is the test for any new one. A square plate in the
+   frame means no roll; a round plate means the axis is the datum.
+
+   (Two things not to rebuild. The fit ran on whichever finish PNG happened to
+   load, so it was per-FINISH: ST-WM-001 measured -19.2 deg on its gold render
+   and 0.0 on champagne, and a fitting changed how it hung when you changed its
+   colour. And body-jet, thermostatic and diverter had to be excluded by hand,
+   one category at a time, because a flat plate shot square-on has no body to
+   find and the fit returned noise — four jets each tilted three degrees is a
+   grid that will not line up. That exclusion list was the shape of the answer:
+   none of these wanted levelling.)
+   ============================================================================= */
+const rollFor = cfg => cfg.roll || 0;
 
 function finishTexture(path) {
   const t = texLoader.load(path);
@@ -1509,6 +2013,7 @@ function artMaterial(mat, emissive) {
 function exposeArtwork(root) {
   const e = artExposure();
   root.traverse(o => {
+    if (o.material && o.material.userData && o.material.userData.fittingEnv) o.material.envMapIntensity = fittingEnvI();
     const a = o.material && o.material.userData && o.material.userData.artwork;
     if (!a) return;
     o.material.color.setScalar(a.color * e);
@@ -1678,17 +2183,10 @@ function addContactShadow(mesh, w, h) {
 
 /* ---- SEATING A FLAT TRIM INTO THE WALL ----------------------------------
    A diverter plate sat on the tile with nothing between it and the grout, so it
-   read as laid ON the wall rather than set INTO it. Two things fix that, and
-   they are what you see on a real concealed valve:
+   read as laid ON the wall rather than set INTO it. What fixes that is what
+   you see on a real concealed valve:
 
-   1. A MOUNTING FLANGE — the plate is not the whole fitting. Behind it is a
-      wider backing collar that covers the cut in the tile, and the step from
-      collar to plate is the border your eye reads as "this is let into the
-      wall". It is built from the artwork's OWN silhouette scaled up, not from a
-      rectangle, so it follows a round plate, a rounded square and a tall
-      rectangle equally well — the range has all three.
-
-   2. A CONTACT SEAM — the occlusion line where the collar meets the tile: tight
+   A CONTACT SEAM — the occlusion line where the plate meets the tile: tight
       and dark at the edge, gone within a couple of centimetres. The radial blob
       addContactShadow paints is right for a spout, which is a small shape
       throwing a shadow to one side, but under a big flat rectangle it reads as
@@ -1708,7 +2206,7 @@ function seamTexture(ar, mFrac) {
   x.save();
   x.shadowColor = "rgba(0,0,0,0.9)";
   x.shadowBlur = Math.min(W, H) * 0.16;
-  x.shadowOffsetY = Math.min(W, H) * 0.035;
+  x.shadowOffsetY = 0;      // SYMMETRIC. Cast downward it read as a plate hung off-square.
   x.fillStyle = "#000";
   x.fillRect(ix, iy, iw, ih);          // its SHADOW is the ring we want
   x.restore();
@@ -1725,24 +2223,17 @@ function seatPanel(mesh, map, w, h, hex) {
      SMALLER side. Taken off the width it was 4.7 cm on a 0.55 m thermostatic
      bar — a border thicker than a third of the bar's own height, which reads
      as a picture frame rather than a backing collar. */
-  const m = Math.max(0.010, Math.min(w, h) * 0.13);
-  // the collar: the same cutout, scaled up, darker, bridging tile to plate
-  const fw = w + 2 * m, fh = h + 2 * m;
-  const flange = new THREE.Mesh(new THREE.PlaneGeometry(fw, fh),
-    new THREE.MeshStandardMaterial({
-      map, alphaTest: 0.45, side: THREE.DoubleSide,
-      color: new THREE.Color(hex).multiplyScalar(0.62),
-      metalness: 0.9, roughness: 0.34, envMapIntensity: 1.0,
-    }));
-  flange.name = "trimFlange";
-  flange.userData.metal = true; flange.userData.shade = 0.62;
-  flange.position.z = -(OFF - 0.004);               // just off the tile, behind the plate
-  mesh.add(flange);
+  const m = Math.max(0.006, Math.min(w, h) * 0.07);
+  /* NO COLLAR. A darker copy of the plate a couple of centimetres bigger used to
+     sit behind it here as a "mounting flange". On the wall it read as a second,
+     dark plate the trim was hung on — and with the seam's shadow thrown
+     downward, as a plate hung off-square: "not at 90 degrees to the wall". The
+     trim is ONE plate on the tile; the seam alone says so. */
   // the seam on the tile, a little wider again than the collar
   const sm = m * 1.9;
   const seam = new THREE.Mesh(new THREE.PlaneGeometry(w + 2 * sm, h + 2 * sm),
     new THREE.MeshBasicMaterial({
-      map: seamTexture(h / w, sm / w), transparent: true, opacity: 0.8, depthWrite: false,
+      map: seamTexture(h / w, sm / w), transparent: true, opacity: 0.55, depthWrite: false,
     }));
   seam.name = "trimSeam";
   seam.position.z = -(OFF - 0.002);
@@ -1767,8 +2258,13 @@ function localBox(root) {
   root.updateMatrixWorld(true);
   const inv = new THREE.Matrix4().copy(root.matrixWorld).invert();
   const box = new THREE.Box3(), tmp = new THREE.Matrix4();
+  // the debug helpers are not part of the product: measuring them made every
+  // fitting report the arrow length (0.22 m) as its own depth the moment
+  // installDebug(true) was on, which is exactly when you are reading the numbers
+  const inDebug = o => { for (let n = o; n; n = n.parent) if (n.name === DEBUG_NAME) return true; return false; };
   root.traverse(o => {
     if (!o.isMesh || !o.geometry) return;
+    if (inDebug(o)) return;
     o.geometry.computeBoundingBox();
     box.union(o.geometry.boundingBox.clone().applyMatrix4(tmp.multiplyMatrices(inv, o.matrixWorld)));
   });
@@ -1973,8 +2469,9 @@ function buildBodyJet(hex, w, opts) {
   const part = (geo, shade, map) => {
     const mesh = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({
       color: new THREE.Color(hex).multiplyScalar(shade),
-      map: map || null, metalness: 1.0, roughness: 0.26, envMapIntensity: 1.15,
+      map: map || null, metalness: 1.0, roughness: 0.14, envMap: fittingEnv(), envMapIntensity: fittingEnvI(),
     }));
+    mesh.material.userData.fittingEnv = true;
     mesh.userData.metal = true;
     mesh.userData.shade = shade;
     return mesh;
@@ -1985,15 +2482,18 @@ function buildBodyJet(hex, w, opts) {
      0.66 wide and 0.30 deep on a 0.09 plate — near enough the same square, near
      enough flush, so the whole jet flattened into concentric outlines. */
   // --- the plate: flat on the tile, tail buried in it ---
-  const proud = w * 0.075;
-  const plate = part(round ? new THREE.CylinderGeometry(w / 2, w / 2, proud + sink, 40)
-                           : new THREE.BoxGeometry(w, w, proud + sink), 1.0);
+  const plateW = opts.plateW || w;                          // the real flange width, when the caller knows it
+  const proud = plateW * 0.11;
+  const plate = part(round ? new THREE.CylinderGeometry(plateW / 2, plateW / 2, proud + sink, 40)
+                           : new THREE.BoxGeometry(plateW, plateW, proud + sink), 1.0);
+  plate.name = "plate";
   if (round) plate.rotation.x = Math.PI / 2;               // lie the disc against the wall
   plate.position.z = proud / 2 - sink / 2;                 // face at +proud, back at -sink
   g.add(plate);
   // --- the neck stands square on the plate; the BALL is at the top of it ---
-  const neckR = w * 0.15, neckD = w * 0.14;
-  const neck = part(new THREE.CylinderGeometry(neckR, neckR * 1.22, neckD, 24), 0.40);
+  const neckR = opts.neckR || w * 0.15, neckD = opts.neckD || w * 0.14;
+  const neck = part(new THREE.CylinderGeometry(neckR, neckR * 1.22, neckD, 24), 0.62);
+  neck.name = "neck";
   neck.rotation.x = Math.PI / 2;
   neck.position.z = proud + neckD / 2;
   g.add(neck);
@@ -2007,18 +2507,22 @@ function buildBodyJet(hex, w, opts) {
   aim.position.z = proud + neckD;
   aim.rotation.set(pitch, yaw, 0);
   g.add(aim);
-  const ball = part(new THREE.SphereGeometry(neckR * 1.05, 20, 14), 0.48);
+  const ball = part(new THREE.SphereGeometry(neckR * 1.05, 20, 14), 0.68);
   aim.add(ball);
-  const headD = w * 0.32, headW = w * 0.54;
+  const headW = opts.headW || w * 0.54, headD = opts.headD || w * 0.32;
   const head = part(round ? new THREE.CylinderGeometry(headW / 2, headW / 2 * 0.94, headD, 36)
-                          : new THREE.BoxGeometry(headW, headW, headD), 0.70);
+                          : new THREE.BoxGeometry(headW, headW, headD), 0.86);
   if (round) head.rotation.x = Math.PI / 2;
   head.position.z = headD / 2;
+  head.name = "head";
   aim.add(head);
-  const face = part(round ? new THREE.CircleGeometry(headW / 2 * 0.88, 36)
-                          : new THREE.PlaneGeometry(headW * 0.88, headW * 0.88), 0.92, nozzleTexture(rows));
-  face.position.z = headD + 0.0012;
-  aim.add(face);
+  // the spray face is drawn — unless the SKU's own photographed face goes on instead (applyDecals)
+  if (opts.face !== false) {
+    const face = part(round ? new THREE.CircleGeometry(headW / 2 * 0.88, 36)
+                            : new THREE.PlaneGeometry(headW * 0.88, headW * 0.88), 0.92, nozzleTexture(rows));
+    face.position.z = headD + 0.0012;
+    aim.add(face);
+  }
   return g;
 }
 
@@ -2035,45 +2539,78 @@ function buildBodyJet(hex, w, opts) {
    wall → seat flush against it (no floating, no embedding).
    ========================================================================= */
 const MODELS_BASE = "assets/models/";
-// size = target real-world length (m) of the model's LARGEST dimension.
-// rot  = optional extra [x,y,z] rad to correct a model's own facing.
-/* REAL 3D MODELS — keyed by SKU, never by category.
-   The 20 OBJs we were given are anonymous ("New folder (n)/Stout Model.obj"), and
-   a category-keyed map meant every thermostatic panel rendered as the SAME block
-   and each rain shower got an arbitrary plate — you never saw the piece you
-   clicked. A model is now used ONLY where it has been visually confirmed to BE
-   that SKU; every other product renders its own artwork, which is exact by
-   definition. Confirmed against the product photography:
-     m02  tall angular single-lever basin mixer   → ST-BM-001 Aria Tall Basin Mixer
-     m15  plain square-section wall spout         → ST-PLAIN  Axis Plain Wall Spout
-     mdiv tall plate + square knob + flat lever   → ST-D5017  Regale Concealed Diverter
-     m13  square 4×4 protruding-nozzle body jet   → ST-BJ-02  Aqua Single-Flow Body Jet
-   (The remaining OBJs — m03-m12, m14, m16-m19, m-bodyjet — are plates/panels we
-   cannot tie to a specific SKU, so they are deliberately unused.) */
+/* =============================================================================
+   REAL GEOMETRY, FROM THE CLIENT'S OWN 3D FILES — keyed by SKU, never by category.
+   -----------------------------------------------------------------------------
+   Why: 43 of 44 SKUs were photographs, and a body jet, a spout or a wall mixer
+   is photographed from three-quarters. Laid flat on the tile that angle is IN
+   the pixels: four jets read as four plates stuck on crooked with their necks
+   pointing along the wall, and the spout reads as lying sideways. No rotation,
+   roll, mirror or homography can put a neck back in front of its plate — the
+   only thing that fixes a protruding fitting is protruding geometry. The
+   client's RAR ships exactly that for the pieces on this wall; tools_models.py
+   exports them as named, web-weight meshes.
+
+   Which model is which SKU was decided by LOOKING, against the photography:
+     jet-sq       square plate, neck, square head, 20-nub spray face    ST-2FBJ (exact)
+                  The same body carries the other square jets wearing THEIR
+                  own face (`decal`): escutcheon / neck / head is one form
+                  across the range, only the spray face differs.
+     jet-panel    flush 16-jet plate with its rough-in box behind      ST-BJ-01
+     spout-plain  plain square-section wall spout                      ST-PLAIN
+     mixer-wall   plate + flat spout + square lever                    ST-WM-002
+     mixer-deck   tall single-lever deck basin mixer                  ST-BM-001
+
+   THE ENTRY IS THE WHOLE INSTALLATION CONTRACT for a model, so nothing about how
+   it sits is guessed from a bounding box:
+     axes    the model's OWN front and up, in its file coordinates. The installer
+             maps them onto the canonical +Z front / +Y up, so a model authored
+             lying on its back (front +Y) needs no hand-typed Euler.
+     fit     { axis, size, object? }  the one dimension we know in metres — the
+             escutcheon width, the spout length — measured after orientation, on
+             the named part if given. Legacy `size` = largest extent.
+     mount   { object }  the part whose BACK FACE touches the wall. Default is
+             the whole model's back. jet-panel needs it: its box sits BEHIND the
+             plate, inside the wall, and must not push the plate off the tile.
+     hide    parts to drop (the 20-nub face, when a different face goes on).
+     decal   { on }  lay this SKU's own spray face — assets/products/face/,
+             cut square out of its photograph by tools_decal.py — on the front
+             of the named part. The body is the client's geometry, the face is
+             the client's render of this exact SKU; nothing is invented.
+     set     "jets" — plumbed as the flanking set of four on JET_GRID.
+     proc    a procedural body where no export exists (the one ROUND jet): built
+             at real size from its render's proportions, then treated exactly
+             like a loaded model.
+
+   Every earlier attempt to use these OBJs failed for reasons that are now
+   contract fields rather than model problems: seated by bounding-box centre
+   (half the piece in the wall) → `mount`; scaled by the largest dimension of a
+   model whose largest dimension was its rough-in box → `fit`; authored
+   face-down → `axes`; a plain untextured block standing in for a SKU with a
+   distinctive face → `decal`.
+   ============================================================================= */
+const JET_GRID = [[-0.32, 0.32], [-0.32, -0.32], [0.32, 0.32], [0.32, -0.32]];   // the set of four; see placeProduct
+const SQUARE_JET = { url: "jet-sq", axes: { front: [0, 0, 1], up: [0, 1, 0] },
+                     fit: { axis: "x", size: 0.10, object: "plate" }, mount: { object: "plate" }, set: "jets" };
 const MODEL_FOR_SKU = {
-  "ST-BM-001": { url: "m02",  size: 0.34 },
-  // ST-PLAIN (Axis Plain Wall Spout) USED to render from m15. It is the only
-  // spout the range now offers, and the OBJ gave you a pale untextured block:
-  // the mesh carries no finish detail, so lit by the room it washes out to
-  // near-white whichever finish you pick, and a plain square spout has no
-  // silhouette left to read once the surface is gone. Its own photograph is
-  // exact in all three finishes. To go back to the mesh:
-  //   "ST-PLAIN":  { url: "m15",  size: 0.26 },
-  // ST-D5017 (Regale Concealed Diverter) USED to render from mdiv. Two problems:
-  // the model is authored face-DOWN, so rot +90x stood it up showing its blank
-  // back — it read as a plain gold plank on the wall. Even flipped to -90x the OBJ
-  // is a low-detail proxy that renders as a pale slab with a barely-visible knob.
-  // Its own photography shows the plate, square knob and lever exactly, so it now
-  // renders its artwork like every other product. To go back to the mesh:
-  //   "ST-D5017": { url: "mdiv", size: 0.36, rot: [-Math.PI / 2, 0, 0] },
-  // ST-BJ-02 (Aqua Single-Flow Body Jet) USED to render from m13. Seen at its
-  // real 14 cm on the wall it reads as a pale dumbbell — two square plates on a
-  // short tube — because seatOnWall aligns the model by its bounding box, with no
-  // idea which face is the mount, so the nozzle plate ends up half in the tiles
-  // and the boss sticks into the room. Its own photograph is exact. To go back:
-  //   "ST-BJ-02":  { url: "m13",  size: 0.14 },
+  "ST-BM-001": { url: "mixer-deck", axes: { front: [0, 0, 1], up: [0, 1, 0] }, fit: { axis: "y", size: 0.34 } },
+  "ST-2FBJ":   Object.assign({}, SQUARE_JET),
+  "ST-BJ21F":  Object.assign({}, SQUARE_JET, { hide: ["nubs"], decal: { on: "head" } }),
+  "ST-BJ-02":  Object.assign({}, SQUARE_JET, { hide: ["nubs"], decal: { on: "head" } }),
+  "ST-BJ3F":   Object.assign({}, SQUARE_JET, { hide: ["nubs"], decal: { on: "head" } }),
+  // the round jet: no export in the RAR, so its body is built — flange, neck,
+  // ball, head — at the proportions of its own render, and wears its own face
+  "ST-J06":    { proc: "roundJet", mount: { object: "plate" }, decal: { on: "head" }, set: "jets" },
+  "ST-BJ-01":  { url: "jet-panel", axes: { front: [0, 1, 0], up: [0, 0, -1] },
+                 fit: { axis: "x", size: 0.22, object: "plate" }, mount: { object: "plate" } },
+  "ST-PLAIN":  { url: "spout-plain", axes: { front: [0, 0, 1], up: [0, 1, 0] }, fit: { axis: "z", size: 0.22 } },
+  "ST-WM-002": { url: "mixer-wall", axes: { front: [0, 0, 1], up: [0, 1, 0] },
+                 fit: { axis: "x", size: 0.20, object: "plate" }, mount: { object: "plate" } },
 };
-const MODEL_WALL_YROT = { back: 0, left: Math.PI / 2, right: -Math.PI / 2, ceiling: 0, counter: 0 };
+/* MODEL_WALL_YROT is GONE. It was a second copy of the per-wall Euler table,
+   for the OBJ path only, and a third copy lived in cutoutFallback. All three
+   are replaced by installQuat, which derives the rotation from the surface
+   normal. Do not reintroduce a per-wall rotation table. */
 
 function showLoading(t) { const el = $("#loading"); if (el) { el.textContent = t; el.classList.remove("hide"); } }
 function hideLoading() { const el = $("#loading"); if (el) el.classList.add("hide"); }
@@ -2095,54 +2632,162 @@ function loadOBJ(url) {
 }
 // the confirmed 3D model for this exact SKU, or null → render its own artwork
 function specFor(product) { return MODEL_FOR_SKU[product.code] || null; }
-// seat a model root flush against its wall using the FINAL oriented size
-function seatOnWall(holder, wall, spot, sz) {
-  const p = spot.clone(), m = 0.25;
-  if (wall === "counter") { p.y = COUNTER.y + sz.y / 2; holder.position.copy(p); return; }
-  if (wall === "ceiling") {
-    p.x = clamp(p.x, -HX + m, HX - m); p.z = clamp(p.z, -HZ + m, HZ - m);
-    p.y = WALLS.ceiling.val - sz.y / 2 + 0.012;             // flush: bite into the slab, no gap above
-  } else if (wall === "left") {
-    p.z = clamp(p.z, -HZ + m, HZ - m); p.y = clamp(p.y, 0.3, RH - 0.15);
-    p.x = WALLS.left.val + sz.x / 2;
-  } else if (wall === "right") {
-    p.z = clamp(p.z, -HZ + m, HZ - m); p.y = clamp(p.y, 0.3, RH - 0.15);
-    p.x = WALLS.right.val - sz.x / 2;
-  } else {
-    p.x = clamp(p.x, -HX + m, HX - m); p.y = clamp(p.y, 0.3, RH - 0.15);
-    p.z = WALLS.back.val + sz.z / 2;                        // project into the room
-  }
-  holder.position.copy(p);
+
+/* bbox of the meshes under `root` — only the part called `name` if given — in
+   root's OWN frame, i.e. with root's scale and offset removed. Face decals are
+   not part of the body and are skipped, so re-measuring after one is laid on
+   gives the same answer. */
+function partBox(root, name) {
+  root.updateMatrixWorld(true);
+  const inv = new THREE.Matrix4().copy(root.matrixWorld).invert();
+  const box = new THREE.Box3(), tmp = new THREE.Matrix4();
+  root.traverse(o => {
+    if (!o.isMesh || !o.geometry || o.name === "faceDecal" || o.name === "contactShadow") return;
+    if (name && o.name !== name) return;
+    o.geometry.computeBoundingBox();
+    box.union(o.geometry.boundingBox.clone().applyMatrix4(tmp.multiplyMatrices(inv, o.matrixWorld)));
+  });
+  return box;
 }
-// a placed 3D-model root (Group). Loads async, then fills + aligns itself.
+
+/* ONE INSTALLED COPY of a model:
+     ProductRoot(offset in the set) -> FitRoot(scale, seat) -> OrientationRoot(axes) -> Model
+   The result stands with its MOUNT FACE on the local z = 0 plane (y = 0 for a
+   deck fitting), centred on its mount part, at real size, front along +Z. The
+   caller then only has to put local z = 0 on the tile. Nothing inside the model
+   is rotated: the axes correction sits on the OrientationRoot and the model's
+   own parts keep the pose they were exported with. */
+function modelInstance(model, spec, hex, rule, rough) {
+  const hide = new Set(spec.hide || []);
+  model.children.slice().forEach(c => { if (hide.has(c.name)) model.remove(c); });
+  if (!spec.proc) {
+    // the MTLs point at Windows paths — the brand metal in the chosen finish instead
+    const mat = metalMat(hex, rough);
+    // two-sided: one of these exports is an inside-out shell, and a culled body
+    // is a spout floating over its own base. Back faces get their normal flipped.
+    mat.side = THREE.DoubleSide;
+    model.traverse(o => { if (o.isMesh) { o.material = mat; o.userData.metal = true; } });
+  }
+  /* NO cast shadows. Tried: the key light sits high on the room's right, so a
+     jet on the right wall threw a metre-long smear of itself onto the LEFT wall
+     and the spout a blur across the back wall — physically fair, visually a
+     mess at this shadow-map resolution. The contact shadow below grounds each
+     piece where it actually touches the tile, which is what the eye wants. */
+  model.traverse(o => { if (o.isMesh) o.castShadow = false; });
+  // 1. ORIENT — carry the file's own axes onto the canonical ones
+  const ax = spec.axes || { front: [0, 0, 1], up: [0, 1, 0] };
+  const orient = new THREE.Group(); orient.name = "OrientationRoot";
+  orient.quaternion.copy(orientFrom(new THREE.Vector3(...ax.front), new THREE.Vector3(...ax.up)).invert());
+  orient.add(model);
+  // 2. FIT — the one dimension we know, measured after orientation
+  const fit = new THREE.Group(); fit.name = "FitRoot"; fit.add(orient);
+  let s = 1;
+  if (spec.fit) {
+    const ext = partBox(fit, spec.fit.object).getSize(new THREE.Vector3());
+    s = spec.fit.size / (ext[spec.fit.axis] || 1);
+  } else if (spec.size) {
+    const ext = partBox(fit).getSize(new THREE.Vector3());
+    s = spec.size / (Math.max(ext.x, ext.y, ext.z) || 1);
+  }
+  fit.scale.setScalar(s);
+  // 3. SEAT — mount face on the origin plane, centred on the mount part
+  const mb = partBox(fit, spec.mount && spec.mount.object);
+  const c = mb.getCenter(new THREE.Vector3());
+  const onY = rule.face === "roomward";
+  fit.position.set(-c.x * s, (onY ? -mb.min.y : -c.y) * s, (onY ? -c.z : -mb.min.z) * s);
+  const inst = new THREE.Group(); inst.name = "ProductRoot"; inst.add(fit);
+  return inst;
+}
+
+/* the procedural bodies — only where the RAR has no export for the form */
+function buildProcBody(kind, hex) {
+  if (kind === "roundJet") {
+    /* ST-J06, from its render: a 78 mm head on a 40 mm neck-and-ball off a
+       62 mm round flange. The spray face is not drawn — the SKU's own is laid on. */
+    return buildBodyJet(hex, 0.16, { round: true, face: false, plateW: 0.062, headW: 0.078,
+                                     headD: 0.040, neckR: 0.013, neckD: 0.040 });
+  }
+  throw new Error("unknown procedural body " + kind);
+}
+
+/* THE SPRAY FACE OF THIS EXACT SKU, on the front of its head. The face is the
+   product's own photograph, cut square (tools_decal.py) — a rosette, a 4x4 grid,
+   three nozzles, a 25-hole disc — printed unlit like all artwork and exposed for
+   the room. One texture is shared by the four members of a set. Re-run on a
+   finish swap (holder.userData.reface). */
+const faceArt = (product, fid) => {
+  const p = (product.images && (product.images[fid] || product.images[product.defaultFinish])) || null;
+  return p ? p.replace("assets/products/", "assets/products/face/") : null;
+};
+function applyDecals(holder, product, fid, spec) {
+  if (!spec.decal) return;
+  const path = faceArt(product, fid); if (!path) return;
+  const old = [];
+  holder.traverse(o => { if (o.name === "faceDecal") old.push(o); });
+  const oldTex = old.length ? old[0].material.map : null;
+  old.forEach(o => { o.parent.remove(o); o.geometry.dispose(); o.material.dispose(); });
+  if (oldTex) oldTex.dispose();
+  const tex = finishTexture(path);
+  holder.children.forEach(inst => {
+    if (inst.name !== "ProductRoot" || !inst.getObjectByName(spec.decal.on)) return;
+    const b = partBox(inst, spec.decal.on);
+    const w = b.max.x - b.min.x, h = b.max.y - b.min.y;
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({
+      map: tex, transparent: true, alphaTest: 0.2, toneMapped: false, depthWrite: false,
+      polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2,
+    }));
+    artMaterial(m.material); m.material.color.setScalar(artExposure());
+    m.name = "faceDecal"; m.userData.own = true;          // ours to dispose, unlike the shared model geometry
+    m.position.set((b.min.x + b.max.x) / 2, (b.min.y + b.max.y) / 2, b.max.z + 0.0006);
+    inst.add(m);
+  });
+}
+
+/* a placed 3D root (Group). Loads async, then fills, orients and seats itself.
+   ONE fitting, or the set of four for a jet SKU, all identical instances. */
 function build3DHolder(product, finishId, wall, spec, uid, onReady) {
   const holder = new THREE.Group();
   holder.userData.uid = uid;
-  showLoading("Loading 3D model…");
-  loadOBJ(MODELS_BASE + spec.url + ".obj").then(raw => {
-    const model = raw.clone(true);
-    const mat = metalMat(finishHex(finishId, product));
-    model.traverse(o => { if (o.isMesh) { o.material = mat; o.userData.metal = true; o.castShadow = false; } });
-    // normalise: recentre to origin + uniform scale so max dim === spec.size
-    const b = new THREE.Box3().setFromObject(model);
-    const s0 = b.getSize(new THREE.Vector3()), c0 = b.getCenter(new THREE.Vector3());
-    model.position.sub(c0);
-    const scaler = new THREE.Group(); scaler.add(model);
-    scaler.scale.setScalar(spec.size / (Math.max(s0.x, s0.y, s0.z) || 1));
-    if (spec.rot) scaler.rotation.set(spec.rot[0] || 0, spec.rot[1] || 0, spec.rot[2] || 0);
-    const orient = new THREE.Group(); orient.add(scaler);
-    orient.rotation.y = MODEL_WALL_YROT[wall] || 0;
-    holder.add(orient);
-    holder.updateMatrixWorld(true);
-    const sz = new THREE.Box3().setFromObject(holder).getSize(new THREE.Vector3());
-    seatOnWall(holder, wall, defaultSpot(wall, skuCfg(product)), sz);
+  const cfg = skuCfg(product);
+  const surf = surfaceOf(wall), rule = ruleFor(product, wall);
+  const hex = finishHex(finishId, product);
+  const set = spec.set === "jets" && !cfg.single;
+  let source;
+  if (spec.proc) source = Promise.resolve(null);
+  else { showLoading("Loading 3D model…"); source = loadOBJ(MODELS_BASE + spec.url + ".obj"); }
+  source.then(raw => {
+    (set ? JET_GRID : [[0, 0]]).forEach(([ox, oy]) => {
+      const body = spec.proc ? buildProcBody(spec.proc, hex) : raw.clone(true);
+      const inst = modelInstance(body, spec, hex, rule, finishRough(finishId));
+      inst.position.set(ox, oy, 0);
+      inst.userData.jet = set;             // a member of a set — installReport checks the four agree
+      // grounding: the soft occlusion where the mount part meets the tile
+      if (rule.face !== "roomward") {
+        const mb = partBox(inst, spec.mount && spec.mount.object), sz = mb.getSize(new THREE.Vector3());
+        const sh = new THREE.Mesh(new THREE.PlaneGeometry(sz.x * 1.7, sz.y * 1.7),
+          new THREE.MeshBasicMaterial({ map: shadowTexture(), transparent: true, opacity: 0.5, depthWrite: false }));
+        sh.name = "contactShadow"; sh.userData.own = true; sh.renderOrder = -1;
+        sh.position.set((mb.min.x + mb.max.x) / 2, (mb.min.y + mb.max.y) / 2, 0.0012);
+        inst.add(sh);
+      }
+      holder.add(inst);
+    });
+    applyDecals(holder, product, finishId, spec);
+    holder.userData.reface = fid => applyDecals(holder, product, fid, spec);
+    /* INSTALL: orient the ProductRoot from the surface normal, then put local
+       z = 0 — where every instance's mount face already is — on the TILE, not on
+       the artwork anchor 2.5 cm in front of it. */
+    holder.quaternion.copy(installQuat(surf, rule, 0));
+    seatOnSurface(holder, surf, { mountPlane: "anchor", onTile: true, face: rule.face },
+                  defaultSpot(wall, cfg), 0.0015);
+    holder.userData.anchorPos = holder.position.clone();
     if (selected === uid) setEmissive(holder, 0x2a2013);    // keep highlight if still selected
     hideLoading();
     if (onReady) onReady();
   }).catch(err => {
     // the OBJ is missing / unparseable — fall back to the product's own artwork so
     // the pick ALWAYS lands something visible in the room instead of an empty group
-    console.error("3D model failed:", spec.url, err);
+    console.error("3D model failed:", spec.url || spec.proc, err);
     hideLoading();
     if (onReady) onReady(err);
   });
@@ -2184,9 +2829,12 @@ function placeProduct(product, finishId, wall, frame) {
       if (err) cutoutFallback(placed.get(uid));   // OBJ missing → show the product artwork instead
       reveal();
     });
-    mesh.rotation.set(0, 0, 0);
+    // build3DHolder installs the holder inside its async callback — do NOT reset
+    // the rotation here, that used to fight it
     room.add(mesh); meshes.push(mesh);
-    placed.set(uid, { uid, mesh, product, finishId, wall, cfg, is3D: true });
+    placed.set(uid, { uid, mesh, product, finishId, wall, cfg, is3D: true, onTile: true,
+                      jetSet: spec.set === "jets" && !cfg.single,
+                      surface: surfaceOf(wall), rule: ruleFor(product, wall) });
     if (isBasinMixer(product, wall)) setStockMixer(false);
     selectProduct(uid);
     renderRail();
@@ -2270,9 +2918,19 @@ function placeProduct(product, finishId, wall, frame) {
     img.onload = () => {
       const ar = img.naturalHeight / img.naturalWidth || 1;
       const d = 0.016, hex = finishHex(finishId, product);
-      const jetRoll = rollFor(product, cfg, img, art);
+      /* A JET'S OWN POSE IS NEVER TOUCHED. This used to assign
+         `jm.rotation.z = jetRoll` on every child — and with no jet in the range
+         carrying a roll, that was writing 0 onto each one, i.e. flattening
+         whatever pose the child had. The installer orients the ProductRoot and
+         nothing else; a child is only written to if a SKU deliberately asks for
+         a roll, which none currently does. */
+      const jetRoll = rollFor(cfg);
       mesh.children.slice().forEach(jm => {
-        jm.rotation.z = jetRoll;                  // measured, not typed
+        // ONLY the jets. The group can also hold the installation-debug helpers
+        // (a Group, with no .geometry), and this loop used to assume every child
+        // was a jet plane and threw on the first one that was not.
+        if (!jm.userData.jet) return;
+        if (jetRoll) jm.rotation.z = jetRoll;     // only if a SKU asked; never reset to 0
         jm.geometry.dispose();
         jm.geometry = new THREE.PlaneGeometry(jetW, jetW * ar);
         jm.geometry.translate(0, 0, d);
@@ -2294,8 +2952,13 @@ function placeProduct(product, finishId, wall, frame) {
     const img = new Image();
     img.onload = () => {
       const ar = img.naturalHeight / img.naturalWidth || 1.4;
-      // hang it level — measured off this very artwork, see measuredRoll
-      mesh.rotation.z = rollFor(product, cfg, img, art);
+      /* Hangs as photographed: the plate is the datum, see rollFor. Re-installed
+         WITH the roll rather than written onto rotation.z — a raw Euler write
+         only happened to work here because the piece's other two Euler terms
+         came from the quaternion, and it would have silently mis-installed on any
+         wall that is not axis-aligned. installQuat applies the roll about the
+         piece's OWN forward axis, which is what a photo tilt is. */
+      mesh.quaternion.copy(installQuat(surface, rule, rollFor(cfg)));
       // A tall piece is sized by its height, not its width (see MAX_H). Done
       // here because it needs the real aspect of the loaded artwork — and done
       // by reassigning `width`, so every body, rim, arm, hose, housing and
@@ -2309,7 +2972,9 @@ function placeProduct(product, finishId, wall, frame) {
       const rim = new THREE.Mesh(new THREE.PlaneGeometry(width, width * ar),
         new THREE.MeshBasicMaterial({ map: mesh.material.map, color: 0x3a352d, transparent: true, alphaTest: 0.45, side: THREE.DoubleSide }));
       rim.name = "rim"; rim.position.z = -0.008; mesh.add(rim);
+      let gotDepth = false;                 // did ANY branch below give it a body?
       if (cfg.shape === "head" && wall !== "ceiling") {
+        gotDepth = true;
         // a wall head stands off the tiles on its arm — flat against them it reads
         // as a sticker, and its inlet connector points at nothing
         const reach = cfg.reach == null ? 0.26 : cfg.reach;
@@ -2324,9 +2989,11 @@ function placeProduct(product, finishId, wall, frame) {
         mesh.add(handShowerRig(finishHex(finishId, product), width, width * ar));
       }
       if (wall === "counter") {
+        gotDepth = true;
         mesh.geometry.translate(0, width * ar / 2, 0);   // stand it on the counter, don't bury it
         rim.position.z = -0.008;
       } else if (cfg.panel && wall !== "ceiling") {
+        gotDepth = true;
         /* A thermostatic panel or diverter trim is a BLOCK on the wall, and the
            client's reference makes the point: you see the body standing off the
            tile, its end face catching the light, a shadow under it. At 5% of the
@@ -2339,8 +3006,15 @@ function placeProduct(product, finishId, wall, frame) {
            wall. Asking for 4.75 cm here bought 7.7 cm of fitting standing off
            the tile, which is not a trim any more, it is a shelf. Subtract the
            standoff and ask for the real number. */
-        const proud = Math.min(0.050, Math.max(0.030, width * 0.085));
-        const d = Math.max(0.004, proud - OFF);
+        /* 3-5 cm here was the whole trim standing off the tile like a shelf, and
+           the client read it as a box that was not sitting flat. A concealed
+           trim PLATE is 10-16 mm proud; the dial and buttons stand off the
+           plate in the photograph, and reliefFace gives them their light. The
+           face therefore sits at proud - OFF, BEHIND the artwork anchor — fine:
+           the anchor is a z-fight standoff for flat photographs, not a datum,
+           and the body below still runs back through the tile. */
+        const proud = Math.min(0.016, Math.max(0.011, width * 0.028));
+        const d = proud - OFF;
         mesh.geometry.translate(0, 0, d);
         mesh.remove(rim);                                   // the extrusion IS the rim now
         extrudeCutout(mesh, mesh.material.map, width, width * ar, d + sinkFor(wall), finishHex(finishId, product), d);
@@ -2349,6 +3023,7 @@ function placeProduct(product, finishId, wall, frame) {
         seatPanel(mesh, mesh.material.map, width, width * ar, finishHex(finishId, product));
       }
       if (cfg.billboard) {
+        gotDepth = true;
         // a spout or tap is a solid object seen from the side: without a body it
         // is a piece of foil the moment the room turns
         const d = 0.018;
@@ -2358,9 +3033,30 @@ function placeProduct(product, finishId, wall, frame) {
         if (sinkFor(wall)) mesh.add(wallBoss(finishHex(finishId, product), width, cfg, width * ar));
         const rec0 = placed.get(uid); if (rec0) rec0.halfW = width / 2;
       }
+      /* NOTHING GAVE IT DEPTH. A wall cutout that none of the branches above
+         extruded sits exactly on the anchor plane — and that plane is already
+         OFF (2.5 cm) clear of the tile, so the piece is a photograph floating on
+         the standoff with nothing bridging it. Its own validator says so:
+         "nothing proud of the surface" (see validateOne).
+         It is not a per-SKU slip. Any product whose category carries none of the
+         depth flags lands here — the wall-mounted rain head whose artwork already
+         includes its own arm, the wastes, and anything added later that nobody
+         remembers to flag. So the FLOOR is handled once, here: its own thickness
+         in front, and a boss on the mount axis bridging the standoff behind,
+         which is the minimum a wall fitting needs to be installed rather than
+         stuck on. */
+      if (!gotDepth && wall !== "ceiling" && wall !== "counter") {
+        const d = 0.014;
+        mesh.geometry.translate(0, 0, d);
+        mesh.remove(rim);
+        extrudeCutout(mesh, mesh.material.map, width, width * ar, d + sinkFor(wall),
+                      finishHex(finishId, product), d);
+        if (sinkFor(wall)) mesh.add(wallBoss(finishHex(finishId, product), width, cfg, width * ar));
+      }
       // grounding: without this every fitting reads as pasted onto the tile
       if (wall !== "ceiling" && wall !== "counter") addContactShadow(mesh, width, width * ar);
       if (wall === "ceiling" && cfg.shape === "head") {
+        gotDepth = true;
         // a round head screws onto a drop pipe — hang it below the ceiling so it
         // reads as a shower head rather than a decal stuck to the slab. The pipe
         // runs UP THROUGH the slab and wears a canopy where it passes through, so
@@ -2376,6 +3072,7 @@ function placeProduct(product, finishId, wall, frame) {
         canopy.rotation.x = Math.PI / 2; canopy.position.z = (0.026 - CEIL_EMBED) / 2;
         canopy.name = "canopy"; canopy.userData.metal = true; mesh.add(canopy);
       } else if (wall === "ceiling") {
+        gotDepth = true;
         // A flush overhead plate is cast INTO the ceiling: you see its underside
         // and a slim edge, never a gap above it. So the housing runs from the
         // plate face UP THROUGH the slab — the buried part (CEIL_EMBED) is what
@@ -2393,17 +3090,22 @@ function placeProduct(product, finishId, wall, frame) {
     img.onerror = () => reveal();
     img.src = art;
   }
-  // `roll` counter-rotates a cutout in its own plane. The spout renders are shot
-  // from above at a 3/4 angle, so laid flat on a wall the body slopes downhill and
-  // the piece reads as if it were stuck on crooked next to the square-on plates.
-  mesh.rotation.set(w.rot.x, w.rot.y, mesh.isGroup ? 0 : (cfg.roll || 0));
+  /* INSTALL IT. One call, derived from the surface normal and the category's
+     installation rule — see installQuat. `roll` would counter-rotate a cutout in
+     its own plane; nothing in the range sets one (a 3/4 render hangs as shot,
+     square on its plate), and a jet SET carries none of its own because each jet
+     inside it is levelled individually. */
+  const surface = surfaceOf(wall);
+  const rule = ruleFor(product, wall);
+  mesh.quaternion.copy(installQuat(surface, rule, mesh.isGroup ? 0 : (cfg.roll || 0)));
   positionOnWall(mesh, wall, defaultSpot(wall, cfg));
   room.add(mesh); meshes.push(mesh);
   // a jet SET is one record holding four separate fittings, so it swings per jet
   // rather than as a slab — stepBillboards needs to be told which it is
   const jetSet = product.catId === "body-jet" && !cfg.single;
-  placed.set(uid, { uid, mesh, product, finishId, wall, cfg, is3D, jetSet,
+  placed.set(uid, { uid, mesh, product, finishId, wall, cfg, is3D, jetSet, surface, rule,
                     halfW: jetSet ? cfg.width / 2 : undefined });
+  drawInstallDebug(placed.get(uid));
   if (isBasinMixer(product, wall)) setStockMixer(false);
   selectProduct(uid);
   renderRail();
@@ -2419,16 +3121,26 @@ function defaultSpot(wall, cfg) {
   return new THREE.Vector3(cfg.x != null ? cfg.x : 0, cfg.y != null ? cfg.y : 1.3, WALLS.back.val);   // back
 }
 
+/* WHERE ON THE SURFACE. This is the in-plane half of installation: clamp the
+   spot so a fitting cannot land outside the room, then let the normal component
+   be decided by the mount plane.
+   Products on the cutout and procedural paths are BUILT around local z = 0 —
+   they deliberately run their bodies back through it into the tile — so their
+   mount plane IS the origin, and seating them means putting the origin on the
+   surface. WALLS[wall].val already carries the OFF standoff that keeps artwork
+   off the tile, so that is the plane they land on. */
 function positionOnWall(mesh, wall, pos) {
   const w = WALLS[wall];
   const p = pos.clone();
   if (wall === "counter") { mesh.position.copy(p); return; }
-  // clamp inside the room with a small margin
-  const m = 0.25;
+  const m = 0.25;                                    // keep it inside the room
   if (wall === "ceiling") { p.x = clamp(p.x, -HX + m, HX - m); p.z = clamp(p.z, -HZ + m, HZ - m); p.y = w.val; }
   else if (wall === "back") { p.x = clamp(p.x, -HX + m, HX - m); p.y = clamp(p.y, 0.3, RH - 0.15); p.z = w.val; }
   else { p.z = clamp(p.z, -HZ + m, HZ - m); p.y = clamp(p.y, 0.3, RH - 0.15); p.x = w.val; }
   mesh.position.copy(p);
+  // remember the seated spot: stepBillboards stands a swinging piece off from
+  // HERE along the normal, and needs the un-offset position to do it
+  mesh.userData.anchorPos = p.clone();
 }
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
@@ -2467,11 +3179,19 @@ function swingFor(base, x, z) {
   return clamp(d, -BILLBOARD_SWING, BILLBOARD_SWING);
 }
 const _jetWP = new THREE.Vector3();
+/* The installed yaw of a surface, taken from its own normal rather than read out
+   of a per-wall Euler table. atan2(n.x, n.z) is the angle whose +Z lands on that
+   normal, which is exactly what installQuat produces for a wall — so the swing
+   below is measured against the real installation, and a wall at any angle works. */
+function surfaceYaw(surface) {
+  return surface ? Math.atan2(surface.normal.x, surface.normal.z) : 0;
+}
 function stepBillboards() {
   placed.forEach(rec => {
     if (rec.is3D || !rec.cfg || !rec.cfg.billboard) return;
-    const w = WALLS[rec.wall]; if (!w) return;
-    const base = w.rot.y || 0;
+    const surf = rec.surface || surfaceOf(rec.wall); if (!surf) return;
+    const w = WALLS[rec.wall];
+    const base = surfaceYaw(surf);
     if (rec.jetSet) {
       // FOUR jets in one group. Swinging the group would rotate the whole grid
       // about its centre and carry two of the jets off the wall, so each one
@@ -2494,14 +3214,19 @@ function stepBillboards() {
     while (d > Math.PI) d -= Math.PI * 2;
     while (d < -Math.PI) d += Math.PI * 2;
     d = clamp(d, -BILLBOARD_SWING, BILLBOARD_SWING);
-    rec.mesh.rotation.y = base + d;
-    // A yawed plane pivots about its centre, so one half would swing back THROUGH
-    // the tiles — which is what made a turned spout look half-buried and
-    // half-floating. Stand it off by exactly the depth the swing needs.
+    /* Swing it about the piece's OWN up axis, on top of its installation.
+       `rotation.y = base + d` swung it about WORLD Y, which is the same thing
+       only while every wall is vertical and axis-aligned — on a sloped or
+       angled surface it would have peeled the piece off the wall. */
+    rec.mesh.quaternion.copy(installQuat(surf, rec.rule || ruleFor(rec.product, rec.wall), rollFor(rec.cfg)))
+      .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), d));
+    /* A yawed plane pivots about its centre, so one half would swing back
+       THROUGH the tiles. Stand it off by exactly the depth the swing needs —
+       ALONG THE SURFACE NORMAL, which used to be three per-wall special cases
+       and now works for any normal. */
     const off = (rec.halfW || 0) * Math.abs(Math.sin(d));
-    if (rec.wall === "back") rec.mesh.position.z = w.val + off;
-    else if (rec.wall === "left") rec.mesh.position.x = w.val + off;
-    else if (rec.wall === "right") rec.mesh.position.x = w.val - off;
+    const seat = rec.mesh.userData.anchorPos;
+    if (seat) rec.mesh.position.copy(seat).addScaledVector(surf.normal, off);
   });
 }
 
@@ -2584,12 +3309,12 @@ function cutoutFallback(rec) {
   artMaterial(mat);
   mat.color.setScalar(artExposure());
   const plane = new THREE.Mesh(new THREE.PlaneGeometry(width, width * 1.2), mat);
-  if (rec.wall === "ceiling") plane.rotation.x = -Math.PI / 2;
   rec.mesh.add(plane);
-  rec.mesh.rotation.set(0, MODEL_WALL_YROT[rec.wall] || 0, 0);
-  rec.mesh.updateMatrixWorld(true);
-  const sz = new THREE.Box3().setFromObject(rec.mesh).getSize(new THREE.Vector3());
-  seatOnWall(rec.mesh, rec.wall, defaultSpot(rec.wall, rec.cfg), sz);
+  // the same installer as everything else — this used to carry its own copy of
+  // the per-wall Euler table and could disagree with the other two
+  const surf = rec.surface || surfaceOf(rec.wall);
+  rec.mesh.quaternion.copy(installQuat(surf, rec.rule || ruleFor(rec.product, rec.wall), 0));
+  positionOnWall(rec.mesh, rec.wall, defaultSpot(rec.wall, rec.cfg));
 }
 
 /* =========================================================================
@@ -2705,14 +3430,19 @@ function changeFinish(uid, fid) {
       if (!o.userData.metal || !o.material) return;
       o.material.color.setHex(hex);
       if (o.userData.shade != null) o.material.color.multiplyScalar(o.userData.shade);
+      if (o.material.userData.fittingEnv && !o.userData.shade) o.material.roughness = finishRough(fid) * 0.8;
     });
     // procedural pieces take their colour from the artwork, not the swatch tone
     if (rec.mesh.userData.retint) rec.mesh.userData.retint(rec.product.images[fid]);
+    if (rec.mesh.userData.reface) rec.mesh.userData.reface(fid);   // and the SKU's own spray face, in that finish
   } else {
     const path = rec.product.images[fid]; if (!path) return;
     // grouped body-jet set shares ONE material across its 4 jets; single products
     // carry their own material — handle both
-    const targetMat = rec.mesh.material || (rec.mesh.children[0] && rec.mesh.children[0].material);
+    // a jet SET shares ONE material across its four planes; pick it off a JET,
+    // not off children[0], which can be the installation-debug group
+    const jetChild = rec.mesh.children && rec.mesh.children.find(c => c.userData.jet && c.material);
+    const targetMat = rec.mesh.material || (jetChild && jetChild.material);
     if (!targetMat) return;
     const old = targetMat.map;
     const next = productTexture(roomArt(path, rec.cfg), rec.cfg);   // face-on art and the mirror both survive a finish swap
@@ -2760,7 +3490,7 @@ function removeProduct(uid) {
   rec.mesh.traverse(o => {
     // 3D-model geometry is SHARED with the load cache (clones reuse buffers) —
     // disposing it would corrupt the next placement of the same model.
-    if (o.geometry && !rec.is3D) o.geometry.dispose();
+    if (o.geometry && (!rec.is3D || o.userData.own)) o.geometry.dispose();
     if (o.material) { if (o.material.map) o.material.map.dispose(); o.material.dispose(); }
   });
   placed.delete(uid);
