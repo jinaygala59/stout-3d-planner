@@ -4825,9 +4825,10 @@ function renderEmptyState() {
   el.innerHTML =
     '<p class="e-kicker">Start your bathroom</p>' +
     '<h2>Step 1 — choose your diverter</h2>' +
-    '<p class="e-body">Pick anything from the products list and it locks into its correct place. ' +
-    'Tap it in the room to try it in another finish. Nothing is priced here — Stout supplies ' +
-    'and installs the whole design, and your consultant quotes it.</p>' +
+    '<p class="e-body">The diverter comes first, because it decides the rest: tap one to pick ' +
+    'its finish, and the whole room is designed in that finish. How many functions it has is how ' +
+    'many fittings it can feed. Nothing is priced here — Stout supplies and installs the whole ' +
+    'design, and your consultant quotes it.</p>' +
     '<div class="e-row">' +
       '<button type="button" data-e="first">Choose a diverter</button>' +
       '<button type="button" data-e="set">Auto-arrange a full set</button>' +

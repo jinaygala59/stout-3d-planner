@@ -121,12 +121,12 @@ const RAW_PRODUCTS = [
   { code: "ST-C1011", cat: "rain-shower", name: "Cascada Maxima Panel",        finishes: ["gunGrey","brushedRoseGold","polishedGold"], variant: "waterfall blades + LED + centre jet" },
 
   // ---- Concealed Diverter (single-lever) ----
-  { code: "ST-D5017", cat: "diverter",    name: "Regale Concealed Diverter",   finishes: ["chrome","gunGrey","champagne","brushedRoseGold","matteBlack"],                                          badge: "Signature" },
+  { code: "ST-D5017", cat: "diverter",    name: "Regale Concealed Diverter",   finishes: ["chrome","gunGrey","champagne","brushedRoseGold","matteBlack"],                                          badge: "Signature", outlets: 2 },
 
   // ---- Thermostatic Diverter panels (D-series) ----
-  { code: "ST-D5018", cat: "thermostatic", name: "Regale Grande Thermostatic Panel", finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], badge: "Bestseller" },
-  { code: "ST-D5019", cat: "thermostatic", name: "Regale Thermostatic Panel",        finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"] },
-  { code: "ST-D5020", cat: "thermostatic", name: "Regale Compact Thermostatic Panel",finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"] },
+  { code: "ST-D5018", cat: "thermostatic", name: "Regale Grande Thermostatic Panel", finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], badge: "Bestseller", outlets: 6 },
+  { code: "ST-D5019", cat: "thermostatic", name: "Regale Thermostatic Panel",        finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], outlets: 4 },
+  { code: "ST-D5020", cat: "thermostatic", name: "Regale Compact Thermostatic Panel",finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], outlets: 3 },
 
   // ---- Wall-mounted BASIN MIXERS ----
   // Both of these are called "Wall Spout" in the range and neither is one: look
@@ -266,9 +266,9 @@ const RAW_PRODUCTS = [
   /* ---- 2026-09 Drive range: showers, diverters, spouts and body jets, each
      with the full set of finishes from the factory photography ---- */
   { code: "ST-FDP", cat: "rain-shower", name: "Cascada Flow Rain Panel", finishes: ["chrome","gunGrey","champagne","brushedRoseGold","matteBlack","polishedGold"], variant: "wide plate · centre waterfall slot" },
-  { code: "ST-CP25", cat: "thermostatic", name: "Regale Digital Thermostatic Panel", finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "digital · dial + 4 function keys" },
-  { code: "ST-MB2", cat: "thermostatic", name: "Regale Smart Control Panel", finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "digital · dial + 6 function keys" },
-  { code: "ST-CJ1", cat: "thermostatic", name: "Regale Touch Control Panel", finishes: ["chrome","gunGrey","champagne","roseGold","matteBlack"], variant: "digital · touch keys + temp dial" },
+  { code: "ST-CP25", cat: "thermostatic", name: "Regale Digital Thermostatic Panel", finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "digital · dial + 4 function keys", outlets: 4 },
+  { code: "ST-MB2", cat: "thermostatic", name: "Regale Smart Control Panel", finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "digital · dial + 4 function keys", outlets: 4 },
+  { code: "ST-CJ1", cat: "thermostatic", name: "Regale Touch Control Panel", finishes: ["chrome","gunGrey","champagne","roseGold","matteBlack"], variant: "digital · dial + 6 function keys", outlets: 6 },
   /* The round concealed mixer the client sent on 2026-09-08. Its renders are the
      only ones in the Drive with no SKU in the filename — 55__1_ / 55__2_ for the
      rose gold and gold, AZBS1 / AZBS2 for the chrome and matte black — so the
@@ -276,13 +276,13 @@ const RAW_PRODUCTS = [
      The client says it ships in the whole range; the folder holds four of the
      eight, and a finish is only listed here when there is a photograph of the
      product in it. The other four go in the day their renders arrive. */
-  { code: "ST-AZBS", cat: "diverter", name: "Regale Round Concealed Mixer", finishes: ["chrome","matteBlack","roseGold","gold"], variant: "round plate · single lever", badge: "New" },
-  { code: "ST-D5001", cat: "diverter", name: "Regale Round Concealed Diverter", finishes: ["chrome"], variant: "round plate · single lever" },
-  { code: "ST-D5002", cat: "diverter", name: "Regale Square Lever Diverter", finishes: ["chrome"], variant: "square plate · single lever" },
-  { code: "ST-D5003", cat: "diverter", name: "Regale 3-Way Concealed Diverter", finishes: ["chrome"], variant: "square plate · 3 buttons" },
-  { code: "ST-D5004", cat: "diverter", name: "Regale 5-Button Diverter Plate", finishes: ["chrome","roseGold","matteBlack"], variant: "tall plate · dial + 5 buttons" },
-  { code: "ST-D5009", cat: "diverter", name: "Regale 2-Way Concealed Thermostat", finishes: ["chrome","roseGold","matteBlack"], variant: "tall plate · 2 outlets" },
-  { code: "ST-D5010", cat: "diverter", name: "Regale 3-Way Concealed Thermostat", finishes: ["chrome","roseGold","matteBlack"], variant: "tall plate · 3 outlets" },
+  { code: "ST-AZBS", cat: "diverter", name: "Regale Round Concealed Mixer", finishes: ["chrome","matteBlack","roseGold","gold"], variant: "round plate · single lever", badge: "New", outlets: 1 },
+  { code: "ST-D5001", cat: "diverter", name: "Regale Round Concealed Diverter", finishes: ["chrome"], variant: "round plate · single lever", outlets: 2 },
+  { code: "ST-D5002", cat: "diverter", name: "Regale Square Lever Diverter", finishes: ["chrome"], variant: "square plate · single lever", outlets: 2 },
+  { code: "ST-D5003", cat: "diverter", name: "Regale 3-Way Concealed Diverter", finishes: ["chrome"], variant: "square plate · 3 buttons", outlets: 3 },
+  { code: "ST-D5004", cat: "diverter", name: "Regale 6-Function Diverter Plate", finishes: ["chrome","roseGold","matteBlack"], variant: "tall plate · dial + 6 buttons", outlets: 6 },
+  { code: "ST-D5009", cat: "diverter", name: "Regale 2-Way Concealed Thermostat", finishes: ["chrome","roseGold","matteBlack"], variant: "tall plate · 2 outlets", outlets: 2 },
+  { code: "ST-D5010", cat: "diverter", name: "Regale 3-Way Concealed Thermostat", finishes: ["chrome","roseGold","matteBlack"], variant: "tall plate · 3 outlets", outlets: 3 },
   { code: "ST-BJ21F", cat: "body-jet", name: "Aqua Square Concealed Body Jet", finishes: ["brushedRoseGold","champagne","chrome","gunGrey","matteBlack","roseGold"], variant: "square escutcheon · single jet" },
   { code: "ST-2FBJ", cat: "body-jet", name: "Aqua Micro-Jet Body Spray", finishes: ["chrome","matteBlack","roseGold"], variant: "square plate · multi micro-jet" },
 ];
@@ -322,6 +322,12 @@ function buildProducts() {
       defaultFinish: (rp.defaultFinish && finishes.includes(rp.defaultFinish)) ? rp.defaultFinish : finishes[0],
       badge: rp.badge || null,
       variant: rp.variant || null,   // what tells near-identical plates apart
+      /* HOW MANY OUTLETS THE VALVE FEEDS — counted off each SKU's own render,
+         not off its name. It is what decides how many fittings the room may
+         hold once this valve is on the wall: a 3-function panel plumbs three
+         things, and a planner that lets you draw six is drawing a bathroom
+         nobody can install. Only the two valve categories carry it. */
+      outlets: rp.outlets || null,
     });
   });
   return byCat;
