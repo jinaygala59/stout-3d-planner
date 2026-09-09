@@ -3704,7 +3704,15 @@ const RAIL_GROUPS = [
      showers into Showers (or a jet panel into Body Jets) can't quietly leave
      two overhead heads or eight jets on the same wall. */
   { id: "diverters", step: 1, name: "Diverter",  cats: ["thermostatic", "diverter"], solo: true },
-  { id: "showers",   step: 2, name: "Shower",    cats: ["rain-shower"], solo: true },
+  /* CEILING ONLY, by the client's decision (meeting, 2026-09-09): the Shower
+     step offers overhead rain showers and not the three wall-mounted heads.
+     Those three are the only rain-shower SKUs whose SKU3D entry moves them off
+     the ceiling (mount: "back" — ST-1017 flat to the tile, ST-1027 / ST-1033 on
+     a built arm), so this list IS "everything not on the ceiling"; if another
+     wall head is ever filed under rain-shower it belongs here too. They stay
+     loaded, sized and anchored, same as the deck mixer under Spouts — one line
+     brings any of them back. */
+  { id: "showers",   step: 2, name: "Shower",    cats: ["rain-shower"], solo: true, omit: ["ST-1017", "ST-1027", "ST-1033"] },
   { id: "bodyjets",  step: 3, name: "Body Jet",  cats: ["body-jet"], solo: true },
   /* basin-mixer rides with the spouts because two products literally named
      "Axis Wall Spout" are filed there; without it this group shows ONE item and
@@ -3761,9 +3769,20 @@ const railQuery = { text: "" };
 let openGroup = RAIL_GROUPS[0].id;
 const groupOfCat = catId => (RAIL_GROUPS.find(g => g.cats.includes(catId)) || {}).id;
 
+/* Every SKU a rail group has asked to hide, in one set. `omit` lives on the
+   group, but "is this product on offer?" gets asked from more than one place:
+   the rail itself, and anything that PICKS a product for the client — the
+   auto-arrange. The auto-arrange read PRODUCTS[cid] directly and took the
+   first finish match, so hiding the wall shower heads from Step 2 did not stop
+   it dropping one in: the client hides a product and the demo puts it back.
+   Both paths go through offered() now. Saved designs deliberately do not — a
+   hidden SKU already in someone's room still loads; hiding is about what is
+   OFFERED, not about deleting what was chosen. */
+const OMITTED = new Set(RAIL_GROUPS.reduce((a, g) => a.concat(g.omit || []), []));
+const offered = cid => (PRODUCTS[cid] || []).filter(p => !OMITTED.has(p.code));
+
 function railItems(group) {
-  const items = group.cats.reduce((a, c) => a.concat(PRODUCTS[c] || []), [])
-    .filter(p => !(group.omit || []).includes(p.code));
+  const items = group.cats.reduce((a, c) => a.concat(offered(c)), []);
   const q = railQuery.text.trim().toLowerCase();
   return items.filter(p => {
     if (!q) return true;
@@ -3818,8 +3837,7 @@ function renderRail() {
   let shown = 0, total = 0;
   // count what the rail can actually OFFER — `omit` has to bite here too, or the
   // header advertises a design the list does not contain
-  RAIL_GROUPS.forEach(g => g.cats.forEach(c => (total += (PRODUCTS[c] || [])
-    .filter(p => !(g.omit || []).includes(p.code)).length)));
+  RAIL_GROUPS.forEach(g => g.cats.forEach(c => (total += offered(c).length)));
 
   acc.innerHTML = RAIL_GROUPS.map((g, i) => {
     const items = railItems(g);
@@ -4250,7 +4268,7 @@ function autoArrange() {
   // FINISH FAMILY first, then take the best product in each category that can
   // actually wear it. A smaller matched set beats a complete mismatched one.
   const PREF = ["brushedGold", "gold", "chrome", "matteBlack", "roseGold"];
-  const canWear = (cid, fin) => (PRODUCTS[cid] || []).some(p => (p.finishes || []).includes(fin));
+  const canWear = (cid, fin) => offered(cid).some(p => (p.finishes || []).includes(fin));
   let best = null;
   PREF.forEach(fin => {
     const covered = DEMO_CATS.filter(cid => canWear(cid, fin)).length;
@@ -4263,8 +4281,8 @@ function autoArrange() {
   [...placed.values()].forEach(r => removeProduct(r.uid));
   const skipped = [];
   DEMO_CATS.forEach(cid => {
-    const list = (PRODUCTS[cid] || []).filter(p => (p.finishes || []).includes(fin));
-    if (!list.length) { if ((PRODUCTS[cid] || []).length) skipped.push(categoryName(cid)); return; }
+    const list = offered(cid).filter(p => (p.finishes || []).includes(fin));
+    if (!list.length) { if (offered(cid).length) skipped.push(categoryName(cid)); return; }
     const p = list[0];
     placeProduct(p, fin, skuCfg(p).mount || "back");
   });

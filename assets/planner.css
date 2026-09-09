@@ -153,6 +153,10 @@ input{font-family:inherit}
   border:1px solid var(--line-soft);display:grid;place-items:center;overflow:hidden}
 .cat-title .ic img{max-width:80%;max-height:80%;object-fit:contain}
 .cat-title b{font-size:var(--t-lead);font-weight:600;flex:1;line-height:1.25}
+/* the step number the client reads the four groups by — small, muted, and
+   set as a run-in before the name so the header still reads as one line */
+.cat-title b .step{display:inline-block;margin-right:.55em;font-size:var(--t-micro);font-weight:600;
+  letter-spacing:.08em;text-transform:uppercase;color:var(--gold, #c9a961);vertical-align:.08em}
 .cat-title .n{font-size:var(--t-micro);color:var(--muted);font-variant-numeric:tabular-nums}
 .cat-title .chev{color:var(--muted2);transition:.25s;font-size:10px}
 .cat-group.open .cat-title .chev{transform:rotate(90deg)}
