@@ -3562,6 +3562,16 @@ function renderTool() {
   };
   showFinish(rec.finishId);
 
+  /* NO SWATCHES ONCE THE VALVE IS IN. The finish was committed to when the
+     valve went on the wall — for the valve and for everything the valve feeds —
+     so offering a row of alternatives here would be offering something the tool
+     is about to refuse. Say what it is locked to, and say the way out. */
+  const lock = lockedFinish();
+  if (lock) {
+    $("#toolFins").innerHTML =
+      `<span class="fin-lock">Locked to <b>${finName(lock)}</b> by the ` +
+      `${placedValve().product.name}. Clear the room to change it.</span>`;
+  } else
   $("#toolFins").innerHTML = rec.product.finishes.map(fid =>
     // a product referencing a finish the palette no longer defines must not take
     // the whole tool down — it renders as a plain chip and stays selectable
@@ -3595,8 +3605,17 @@ $("#tool").querySelectorAll("[data-a]").forEach(b => b.onclick = () => {
   setBaseScale(rec.mesh, next);
   saveDesign();
 });
-function changeFinish(uid, fid) {
+/* `commit` is the valve setting the room's finish — the one caller allowed
+   through the lock, because it is the thing that CREATES the lock. Every other
+   route (a swatch, a restored design) is refused while a valve is on the wall. */
+function changeFinish(uid, fid, commit) {
   const rec = placed.get(uid); if (!rec) return;
+  const lock = lockedFinish();
+  if (lock && !commit && fid !== lock) {
+    toast(`The room is locked to ${finName(lock)} — clear it to change finish`);
+    return;
+  }
+  if (!(rec.product.finishes || []).includes(fid)) return;   // no art, no finish
   rec.finishId = fid;
   sessionFinish = fid;
   if (rec.is3D) {
@@ -3729,22 +3748,88 @@ const RAIL_GROUPS = [
      Nothing is deleted. All four keep their catalogue row, their category,
      their anchor and their artwork, so a Basins group would list them again by
      naming the category — see the note on hidden groups above.
-     What is left in the list is what a spout actually is: ST-PLAIN (a plain
-     wall spout), ST-BSDV (a spout with a diverter handle, which switches
-     outlets rather than turning water on) and ST-SARM (the shower arm, which
-     the client asked to be listed here). */
+     ST-BSDV is out too, and for a different reason: it has no artwork of its
+     own yet. Its row borrows ST-PLAIN's photograph (catalog.js `art`), so on
+     the rail it sat next to the plain spout showing the same picture and read
+     as a duplicate of it — the diverter handle that is the whole point of the
+     SKU is not in the image. Listing it again is a one-word change the day its
+     render arrives; until then a card that cannot show what it is does not
+     belong in front of a client.
+     What is left in the list is ST-PLAIN (a plain wall spout) and ST-SARM (the
+     shower arm, which the client asked to be listed here). */
   /* Hand showers ride in this group too, as the client's step 4 names them.
      NOT `solo`: a spout and a handset are two fittings on two brackets, and the
      per-category rule in placeProduct already keeps each to one. The shattaf
      (health-faucet) is deliberately not here — it is a WC fitting, not a hand
      shower, and it was not asked for. */
-  { id: "spouts",    step: 4, name: "Spout / Hand Shower", cats: ["bath-spout", "hand-shower"], omit: ["ST-2513"] },
+  { id: "spouts",    step: 4, name: "Spout / Hand Shower", cats: ["bath-spout", "hand-shower"], omit: ["ST-2513", "ST-BSDV"] },
 ];
 /* Auto-arrange builds a SHOWER SET, so it stays on the shower categories even
    though the list now offers the whole range — otherwise the demo would drop a
    waste and a bib tap into it and stop reading as one. */
 const DEMO_CATS = ["rain-shower", "thermostatic", "diverter", "bath-spout", "body-jet"];
 const RAIL_CATS = RAIL_GROUPS.reduce((a, g) => a.concat(g.cats), []);
+
+/* =========================================================================
+   THE VALVE DECIDES THE ROOM
+   A concealed valve is not one more fitting in the list: it is the plumbing the
+   rest of the room hangs off. Two real constraints follow from that, and the
+   planner now enforces both instead of letting a client draw a bathroom no
+   plumber can install.
+     1. IT FEEDS A FIXED NUMBER OF OUTLETS. A three-function panel plumbs three
+        things. So once a valve is on the wall, the room may hold that many
+        fittings from the categories a valve actually feeds — and no more.
+     2. IT SETS THE FINISH. A shower set is bought as a set; the valve is the
+        piece you commit to first, and everything after it matches. So the
+        finish is chosen BEFORE the valve is placed, and once it is placed it is
+        locked — for the valve and for everything else. Clearing the room is the
+        way back, which is also true on site.
+   ========================================================================= */
+const VALVE_CATS = new Set(["thermostatic", "diverter"]);
+const isValve = p => VALVE_CATS.has(p.catId);
+/* What a valve actually plumbs. A basin mixer is NOT on this list — it is fed
+   off the basin's own stops, not off the shower valve, and counting it would
+   spend an outlet the valve never had to give. */
+const OUTLET_CATS = new Set(["rain-shower", "body-jet", "bath-spout", "hand-shower"]);
+const placedValve = () => [...placed.values()].find(r => isValve(r.product)) || null;
+/* The four body jets are ONE outlet: a jet set is fed from a single port, which
+   is why they arrive as one selectable piece. Counting them as four would make
+   every valve in the range look two sizes too small. */
+const outletsUsed = () => [...placed.values()].filter(r => OUTLET_CATS.has(r.product.catId)).length;
+const outletCap = () => { const v = placedValve(); return v ? (v.product.outlets || 1) : Infinity; };
+/* the finish the whole room is committed to, or null while there is no valve */
+const lockedFinish = () => { const v = placedValve(); return v ? v.finishId : null; };
+/* is anything from this category already in the room? A swap inside a category
+   costs no outlet — the old piece comes off as the new one goes on. */
+const catPlaced = cid => [...placed.values()].some(r => r.product.catId === cid);
+const finName = fid => (FINISHES[fid] || {}).name || fid;
+
+/* Why this product cannot be added right now — a sentence to show the client,
+   or null when it can. Everything that refuses a product answers here, so the
+   rail, the swatch tray and the add path can never disagree about it. */
+function blockReason(p) {
+  const lock = lockedFinish(), v = placedValve();
+  if (lock && !(p.finishes || []).includes(lock))
+    return `Not made in ${finName(lock)}`;
+  if (isValve(p) && v && p.outlets && p.outlets < outletsUsed())
+    return `Feeds ${p.outlets}, the room has ${outletsUsed()}`;
+  if (OUTLET_CATS.has(p.catId) && !catPlaced(p.catId) && outletsUsed() >= outletCap())
+    return `${v ? v.product.name : "The valve"} feeds ${outletCap()}`;
+  return null;
+}
+/* Could the room still match if the valve went in wearing THIS finish? Asked per
+   swatch, because the answer differs per swatch: the valve sets the finish for
+   everything, so a colour one of the pieces already on the wall is not made in
+   would stand the room up in two finishes. */
+const finishStrands = fid =>
+  [...placed.values()].filter(r => !(r.product.finishes || []).includes(fid)).map(r => r.product.name);
+
+/* the finishes a product may still be offered in, under whatever lock is on */
+function finishesFor(p) {
+  const lock = lockedFinish();
+  if (!lock) return p.finishes || [];
+  return (p.finishes || []).includes(lock) ? [lock] : [];
+}
 
 /* The finish the visitor is designing in. Picking any swatch sets it, and every
    piece added afterwards arrives in that finish when it is available — a set of
@@ -3757,6 +3842,10 @@ const railFinish = new Map();
 function cardFinish(p) {
   const rec = [...placed.values()].find(r => r.product.id === p.id);
   if (rec) return rec.finishId;
+  // a valve on the wall overrules the card, the session and the default: there
+  // is one finish in this room now and it is not up for negotiation
+  const lock = lockedFinish();
+  if (lock && (p.finishes || []).includes(lock)) return lock;
   const picked = railFinish.get(p.id);
   if (picked) return picked;
   if (sessionFinish && (p.finishes || []).includes(sessionFinish)) return sessionFinish;
@@ -3777,6 +3866,9 @@ const railQuery = { text: "" };
    product collapse the group you were working in and leave the FIRST group
    (openByDefault, i === 0) expanded instead: the one list you weren't using. */
 let openGroup = RAIL_GROUPS[0].id;
+/* the valve card whose swatches are open. Module-level, like openGroup and for
+   the same reason: every add re-renders the rail from scratch. */
+let armedCard = null;
 const groupOfCat = catId => (RAIL_GROUPS.find(g => g.cats.includes(catId)) || {}).id;
 
 /* Every SKU a rail group has asked to hide, in one set. `omit` lives on the
@@ -3859,13 +3951,35 @@ function renderRail() {
     const cards = items.map(p => {
       const fin = cardFinish(p);
       const img = (p.images && (p.images[fin] || p.images[p.defaultFinish])) || "";
-      return `<div class="pcard ${isPlaced(p.id) ? "placed" : ""}" data-prod="${p.id}" data-cat="${p.catId}">
-        <button type="button" class="pc-main" data-add
-                aria-label="Add ${p.name}, ${p.code}${isPlaced(p.id) ? ", already in the room" : ""}">
+      const why = blockReason(p);
+      /* A VALVE IS NOT ADDED BY TAPPING IT. Its finish is the room's finish, so
+         it is chosen before the piece goes on the wall, not corrected after:
+         tapping the card opens its swatches and tapping a swatch is what places
+         it. Every other product still adds on one tap — it inherits the lock. */
+      const valve = isValve(p), armed = valve && armedCard === p.id && !why;
+      const fins = finishesFor(p);
+      const tray = !valve || why ? "" : `<div class="pc-fins"${armed ? "" : " hidden"}>
+          <span class="pc-fl">${fins.length > 1 ? "Choose its finish" : "Adds in " + finName(fins[0])}</span>
+          <span class="pc-sw">${fins.map(fid => {
+            const strands = lockedFinish() ? [] : finishStrands(fid);
+            return `<button type="button" class="fin${strands.length ? " no" : ""}" data-pfin="${fid}"
+              style="background:${(FINISHES[fid] || {}).swatch || "#888"}"
+              title="${strands.length ? strands.join(", ") + " not made in " + finName(fid) : "Add in " + finName(fid)}"
+              aria-label="Add ${p.name} in ${finName(fid)}"></button>`;
+          }).join("")}</span>
+        </div>`;
+      return `<div class="pcard ${isPlaced(p.id) ? "placed" : ""}${why ? " blocked" : ""}${armed ? " armed" : ""}" data-prod="${p.id}" data-cat="${p.catId}">
+        <button type="button" class="pc-main" ${valve ? "data-arm" : "data-add"}${why ? " disabled" : ""}
+                aria-expanded="${valve && !why ? String(armed) : "undefined"}"
+                aria-label="${why ? p.name + ", unavailable: " + why
+                              : (valve ? "Choose a finish for " : "Add ") + p.name + ", " + p.code
+                                + (isPlaced(p.id) ? ", already in the room" : "")}">
           <span class="pic"><img src="${thumbOf(img)}" loading="lazy" decoding="async" alt=""></span>
           <span class="nm">${p.name}</span>
           <span class="sub">${p.code}${p.variant ? " · " + p.variant : ""}</span>
+          ${p.outlets ? `<span class="fn">${p.outlets} function${p.outlets > 1 ? "s" : ""}</span>` : ""}
         </button>
+        ${why ? `<span class="pc-why">${why}</span>` : tray}
       </div>`;
     }).join("");
     return `<div class="cat-group ${openByDefault ? "open" : ""}" data-group="${g.id}">
@@ -3907,18 +4021,49 @@ function renderRail() {
     // the camera to frame the piece once its artwork is in (async).
     // the group you picked from is the group you are working in — hold it open
     // (placeProduct re-renders the rail, which reads openGroup back)
+    const why = blockReason(p);
+    if (why) { toast(`${p.name}: ${why.toLowerCase()}`); return; }
+    const lock = lockedFinish();
+    if (lock) fin = lock;                     // one finish in this room, no exceptions
+    /* Placing the valve is the moment the room commits. Refuse a finish that
+       would strand something already on the wall rather than placing it and
+       leaving the client to notice their shower is a different colour. */
+    const strands = isValve(p) && !lock ? finishStrands(fin) : [];
+    if (strands.length) {
+      toast(`${strands.join(" and ")} ${strands.length > 1 ? "are" : "is"} not made in ${finName(fin)}`);
+      return;
+    }
     const gid = groupOfCat(p.catId);
     if (gid) openGroup = gid;
     const replaced = [...placed.values()].find(r => r.product.catId === p.catId && r.product.id !== p.id);
     const undo = snapshot();
     placeProduct(p, fin, skuCfg(p).mount || "back", true);
-    toast(replaced ? `${p.name} replaced ${replaced.product.name}` : `${p.name} added`,
+    // and bring the rest of the room to the finish the valve just set
+    if (isValve(p)) [...placed.values()].forEach(r => {
+      if (r.product.catId !== p.catId && r.finishId !== fin) changeFinish(r.uid, fin, true);
+    });
+    toast(replaced ? `${p.name} replaced ${replaced.product.name}`
+                   : isValve(p) ? `${p.name} added — the room is now ${finName(fin)}, and feeds ${p.outlets || 1}`
+                                : `${p.name} added`,
           { label: "Undo", run: () => restore(undo) });
   };
 
   acc.querySelectorAll("[data-add]").forEach(btn => btn.onclick = () => {
     const card = btn.closest(".pcard"), p = productFor(card); if (!p) return;
     add(p, cardFinish(p));
+  });
+  // a valve card opens (or closes) its swatches — one card armed at a time
+  acc.querySelectorAll("[data-arm]").forEach(btn => btn.onclick = () => {
+    const card = btn.closest(".pcard"), p = productFor(card); if (!p) return;
+    armedCard = armedCard === p.id ? null : p.id;
+    renderRail();
+  });
+  // ...and a swatch is what actually places it
+  acc.querySelectorAll("[data-pfin]").forEach(btn => btn.onclick = e => {
+    e.stopPropagation();
+    const card = btn.closest(".pcard"), p = productFor(card); if (!p) return;
+    armedCard = null;
+    add(p, btn.dataset.pfin);
   });
   describeRoom();
   renderChosen();
