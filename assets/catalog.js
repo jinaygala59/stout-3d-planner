@@ -215,7 +215,22 @@ const RAW_PRODUCTS = [
   // { code: "ST-TSQ",   cat: "waste",        name: "Axis Pop-up Waste",      finishes: ["chrome","brushedGold","gold","roseGold","matteBlack","antiqueGold","brushedBronze"] },
   { code: "ST-J06",   cat: "body-jet",     name: "Axis Round Body Jet",          finishes: ["chrome"] },
   // the one genuine spout in the range: a spout and a flange, no handle on it
-  { code: "ST-PLAIN", cat: "bath-spout",   name: "Axis Plain Wall Spout",       finishes: ["gunGrey","champagne","brushedRoseGold"] },
+  /* THE RANGE'S ONE SPOUT, IN EVERY COLOUR (2026-09-09, asked for directly).
+     The Drive folder ships this spout in three finishes — gun grey, champagne
+     and brushed rose gold — and it is now the only spout the planner offers. In
+     a room locked to any of the other five its card greyed out with "Not made
+     in Matte Black" and the client could not place a spout at all.
+     The five missing ones are built by tools_finish.py from this spout's OWN
+     gun-grey render, against a curve fitted per finish off ST-2513, the
+     single-lever wall mixer: same Axis family, same square section, same studio
+     set-up, and the folder ships it in seven of the eight. Brushed gold comes
+     off ST-WM-001, the twin-lever wall tap, for the same reason.
+     Checked on this SKU rather than a stand-in: ST-2513 also carries the three
+     finishes the spout really ships, and regenerating those from the gun-grey
+     render reproduces the folder's own photographs to within 2.2 deg of hue and
+     0.01 of saturation (`tools_finish.py --spout-check`). Replace any of the
+     five the day the factory sends a real render of it. */
+  { code: "ST-PLAIN", cat: "bath-spout",   name: "Axis Plain Wall Spout",       finishes: ["chrome","gunGrey","brushedGold","champagne","gold","roseGold","brushedRoseGold","matteBlack"] },
   /* 2026-09-08, off the client's own upload. The Drive folder has it as
      SHOWER_ARM in six finishes — BRG / BV / FG / GG / MB / RG — and NO chrome,
      so chrome is not listed: a swatch the factory has not shot is worse than

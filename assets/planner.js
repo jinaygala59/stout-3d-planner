@@ -993,9 +993,30 @@ const fittingEnvI = () => 0.50 + 0.40 * (THEME && THEME.art != null ? THEME.art 
 const FINISH_ROUGH = { chrome: 0.10, gold: 0.16, roseGold: 0.16, champagne: 0.20, brushedGold: 0.38,
                        brushedRoseGold: 0.38, gunGrey: 0.30, matteBlack: 0.60, brushedSteel: 0.40 };
 const finishRough = fid => FINISH_ROUGH[fid] == null ? 0.20 : FINISH_ROUGH[fid];
-function metalMat(hex, rough) {
-  const m = new THREE.MeshStandardMaterial({ color: hex, metalness: 1.0, roughness: rough == null ? 0.18 : rough * 0.8,
-                                             envMap: fittingEnv(), envMapIntensity: fittingEnvI() });
+
+/* NOT EVERY FINISH IS A METAL.
+   Roughness was per-finish but metalness was 1.0 for all of them, and in a PBR
+   metal there is no diffuse term at all — the surface is nothing but a mirror
+   tinted by its base colour. That is right for chrome, for the golds, for gun
+   grey: they ARE polished metal. It is wrong for matte black, which is a powder
+   coat over the brass, a dielectric. Rendered at metalness 1 in the White room,
+   a matte black jet had no colour of its own to show and reflected what was in
+   front of it — warm beige marble — so the client picked black and got four tan
+   squares on the wall. Nothing about the finish id, the swatch or the artwork
+   was wrong; the surface model was.
+   A coating gets its colour from diffuse, so it needs the metalness down. It
+   also has to take LESS from the environment map: at low metalness the env acts
+   as ambient light on that diffuse, and a black plate lit by a bright room
+   ambient goes grey. */
+const FINISH_METAL = { matteBlack: 0.10 };
+const finishMetal = fid => FINISH_METAL[fid] == null ? 1.0 : FINISH_METAL[fid];
+/* how much env a surface should take, given how metallic it is */
+const envForMetal = m => fittingEnvI() * (0.34 + 0.66 * m);
+
+function metalMat(hex, rough, fid) {
+  const metal = fid == null ? 1.0 : finishMetal(fid);
+  const m = new THREE.MeshStandardMaterial({ color: hex, metalness: metal, roughness: rough == null ? 0.18 : rough * 0.8,
+                                             envMap: fittingEnv(), envMapIntensity: envForMetal(metal) });
   m.userData.fittingEnv = true;
   return m;
 }
@@ -2324,6 +2345,19 @@ function seatPanel(mesh, img, w, h) {
   mesh.add(seam);
 }
 
+/* SELECTION AND HOVER DO NOT TOUCH THE PIECE.
+   They used to lay a warm brown emissive over it — 0x2a2013 selected, 0x140f08
+   hovered. Emission is added ON TOP of the surface, so on chrome it is invisible
+   and on MATTE BLACK it is the only thing you can see: rgb(42,32,19) over a black
+   jet is a tan square. That is what the client hit — matte black jets rendering
+   tan next to a correctly black panel, the panel being the one piece that
+   happened not to be selected.
+   A cue that changes the product's colour cannot live in a tool whose whole job
+   is showing the client that colour, so it is gone, and nothing replaces it on
+   the piece. This is the rule the selection glow was already removed under (see
+   the note below): what is selected is stated by the tool card, which names the
+   piece with its code and finish, and by its highlighted tile in the rail.
+   setEmissive stays because the room's own fittings still use it. */
 function setEmissive(obj, hex) {
   obj.traverse(o => { if (o.material && o.material.emissive) o.material.emissive.setHex(hex); });
 }
@@ -2829,12 +2863,12 @@ function partBox(root, name) {
    caller then only has to put local z = 0 on the tile. Nothing inside the model
    is rotated: the axes correction sits on the OrientationRoot and the model's
    own parts keep the pose they were exported with. */
-function modelInstance(model, spec, hex, rule, rough) {
+function modelInstance(model, spec, hex, rule, rough, fid) {
   const hide = new Set(spec.hide || []);
   model.children.slice().forEach(c => { if (hide.has(c.name)) model.remove(c); });
   if (!spec.proc) {
     // the MTLs point at Windows paths — the brand metal in the chosen finish instead
-    const mat = metalMat(hex, rough);
+    const mat = metalMat(hex, rough, fid);
     // two-sided: one of these exports is an inside-out shell, and a culled body
     // is a spout floating over its own base. Back faces get their normal flipped.
     mat.side = THREE.DoubleSide;
@@ -2930,7 +2964,7 @@ function build3DHolder(product, finishId, wall, spec, uid, onReady) {
   source.then(raw => {
     (set ? JET_GRID : [[0, 0]]).forEach(([ox, oy]) => {
       const body = spec.proc ? buildProcBody(spec.proc, hex) : raw.clone(true);
-      const inst = modelInstance(body, spec, hex, rule, finishRough(finishId));
+      const inst = modelInstance(body, spec, hex, rule, finishRough(finishId), finishId);
       inst.position.set(ox, oy, 0);
       inst.userData.jet = set;             // a member of a set — installReport checks the four agree
       // grounding: the soft occlusion where the mount part meets the tile
@@ -2953,7 +2987,7 @@ function build3DHolder(product, finishId, wall, spec, uid, onReady) {
     seatOnSurface(holder, surf, { mountPlane: "anchor", onTile: true, face: rule.face },
                   defaultSpot(wall, cfg), 0.0015);
     holder.userData.anchorPos = holder.position.clone();
-    if (selected === uid) setEmissive(holder, 0x2a2013);    // keep highlight if still selected
+
     hideLoading();
     if (onReady) onReady();
   }).catch(err => {
@@ -3239,7 +3273,7 @@ function placeProduct(product, finishId, wall, frame) {
         const drop = 0.20;
         mesh.geometry.translate(0, 0, drop);
         rim.position.z = drop - 0.008;
-        const metal = metalMat(finishHex(finishId, product), 0.3);
+        const metal = metalMat(finishHex(finishId, product), 0.3, finishId);
         const pipe = new THREE.Mesh(new THREE.CylinderGeometry(0.017, 0.017, drop + CEIL_EMBED, 16), metal);
         pipe.rotation.x = Math.PI / 2; pipe.position.z = (drop - CEIL_EMBED) / 2;
         pipe.name = "arm"; pipe.userData.metal = true; mesh.add(pipe);
@@ -3515,14 +3549,10 @@ function pickProduct(e) {
 
 function selectProduct(uid) {
   selected = uid;
-  meshes.forEach(m => setEmissive(m, 0x000000));
-  const rec = placed.get(uid);
-  if (rec) setEmissive(rec.mesh, 0x2a2013);
   renderTool();
 }
 function deselect() {
   selected = null; renderTool();
-  meshes.forEach(m => setEmissive(m, 0x000000));
 }
 
 renderer.domElement.addEventListener("pointerdown", e => {
@@ -3624,7 +3654,14 @@ function changeFinish(uid, fid, commit) {
       if (!o.userData.metal || !o.material) return;
       o.material.color.setHex(hex);
       if (o.userData.shade != null) o.material.color.multiplyScalar(o.userData.shade);
-      if (o.material.userData.fittingEnv && !o.userData.shade) o.material.roughness = finishRough(fid) * 0.8;
+      if (o.material.userData.fittingEnv && !o.userData.shade) {
+        // the SURFACE changes with the finish, not only its colour: swapping
+        // chrome for matte black turns a mirror into a powder coat
+        o.material.roughness = finishRough(fid) * 0.8;
+        o.material.metalness = finishMetal(fid);
+        o.material.envMapIntensity = envForMetal(o.material.metalness);
+        o.material.needsUpdate = true;
+      }
     });
     // procedural pieces take their colour from the artwork, not the swatch tone
     if (rec.mesh.userData.retint) rec.mesh.userData.retint(rec.product.images[fid]);
@@ -3755,14 +3792,20 @@ const RAIL_GROUPS = [
      SKU is not in the image. Listing it again is a one-word change the day its
      render arrives; until then a card that cannot show what it is does not
      belong in front of a client.
-     What is left in the list is ST-PLAIN (a plain wall spout) and ST-SARM (the
-     shower arm, which the client asked to be listed here). */
+     ST-SARM goes too. It was put here because the client asked to see the
+     shower arm with the spouts, and then asked for it to go: an arm is not a
+     fitting you choose, it is the pipe a wall head screws onto, and its
+     three-quarter render lies ALONG the tile rather than reaching into the
+     room, so on the wall it read as a black bar with a lump in the middle.
+     What is left is ONE spout — ST-PLAIN — which is what was asked for, and it
+     now comes in all eight finishes rather than three (see catalog.js), so it
+     can be placed in any room whatever the diverter locks the palette to. */
   /* Hand showers ride in this group too, as the client's step 4 names them.
      NOT `solo`: a spout and a handset are two fittings on two brackets, and the
      per-category rule in placeProduct already keeps each to one. The shattaf
      (health-faucet) is deliberately not here — it is a WC fitting, not a hand
      shower, and it was not asked for. */
-  { id: "spouts",    step: 4, name: "Spout / Hand Shower", cats: ["bath-spout", "hand-shower"], omit: ["ST-2513", "ST-BSDV"] },
+  { id: "spouts",    step: 4, name: "Spout / Hand Shower", cats: ["bath-spout", "hand-shower"], omit: ["ST-2513", "ST-BSDV", "ST-SARM"] },
 ];
 /* Auto-arrange builds a SHOWER SET, so it stays on the shower categories even
    though the list now offers the whole range — otherwise the demo would drop a
@@ -4703,14 +4746,16 @@ renderer.domElement.addEventListener("pointermove", e => {
 });
 renderer.domElement.addEventListener("pointerleave", () => { look.tgtX = 0; look.tgtY = 0; });
 
-/* hover: nothing in the 3D view used to look clickable — cursor + a soft lift */
+/* hover: nothing in the 3D view looks clickable on its own, so the cursor says
+   so. It used to tint the piece as well — see the note on setEmissive for why a
+   cue that changes a fitting's colour has no place in a finish visualiser. */
 let hovered = null;
 renderer.domElement.addEventListener("pointermove", e => {
   const uid = pickProduct(e);
   if (uid === hovered) return;
-  if (hovered && hovered !== selected) { const r = placed.get(hovered); if (r) setEmissive(r.mesh, 0x000000); }
+
   hovered = uid;
-  if (hovered && hovered !== selected) { const r = placed.get(hovered); if (r) setEmissive(r.mesh, 0x140f08); }
+
   holder.classList.toggle("over-product", !!hovered);
 });
 controls.addEventListener("start", () => { lookSuspended = true; });

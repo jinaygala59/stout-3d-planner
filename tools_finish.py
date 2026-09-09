@@ -324,7 +324,68 @@ def run_finish(fin, write):
         print(f"    made {sku}-{fin:16} from {d}")
     print(f"    {made} generated")
 
+# =============================================================================
+# ONE SPOUT, IN THE WHOLE PALETTE
+# -----------------------------------------------------------------------------
+# The range offers a single bath spout, ST-PLAIN, and the Drive folder ships it
+# in three finishes only — gun grey, champagne and brushed rose gold. So in a
+# room whose finish is locked to any of the other five the spout card greys out
+# with "Not made in Matte Black" and the client cannot place a spout at all.
+#
+# The reference for each finish is ST-2513, the single-lever wall mixer: same
+# Axis family, same square section, same studio set-up, and the folder ships it
+# in seven of the eight. Brushed gold comes off ST-WM-001, the twin-lever wall
+# tap, for the same reason. The donor is the spout's OWN gun-grey render.
+#
+# This is checkable on the SKU itself: ST-2513 also has the three finishes the
+# spout really ships, so generating those and comparing them against the spout's
+# own photographs says how far the method is off for THIS product, not for a
+# stand-in. `--spout-check` prints exactly that.
+# =============================================================================
+SPOUT = "ST-PLAIN"
+SPOUT_DONOR = "ST-PLAIN-gunGrey.png"
+SPOUT_REF = {
+    "chrome":          "ST-2513-chrome.png",
+    "gold":            "ST-2513-gold.png",
+    "roseGold":        "ST-2513-roseGold.png",
+    "matteBlack":      "ST-2513-matteBlack.png",
+    "brushedGold":     "ST-WM-001-brushedGold.png",
+    # the three the folder ships for the spout itself — used only to CHECK
+    "gunGrey":         "ST-2513-gunGrey.png",
+    "champagne":       "ST-2513-champagne.png",
+    "brushedRoseGold": "ST-2513-brushedRoseGold.png",
+}
+SPOUT_REAL = ("gunGrey", "champagne", "brushedRoseGold")
+
+def spout_variant(finish):
+    ref = SPOUT_REF[finish]
+    curve = fit(ref)
+    tone = match_map(lum_cdf(SPOUT_DONOR), lum_cdf(ref))
+    return apply_curve(SPOUT_DONOR, curve, tone)
+
+def spout_main(write):
+    os.chdir(PROD)
+    if not write:
+        print("reproducing the spout's OWN photographs from its gun-grey render:")
+        print("  %-16s %-28s %-28s" % ("finish", "generated (h,s,v,range)", "the folder's own"))
+        for f in SPOUT_REAL:
+            got = median_hsv(spout_variant(f))
+            want = median_hsv(Image.open(f"{SPOUT}-{f}.png"))
+            print("  %-16s %6.1f %5.3f %5.3f %5.3f   %6.1f %5.3f %5.3f %5.3f   dHue %+6.1f dSat %+.3f dVal %+.3f"
+                  % (f, *got, *want, got[0] - want[0], got[1] - want[1], got[2] - want[2]))
+        return
+    for f in SPOUT_REF:
+        if f in SPOUT_REAL:
+            continue                      # the folder's own photograph stands
+        out = spout_variant(f)
+        out.save(f"{SPOUT}-{f}.png")
+        out.save(f"{SPOUT}-{f}.webp", quality=92, method=6)
+        thumb(f"{SPOUT}-{f}.png")
+        print("  generated %-26s from %s" % (f"{SPOUT}-{f}", SPOUT_REF[f]))
+
 def main():
+    if "--spout-check" in sys.argv: return spout_main(False)
+    if "--spout-write" in sys.argv: return spout_main(True)
     os.chdir(PROD)
     if "--all" in sys.argv:
         write = "--write" in sys.argv
