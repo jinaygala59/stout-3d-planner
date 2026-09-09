@@ -10,7 +10,12 @@ import hashlib, os, shutil
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 DIST = os.path.join(ROOT, "dist")
-SKIP_DIRS = {".git", "dist", "_dev", "__pycache__", "_quarantine"}
+# Dot-directories are tooling, not the site: .claude carries the dev-server
+# config and .vercel the deploy link, and both were being copied into dist/ and
+# uploaded with the bundle. _drive is a symlink to a 15 GB scratch folder — both
+# it and _quarantine are gitignored, so a clean checkout never sees them, but
+# anyone building locally would have shipped them.
+SKIP_DIRS = {".git", "dist", "_dev", "__pycache__", "_quarantine", "_drive"}
 SKIP_EXT = (".py", ".log")
 STAMPED = ("assets/planner.css", "assets/catalog.js", "assets/planner.js")
 
@@ -22,10 +27,22 @@ def stamp(rel):
 
 def main():
     if os.path.isdir(DIST):
+        # keep the host's project link — a rebuild that drops it makes the next
+        # `vercel deploy` create a brand-new project called "dist".
+        keep = os.path.join(DIST, ".vercel")
+        stash = os.path.join(ROOT, ".vercel-link-stash")
+        had_link = os.path.isdir(keep)
+        if had_link:
+            if os.path.isdir(stash):
+                shutil.rmtree(stash)
+            shutil.move(keep, stash)
         shutil.rmtree(DIST)
+        if had_link:
+            os.makedirs(DIST, exist_ok=True)
+            shutil.move(stash, keep)
     copied = total = 0
     for base, dirs, files in os.walk(ROOT):
-        dirs[:] = [d for d in dirs if d not in SKIP_DIRS]
+        dirs[:] = [d for d in dirs if d not in SKIP_DIRS and not d.startswith(".")]
         for name in files:
             if name.endswith(SKIP_EXT) or name.startswith(".") or ".bak-" in name:
                 continue

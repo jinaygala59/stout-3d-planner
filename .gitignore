@@ -5,3 +5,4 @@ assets/*.bak-*
 dist/
 _drive
 _quarantine/
+.vercel
