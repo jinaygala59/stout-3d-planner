@@ -49,6 +49,13 @@ def main():
             # the PNG masters stay in the repo; only the WebP copies ship
             if "assets/products" in base.replace(os.sep, "/") and name.endswith(".png"):
                 continue
+            # vercel.json at the ROOT tells Vercel how to BUILD this repo
+            # (python3 build.py -> dist). Copied verbatim into dist it becomes a
+            # build config sitting inside the build output, and a prebuilt upload
+            # of dist/ then tries to run build.py in a folder that has none. The
+            # bundle gets the serving half only — see the write below.
+            if base == ROOT and name == "vercel.json":
+                continue
             src = os.path.join(base, name)
             rel = os.path.relpath(src, ROOT)
             dst = os.path.join(DIST, rel)
@@ -64,6 +71,14 @@ def main():
         html = html.replace(rel + "?v=DEV", "%s?v=%s" % (rel, stamp(rel)))
     with open(index, "w", encoding="utf-8") as fh:
         fh.write(html)
+
+    # the serving half of the root config: caching only, no build instructions,
+    # so the bundle is a plain static site for Vercel or any other host
+    import json
+    with open(os.path.join(ROOT, "vercel.json")) as fh:
+        full = json.load(fh)
+    with open(os.path.join(DIST, "vercel.json"), "w") as fh:
+        json.dump({k: full[k] for k in ("headers", "redirects", "cleanUrls") if k in full}, fh, indent=2)
 
     print("dist/ ready — %d files, %.1f MB" % (copied, total / 1048576.0))
     print("Upload the contents of dist/ to any static host. No server code needed.")
