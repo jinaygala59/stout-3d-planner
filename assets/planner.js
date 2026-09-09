@@ -3866,9 +3866,6 @@ const railQuery = { text: "" };
    product collapse the group you were working in and leave the FIRST group
    (openByDefault, i === 0) expanded instead: the one list you weren't using. */
 let openGroup = RAIL_GROUPS[0].id;
-/* the valve card whose swatches are open. Module-level, like openGroup and for
-   the same reason: every add re-renders the rail from scratch. */
-let armedCard = null;
 const groupOfCat = catId => (RAIL_GROUPS.find(g => g.cats.includes(catId)) || {}).id;
 
 /* Every SKU a rail group has asked to hide, in one set. `omit` lives on the
@@ -3956,21 +3953,10 @@ function renderRail() {
          it is chosen before the piece goes on the wall, not corrected after:
          tapping the card opens its swatches and tapping a swatch is what places
          it. Every other product still adds on one tap — it inherits the lock. */
-      const valve = isValve(p), armed = valve && armedCard === p.id && !why;
-      const fins = finishesFor(p);
-      const tray = !valve || why ? "" : `<div class="pc-fins"${armed ? "" : " hidden"}>
-          <span class="pc-fl">${fins.length > 1 ? "Choose its finish" : "Adds in " + finName(fins[0])}</span>
-          <span class="pc-sw">${fins.map(fid => {
-            const strands = lockedFinish() ? [] : finishStrands(fid);
-            return `<button type="button" class="fin${strands.length ? " no" : ""}" data-pfin="${fid}"
-              style="background:${(FINISHES[fid] || {}).swatch || "#888"}"
-              title="${strands.length ? strands.join(", ") + " not made in " + finName(fid) : "Add in " + finName(fid)}"
-              aria-label="Add ${p.name} in ${finName(fid)}"></button>`;
-          }).join("")}</span>
-        </div>`;
-      return `<div class="pcard ${isPlaced(p.id) ? "placed" : ""}${why ? " blocked" : ""}${armed ? " armed" : ""}" data-prod="${p.id}" data-cat="${p.catId}">
+      const valve = isValve(p);
+      return `<div class="pcard ${isPlaced(p.id) ? "placed" : ""}${why ? " blocked" : ""}" data-prod="${p.id}" data-cat="${p.catId}">
         <button type="button" class="pc-main" ${valve ? "data-arm" : "data-add"}${why ? " disabled" : ""}
-                aria-expanded="${valve && !why ? String(armed) : "undefined"}"
+                ${valve && !why ? 'aria-haspopup="dialog"' : ""}
                 aria-label="${why ? p.name + ", unavailable: " + why
                               : (valve ? "Choose a finish for " : "Add ") + p.name + ", " + p.code
                                 + (isPlaced(p.id) ? ", already in the room" : "")}">
@@ -3979,7 +3965,7 @@ function renderRail() {
           <span class="sub">${p.code}${p.variant ? " · " + p.variant : ""}</span>
           ${p.outlets ? `<span class="fn">${p.outlets} function${p.outlets > 1 ? "s" : ""}</span>` : ""}
         </button>
-        ${why ? `<span class="pc-why">${why}</span>` : tray}
+        ${why ? `<span class="pc-why">${why}</span>` : ""}
       </div>`;
     }).join("");
     return `<div class="cat-group ${openByDefault ? "open" : ""}" data-group="${g.id}">
@@ -4052,18 +4038,10 @@ function renderRail() {
     const card = btn.closest(".pcard"), p = productFor(card); if (!p) return;
     add(p, cardFinish(p));
   });
-  // a valve card opens (or closes) its swatches — one card armed at a time
+  // a valve card opens the finish chooser; picking there is what places it
   acc.querySelectorAll("[data-arm]").forEach(btn => btn.onclick = () => {
     const card = btn.closest(".pcard"), p = productFor(card); if (!p) return;
-    armedCard = armedCard === p.id ? null : p.id;
-    renderRail();
-  });
-  // ...and a swatch is what actually places it
-  acc.querySelectorAll("[data-pfin]").forEach(btn => btn.onclick = e => {
-    e.stopPropagation();
-    const card = btn.closest(".pcard"), p = productFor(card); if (!p) return;
-    armedCard = null;
-    add(p, btn.dataset.pfin);
+    openFinishPick(p, fid => add(p, fid));
   });
   describeRoom();
   renderChosen();
@@ -4489,12 +4467,67 @@ function setBasin(show) {
              btn.title = show ? "Hide the vanity" : "Show the vanity"; }
 }
 function clearAll() { [...placed.keys()].forEach(removeProduct); deselect(); saveDesign(); }
-$("#clearAll").onclick = () => {
+/* RESET ALL — the same thing the room needs after a finish is committed, so it
+   is in the toolbar where it can be found, not only in the overflow menu. It is
+   the documented way back out of the finish lock, so hiding it would have made
+   that lock feel like a trap. */
+if ($("#resetAll")) $("#resetAll").onclick = () => {
+  if (!placed.size) { toast("The room is already empty"); return; }
+  askConfirm(() => {
+    const undo = snapshot(); clearAll();
+    toast("Every fitting removed — the room is open again", { label: "Undo", run: () => restore(undo) });
+  });
+};
+if ($("#clearAll")) $("#clearAll").onclick = () => {
   if (!placed.size) { toast("The room is already empty"); return; }
   askConfirm(() => { const undo = snapshot(); clearAll(); toast("Room cleared", { label: "Undo", run: () => restore(undo) }); });
 };
 
 /* ---- confirm dialog ----------------------------------------------------- */
+/* THE FINISH CHOOSER.
+   Big, and modal, because of what it decides: not this piece's colour but the
+   colour of every fitting in the room. A row of 20 px dots on a rail card is
+   the wrong size for that — you cannot tell Champagne from Brushed Rose Gold at
+   20 px, and you certainly cannot tell what either does to THIS product. So the
+   choice is made full size, with the piece itself shown in each finish. */
+let finPickRun = null;
+function openFinishPick(p, run) {
+  const m = $("#finPick"); if (!m) { run(cardFinish(p)); return; }
+  finPickRun = run;
+  const fins = finishesFor(p);
+  const lock = lockedFinish();
+  $("#finPickTitle").textContent = `${p.name} — choose your finish`;
+  $("#finPickBody").textContent = lock
+    ? `The room is already in ${finName(lock)}, so that is the finish this goes in.`
+    : `This is the finish the whole room is designed in — every fitting after it ` +
+      `matches. It locks when the piece goes on the wall, and clearing the room is the way back.`;
+  $("#finPickGrid").innerHTML = fins.map(fid => {
+    // a finish nothing already on the wall can wear is shown, and shown as refused,
+    // rather than quietly missing — the client should see why it is not an option
+    const strands = lock ? [] : finishStrands(fid);
+    const src = thumbOf((p.images && p.images[fid]) || "");
+    return `<button type="button" class="fin-tile${strands.length ? " no" : ""}" data-fid="${fid}"
+        ${strands.length ? "disabled" : ""}
+        aria-label="${p.name} in ${finName(fid)}${strands.length ? ", unavailable" : ""}">
+        <span class="ft-pic"><img src="${src}" alt="" decoding="async"></span>
+        <span class="ft-sw" style="background:${(FINISHES[fid] || {}).swatch || "#888"}"></span>
+        <span class="ft-nm">${finName(fid)}</span>
+        ${strands.length ? `<span class="ft-no">${strands.join(", ")} not made in it</span>` : ""}
+      </button>`;
+  }).join("");
+  $("#finPickGrid").querySelectorAll("[data-fid]").forEach(b => b.onclick = () => {
+    const fid = b.dataset.fid, r = finPickRun;
+    closeFinishPick();
+    if (r) r(fid);
+  });
+  m.hidden = false;
+  const first = $("#finPickGrid").querySelector("[data-fid]:not([disabled])");
+  if (first) first.focus();
+}
+function closeFinishPick() { const m = $("#finPick"); if (m) m.hidden = true; finPickRun = null; }
+if ($("#finPickNo")) $("#finPickNo").onclick = closeFinishPick;
+if ($("#finPick")) $("#finPick").onclick = e => { if (e.target === $("#finPick")) closeFinishPick(); };
+
 let confirmRun = null;
 function askConfirm(run) {
   confirmRun = run;

@@ -63,12 +63,13 @@
           <button type="button" data-wall="left" aria-pressed="false">Left</button>
           <button type="button" data-wall="right" aria-pressed="false">Right</button>
         </div>
-        <button type="button" id="resetView" class="btn ghost" title="Back to the opening view">Reset</button>
+        <button type="button" id="resetView" class="btn ghost" title="Back to the opening view">Reset view</button>
         <button type="button" id="lookToggle" class="btn ghost" aria-pressed="true"
                 title="Turn the room by moving the cursor over it">Cursor turn</button>
       </div>
 
       <div class="group" role="group" aria-label="Design">
+        <button type="button" id="resetAll" class="btn ghost warn" title="Take every fitting back out of the room">Reset all</button>
         <button type="button" id="downloadPdf" class="btn ghost">Spec sheet</button>
         <button type="button" id="moreBtn" class="btn ghost icon" aria-haspopup="menu"
                 aria-expanded="false" aria-controls="moreMenu" aria-label="More actions">···</button>
@@ -76,7 +77,6 @@
           <button type="button" role="menuitem" id="shareDesign">Copy a link to this room</button>
           <button type="button" role="menuitem" id="emailDesign">Email this design to Stout</button>
           <button type="button" role="menuitem" id="snapCol">Auto-arrange a shower set</button>
-          <button type="button" role="menuitem" id="clearAll" class="danger">Clear the room…</button>
         </div>
       </div>
     </header>
@@ -107,9 +107,9 @@
         <div id="catAccordion" class="cats"></div>
 
         <div class="rail-foot">
-          <p class="hint">Start with the diverter: tap one to choose its finish, and the swatch
-            you pick is what places it. That finish then sets the whole room, and the diverter's
-            function count sets how many fittings it can feed — clear the room to start again.
+          <p class="hint">Start with the diverter: tapping one opens the finish chooser, and the
+            finish you pick there is what places it. That finish then sets the whole room, and the
+            diverter's function count sets how many fittings it can feed — Reset all starts again.
             Move the cursor over the room to turn it; drag, pinch or use the rotator for full control.</p>
         </div>
       </div>
@@ -165,6 +165,20 @@
       <!-- what is currently in the room, for screen readers -->
       <p id="a11ySummary" class="sr-only" role="status" aria-live="polite"></p>
     </main>
+  </div>
+
+  <!-- Choosing a diverter's finish. It is a modal and not a row of dots on the
+       card because of what it decides: the finish of every fitting in the room.
+       You should be able to SEE the piece in each one before you commit. -->
+  <div class="modal" id="finPick" role="dialog" aria-modal="true" aria-labelledby="finPickTitle" hidden>
+    <div class="modal-card wide">
+      <h2 id="finPickTitle">Choose your finish</h2>
+      <p id="finPickBody"></p>
+      <div class="fin-grid" id="finPickGrid"></div>
+      <div class="modal-row">
+        <button type="button" class="btn ghost" id="finPickNo">Cancel</button>
+      </div>
+    </div>
   </div>
 
   <!-- confirm dialog (Clear) -->
