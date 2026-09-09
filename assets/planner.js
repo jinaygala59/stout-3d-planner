@@ -3714,21 +3714,31 @@ const RAIL_GROUPS = [
      brings any of them back. */
   { id: "showers",   step: 2, name: "Shower",    cats: ["rain-shower"], solo: true, omit: ["ST-1017", "ST-1027", "ST-1033"] },
   { id: "bodyjets",  step: 3, name: "Body Jet",  cats: ["body-jet"], solo: true },
-  /* basin-mixer rides with the spouts because two products literally named
-     "Axis Wall Spout" are filed there; without it this group shows ONE item and
-     those two disappear from the planner altogether.
-     `omit` is what keeps the DECK mixer out of it. ST-BM-001 is a tall basin
-     tap that stands on the vanity — it shares a category with the two wall
-     spouts and nothing else, and a basin tap in a list called Spouts is the
-     client's own complaint. Omitting the SKU rather than re-filing it leaves
-     its category, its counter mount and its OBJ exactly as they are, so it can
-     be listed again the day the rail grows a Basins group. */
+  /* NO TAPS IN THE SPOUTS LIST (2026-09-09, asked for directly: "remove the
+     spouts which are used for the taps"). A spout is an outlet; the moment a
+     piece carries a lever it is a tap, and three of the things offered here
+     were taps wearing the word "spout" in their name:
+       ST-WM-001  twin levers, marked red and blue, on a backplate
+       ST-WM-002  a single cube lever on a backplate
+       ST-2513    a single-lever wall mixer, filed under bath-spout
+     All three are BASIN taps — they anchor over the vanity, not on the shower
+     wall — so a shower planner's spout step is the wrong list for them. The
+     first two leave with their category: basin-mixer is off `cats` now, which
+     takes the deck mixer ST-BM-001 with it and makes its old `omit` entry
+     redundant. ST-2513 is a bath-spout by filing, so it needs the explicit one.
+     Nothing is deleted. All four keep their catalogue row, their category,
+     their anchor and their artwork, so a Basins group would list them again by
+     naming the category — see the note on hidden groups above.
+     What is left in the list is what a spout actually is: ST-PLAIN (a plain
+     wall spout), ST-BSDV (a spout with a diverter handle, which switches
+     outlets rather than turning water on) and ST-SARM (the shower arm, which
+     the client asked to be listed here). */
   /* Hand showers ride in this group too, as the client's step 4 names them.
      NOT `solo`: a spout and a handset are two fittings on two brackets, and the
      per-category rule in placeProduct already keeps each to one. The shattaf
      (health-faucet) is deliberately not here — it is a WC fitting, not a hand
      shower, and it was not asked for. */
-  { id: "spouts",    step: 4, name: "Spout / Hand Shower", cats: ["bath-spout", "basin-mixer", "hand-shower"], omit: ["ST-BM-001"] },
+  { id: "spouts",    step: 4, name: "Spout / Hand Shower", cats: ["bath-spout", "hand-shower"], omit: ["ST-2513"] },
 ];
 /* Auto-arrange builds a SHOWER SET, so it stays on the shower categories even
    though the list now offers the whole range — otherwise the demo would drop a
