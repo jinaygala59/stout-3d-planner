@@ -159,7 +159,23 @@ const CAT3D = {
   // --- the odds and ends the rail doesn't offer stay on the back wall, right
   //     end, clear of the niche (0.44–0.84) and of the vanity, which owns the left
   "wall-tap":     { mount: "back", width: 0.34, y: 0.42, x: 1.16, billboard: true },  // bucket tap, near the floor
-  "hand-shower":  { mount: "back", width: 0.17, y: 1.15, x: 0.82, billboard: true },  // handset on a bracket
+  /* THE HANDSET GOES ON THE WALL ITS MIXER IS ON, AND INSIDE THE ENCLOSURE.
+     It was on the BACK wall at x 0.82 — a metre and a half from the valve set,
+     on the far side of the corner. A hand shower is plumbed off the diverter:
+     its outlet comes out of the same rough-in as the trim, so on the opposite
+     wall it is not an installation, it is a handset hung where the tiling
+     happened to be blank.
+     The RIGHT wall is the shower wall. z -0.90 is the one stretch of it that is
+     both inside the wet tray (which runs z -1.48..-0.43) and clear of the whole
+     valve column: the back jet owns z -0.645..-0.495, so this sits 0.17 m
+     behind it with nothing above or below. Deliberately NOT on the valve lane
+     itself (z -0.25) — the tallest trim in the range, ST-D5017, hangs
+     1.09..1.59 there, and a handset on that centre line would foul it at every
+     height that is still a reachable one.
+     y 1.10 puts the bracket at 1.06, which is where a handset holder is
+     actually set. No swing: it hangs in a bracket, and a bracket does not
+     follow the camera. */
+  "hand-shower":  { mount: "right", width: 0.17, y: 1.10, z: -0.90, billboard: false },
   // over the basin, which is the wall-hung vanity on the LEFT (COUNTER.x -1.06)
   // — the only place a basin mixer can go, whatever the rest of the layout does.
   // The deck-mounted ones override this with mount:"counter".
@@ -220,6 +236,23 @@ const SKU3D = {
   "ST-1033": { width: 0.24, mount: "back", y: 2.00, shape: "head", reach: 0.28 },
   // not a rain head at all — it is a handset, so it hangs on a wall outlet + hose
   "ST-OP1":  { width: 0.18, mount: "right", y: 0.75, z: 0.52, hose: true },   // beside the WC, where a jet spray actually goes
+  /* --- HAND SHOWERS. Ten of the thirteen are photographed as a BARE handset:
+     head, handle, threaded inlet, nothing else. Those get the bracket, wall
+     outlet and hose built for them (handShowerRig) or they hang on the tile
+     attached to nothing.
+     These THREE do not. Their render is the whole set — slim wand, square wall
+     bracket, supply elbow and the hose looping down off it — one photograph in
+     three finishes. Given the rig as well they came out wearing two brackets
+     and trailing two hoses, so `ownRig` says the artwork already carries its
+     own and the builder stands down.
+     They also cannot take the category's 0.30 m height cap, which is sized for
+     a handset ALONE: measured off the silhouette this frame is the handset over
+     f 0..0.60, the bracket at f 0.54 and the hose from f 0.60 to the bottom, so
+     0.30 m of frame would be a 0.18 m wand. At maxH 0.40 the wand reads 0.24 m
+     — its real length — and the bracket lands at y 1.084, which is bracket
+     height. --- */
+  "ST-1037": { maxH: 0.40, ownRig: true }, "ST-1038": { maxH: 0.40, ownRig: true },
+  "ST-1039": { maxH: 0.40, ownRig: true },
   // --- thermostatic trims / panels ---
   /* WIDTHS ONLY — these three were the last of the hand-typed `roll` angles to
      go. A silhouette fit called the Grande 5.8 deg uphill and the cutout was
@@ -253,6 +286,35 @@ const SKU3D = {
      reference shot of this range sits on the wall. Rolling the frame to level
      that body is what cocks the plate. See rollFor for the argument. --- */
   "ST-PLAIN":  { width: 0.24 },   // body falls 22.3° across the frame: perspective, not tilt
+  /* The shower arm is filed with the spouts (that is where the client wants it
+     listed) but it is not plumbed like one, so it overrides the category's
+     placement rather than standing at filler height.
+     It went on the BACK wall first, at x 0 / y 2.05 — the wall-head spot — and
+     the client's screenshot showed why that is wrong here: the back wall also
+     carries the vanity and the mirror (COUNTER.x -1.06), and x 0 is half a
+     metre off the mirror's edge, so a lone arm up there read as a spout stuck
+     above the basin. The shower in this room is the RIGHT wall — jets, trim
+     and filler all hang on the z -0.25 centre line of a corner enclosure over
+     the tray — so the arm takes that same line, at the top of the stack:
+     y 2.05, above the upper jet row (1.66) and under the slab (2.65), with
+     0.169 m of height (0.40 x 711/301, inside the 0.30 cap). Read down the
+     wall it is now arm, jets and trim, filler — the brochure column.
+     Its render is a three-quarter shot like every other protruding fitting, so
+     the arm reads as running ALONG the tile rather than out into the room. That
+     is the artwork path's known limit and the reason the jets and the plain
+     spout moved to real geometry; this SKU has no OBJ in the client's RAR yet,
+     so it stays a photograph until one arrives. */
+  "ST-SARM":   { width: 0.40, mount: "right", y: 2.05, z: -0.25 },
+  /* The lever mixer and the diverter spout are both bath fillers and both take
+     the category's own spot — right wall, filler height — so they need only a
+     width. 0.26 is by analogy with ST-WM-002, whose render is framed the same
+     way (plate at one edge, spout at the other, lever on top); the plain spout
+     next door is wider at 0.24 because its frame is almost all spout.
+     ST-BSDV wears ST-PLAIN's artwork (see catalog.js `art`), so it is sized
+     like the piece it borrows from and will need re-measuring the day it gets
+     renders of its own — it is a longer spout than the plain one. */
+  "ST-2513":   { width: 0.26 },
+  "ST-BSDV":   { width: 0.24 },
   // --- basin mixers. WM-001 and WM-002 are the WALL-mounted pair: both were
   //     filed as spouts and neither is one — see catalog.js. Like the spout
   //     above, they hang as photographed, on their plates. ---
@@ -330,6 +392,9 @@ const SKU3D = {
      1.26 and its foot at 0.86, which is right; centring the 0.51 m one there
      would push it up into the thermostatic panel above. The tall ones therefore
      hang from reach height instead of straddling it. */
+  // 677x900 artwork: the round plate fills the width and the lever hangs below
+  // it, so 0.155 across puts a 150 mm escutcheon on the wall and 0.21 overall
+  "ST-AZBS":  { width: 0.155 },
   "ST-D5001": { width: 0.16 }, "ST-D5002": { width: 0.15 }, "ST-D5003": { width: 0.17 },
   "ST-D5004": { width: 0.18 },
   /* NO per-SKU `y` on these. They used to carry 1.04 / 1.03, from when the trim
@@ -2193,28 +2258,46 @@ function addContactShadow(mesh, w, h) {
       nothing at all. This is a ring, and it is drawn to the plate's own
       proportions so the border stays an even width all the way round.        */
 let _seamTex = null;
-function seamTexture(ar, mFrac) {
-  const key = ar.toFixed(2) + "_" + mFrac.toFixed(2);
+/* The seam is cast by the PIECE'S OWN OUTLINE, not by its bounding box.
+   It used to be a filled rectangle, which is right only while every trim in the
+   range is a rectangle. The round concealed mixer is not: it is a disc with a
+   lever hanging off it, and a rectangular seam drew a visible box of shadow on
+   the tile around a round plate — a panel behind the fitting that is not there.
+   Taking the silhouette from the artwork's alpha costs nothing and is right for
+   every shape, the rectangles included: the bar trims come out exactly as they
+   did, because their silhouette IS a rectangle. */
+function seamTexture(img, mFrac, ar) {
+  const key = (img.src || "") + "_" + mFrac.toFixed(3);
   _seamTex = _seamTex || {};
   if (_seamTex[key]) return _seamTex[key];
   // outer canvas covers plate + margin on every side, in the plate's proportions
   const outW = 1 + 2 * mFrac, outH = ar + 2 * mFrac;
   const W = 256, H = Math.max(24, Math.round(W * outH / outW));
-  const c = mkCanvas(W, H), x = c.getContext("2d");
   const ix = W * (mFrac / outW), iy = H * (mFrac / outH);
   const iw = W - ix * 2, ih = H - iy * 2;
+  /* A flat BLACK stamp of the artwork's alpha. Drawing the photograph itself
+     would work for the shadow but not for the punch-out below, which removes in
+     proportion to what it draws and would leave a half-strength colour fringe
+     wherever the render's edge is anti-aliased. */
+  const mk = mkCanvas(Math.max(1, Math.round(iw)), Math.max(1, Math.round(ih)));
+  const m = mk.getContext("2d");
+  m.drawImage(img, 0, 0, mk.width, mk.height);
+  m.globalCompositeOperation = "source-in";
+  m.fillStyle = "#000"; m.fillRect(0, 0, mk.width, mk.height);
+  const c = mkCanvas(W, H), x = c.getContext("2d");
   x.save();
   x.shadowColor = "rgba(0,0,0,0.9)";
   x.shadowBlur = Math.min(W, H) * 0.16;
   x.shadowOffsetY = 0;      // SYMMETRIC. Cast downward it read as a plate hung off-square.
-  x.fillStyle = "#000";
-  x.fillRect(ix, iy, iw, ih);          // its SHADOW is the ring we want
+  x.drawImage(mk, ix, iy, iw, ih);     // its SHADOW is the ring we want
   x.restore();
-  x.clearRect(ix, iy, iw, ih);         // the plate's own footprint stays clear
+  x.globalCompositeOperation = "destination-out";
+  x.drawImage(mk, ix, iy, iw, ih);     // the plate's own footprint stays clear
+  x.globalCompositeOperation = "source-over";
   _seamTex[key] = canvasTex(c, false);
   return _seamTex[key];
 }
-function seatPanel(mesh, map, w, h, hex) {
+function seatPanel(mesh, img, w, h) {
   ["trimFlange", "trimSeam"].forEach(n => {
     const prev = mesh.getObjectByName(n);
     if (prev) { mesh.remove(prev); if (prev.geometry) prev.geometry.dispose(); }
@@ -2233,7 +2316,7 @@ function seatPanel(mesh, map, w, h, hex) {
   const sm = m * 1.9;
   const seam = new THREE.Mesh(new THREE.PlaneGeometry(w + 2 * sm, h + 2 * sm),
     new THREE.MeshBasicMaterial({
-      map: seamTexture(h / w, sm / w), transparent: true, opacity: 0.55, depthWrite: false,
+      map: seamTexture(img, sm / w, h / w), transparent: true, opacity: 0.55, depthWrite: false,
     }));
   seam.name = "trimSeam";
   seam.position.z = -(OFF - 0.002);
@@ -2291,52 +2374,141 @@ function hoseTexture() {
   _hoseTex = t; return t;
 }
 
+/* WHERE THE HANDLE IS, measured off the artwork instead of typed per SKU.
+   A bracket has to close around the handle, and the hose has to meet the butt of
+   it — and the range is not framed consistently: some handsets are shot dead
+   centre, the rail one carries its rail, the 3/4 ones sit off to one side. So
+   the silhouette is read out of the alpha channel over a horizontal band, and
+   the bracket and hose are built from that. Returns fractions of the artwork's
+   width, cx relative to its centre, or null if the pixels cannot be read (in
+   which case the caller falls back to the frame centre). */
+let _silCanvas = null;
+function silhouetteBand(img, f0, f1) {
+  if (!img || !img.naturalWidth) return null;
+  const W = 96, H = 192;
+  _silCanvas = _silCanvas || mkCanvas(W, H);
+  const x = _silCanvas.getContext("2d");
+  x.clearRect(0, 0, W, H);
+  x.drawImage(img, 0, 0, W, H);
+  let d;
+  try { d = x.getImageData(0, 0, W, H).data; } catch (_) { return null; }   // tainted canvas
+  const y0 = Math.max(0, Math.floor(f0 * H)), y1 = Math.min(H - 1, Math.ceil(f1 * H));
+  /* The widest CONTIGUOUS run in each row, not the row's outer extremes. A
+     handset render can carry a second strand at the same height — a hose
+     sweeping away, a rail — and measuring min-to-max across the row then puts
+     the bracket in the gap between the two. */
+  let cx = 0, hw = 0, rows = 0;
+  for (let yy = y0; yy <= y1; yy++) {
+    let bs = -1, be = -1, s0 = -1;
+    for (let xx = 0; xx <= W; xx++) {
+      const on = xx < W && d[(yy * W + xx) * 4 + 3] > 128;
+      if (on && s0 < 0) s0 = xx;
+      if (!on && s0 >= 0) {
+        if (xx - s0 > be - bs) { bs = s0; be = xx; }
+        s0 = -1;
+      }
+    }
+    if (bs < 0) continue;
+    cx += (bs + be) / 2; hw += (be - bs) / 2; rows++;
+  }
+  if (!rows) return null;
+  return { cx: cx / rows / W - 0.5, halfW: hw / rows / W };
+}
+
 /* Wall supply elbow + flexible hose for a wall-mounted hand shower.
    The product PNG is just the handset — on the wall it needs a pipe running
    from a wall outlet down to the handset, or it reads as floating. Sized from
    the placed image height (hh) so it scales with the resize control. Parts are
    flagged userData.metal so they recolour with the chosen finish. */
-function handShowerRig(hex, width, hh) {
+function handShowerRig(hex, width, hh, img) {
   const g = new THREE.Group();
   g.name = "hsRig";
-  const r = Math.max(0.007, width * 0.055);          // hose radius, scales with the handset
-  // wall outlet elbow — sits up and to the side of the handset, flat to the wall
-  const ex = width * 0.60, ey = hh * 0.34;
-  const fh = r * 1.2 + WALL_SINK;                    // reaches the wall, not the anchor
-  const flange = metalPart(new THREE.CylinderGeometry(r * 2.2, r * 2.5, fh, 22), hex, 0.28);
-  flange.rotation.x = Math.PI / 2; flange.position.set(ex, ey, r * 0.6 - WALL_SINK / 2); g.add(flange);
-  const elbow = metalPart(new THREE.SphereGeometry(r * 1.5, 18, 14), hex, 0.2);
-  elbow.position.set(ex, ey, r * 1.4); g.add(elbow);
-  // flexible hose: curves from the elbow down and in to the base of the handle
+  /* THE BRACKET IS THE POINT. Before this the rig was an elbow and a hose and
+     nothing else, so the handset hung against bare tile with a pipe curling
+     away behind it: no cradle, nothing holding it, and the hose left the frame
+     near the HEAD rather than the butt of the handle. What a wall handset
+     actually has is three things, and it needs all three to read as installed —
+     a plate screwed to the tile, a cradle the handle drops into, and a hose
+     from a supply elbow to the handle's inlet.
+     Every position comes from the artwork's own silhouette (silhouetteBand), so
+     the same code fits a centred handset, a 3/4 one and the rail one. */
+  const grip = silhouetteBand(img, 0.55, 0.70) || { cx: 0, halfW: 0.10 };   // upper handle
+  const butt = silhouetteBand(img, 0.92, 1.00) || { cx: grip.cx, halfW: grip.halfW };
+  const gx = grip.cx * width, gw = Math.max(0.012, grip.halfW * width);
+  const bx = butt.cx * width;
+  const gy = hh * (0.5 - 0.625);                       // the cradle, level with the upper handle
+  const r = Math.max(0.006, width * 0.05);             // hose radius, scales with the handset
+
+  // the plate: a round escutcheon on the tile, wider than the handle so it reads
+  // from the front, its tail buried so it meets the tile rather than the standoff
+  const rp = gw + Math.max(0.016, width * 0.11);
+  const plate = metalPart(new THREE.CylinderGeometry(rp, rp * 1.04, WALL_SINK + 0.007, 28), hex, 0.3);
+  plate.rotation.x = Math.PI / 2;
+  plate.position.set(gx, gy, (0.007 - WALL_SINK) / 2);
+  g.add(plate);
+  // the cradle: a collar round the handle. Its axis runs UP the handle, so what
+  // you see either side of the handle's own silhouette is the ring's two flanks —
+  // which is exactly how a handset in a holder reads.
+  const collar = metalPart(new THREE.TorusGeometry(gw + 0.008, Math.max(0.004, width * 0.032), 12, 26), hex, 0.22);
+  collar.rotation.x = Math.PI / 2;
+  collar.position.set(gx, gy, 0.006);
+  g.add(collar);
+  // a short neck from plate to collar, so the cradle stands off the tile
+  const neck = metalPart(new THREE.CylinderGeometry(rp * 0.42, rp * 0.42, 0.026, 18), hex, 0.3);
+  neck.rotation.x = Math.PI / 2;
+  neck.position.set(gx, gy, 0.008);
+  g.add(neck);
+
+  // the supply elbow: BELOW the bracket and off to one side, where a handset
+  // outlet is really set — the hose then hangs in front of the tile instead of
+  // being threaded up behind the handset
+  const side = grip.cx <= 0 ? 1 : -1;                  // away from whichever side the handle sits
+  const ex = gx + side * (gw + rp * 1.35), ey = -hh * 0.16;
+  const fh = r * 1.4 + WALL_SINK;
+  const flange = metalPart(new THREE.CylinderGeometry(r * 2.0, r * 2.3, fh, 22), hex, 0.28);
+  flange.rotation.x = Math.PI / 2;
+  flange.position.set(ex, ey, r * 0.7 - WALL_SINK / 2);
+  g.add(flange);
+  const elbow = metalPart(new THREE.SphereGeometry(r * 1.45, 18, 14), hex, 0.2);
+  elbow.position.set(ex, ey, r * 1.5);
+  g.add(elbow);
+
+  // the hose: out of the elbow, a loose loop hanging clear of the wall, and back
+  // up into the butt of the handle. It ends where the handle ends, measured.
+  /* A LOOSE LOOP, not a coil. A shower hose is about a metre and a half of
+     braided steel: hung between an outlet and a handset a hand's width apart it
+     falls well below both of them and stands off the tile as it goes. The first
+     pass ran it straight from elbow to butt over a tenth of the handset's
+     height, which at this scale is a telephone cord. It now drops most of the
+     handset's length below the butt and swings out from the wall on the way. */
   const curve = new THREE.CatmullRomCurve3([
-    new THREE.Vector3(ex, ey, r * 1.4),
-    new THREE.Vector3(ex + width * 0.10, hh * 0.02, r * 3.0),
-    new THREE.Vector3(width * 0.10, -hh * 0.42, r * 3.2),
-    new THREE.Vector3(width * 0.01, -hh * 0.50, r * 1.6),
-    new THREE.Vector3(0, -hh * 0.46, r * 0.8),
+    new THREE.Vector3(ex, ey, r * 1.5),
+    new THREE.Vector3(ex + side * r * 2.2, ey - hh * 0.30, r * 4.4),
+    new THREE.Vector3((bx + ex) / 2 + side * r * 1.8, -hh * 0.82, r * 5.0),
+    new THREE.Vector3(bx - side * r * 0.4, -hh * 0.92, r * 4.2),
+    new THREE.Vector3(bx, -hh * 0.62, r * 2.2),
+    new THREE.Vector3(bx, -hh * 0.47, r * 0.9),
   ]);
-  // coiled stainless-steel hose: ribbed metal texture along its length
   const tube = new THREE.TubeGeometry(curve, 96, r, 14, false);
   const coilTex = hoseTexture().clone(); coilTex.needsUpdate = true;
-  const coils = Math.max(24, Math.round(curve.getLength() / (r * 0.85)));  // ~1 rib per hose-thickness
+  /* One rib per hose-and-a-half, not per hose-thickness. At the old pitch the
+     ribs were tighter than the tube is thick and the whole thing read as a
+     coil spring rather than a braided hose. */
+  const coils = Math.max(18, Math.round(curve.getLength() / (r * 2.6)));
   coilTex.repeat.set(coils, 1);
   const hose = new THREE.Mesh(tube, new THREE.MeshStandardMaterial({
-    color: hex, map: coilTex, bumpMap: coilTex, bumpScale: r * 0.5,
-    metalness: 1.0, roughness: 0.22, envMapIntensity: 1.35,
+    color: hex, map: coilTex, bumpMap: coilTex, bumpScale: r * 0.16,
+    metalness: 1.0, roughness: 0.24, envMapIntensity: 1.25,
   }));
   hose.userData.metal = true; g.add(hose);
-  // polished couplings (nuts) at each end, like the reference hose
+  // polished couplings at each end, like the reference hose
   const nut = (rad, len) => metalPart(new THREE.CylinderGeometry(rad, rad, len, 18), hex, 0.12);
-  const topNut = nut(r * 1.35, r * 2.2);
-  topNut.position.copy(curve.getPointAt(0.04));
-  const topTan = curve.getTangentAt(0.04);
-  topNut.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), topTan.normalize());
-  g.add(topNut);
-  const botNut = nut(r * 1.45, r * 2.6);
-  botNut.position.copy(curve.getPointAt(0.97));
-  const botTan = curve.getTangentAt(0.97);
-  botNut.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), botTan.normalize());
-  g.add(botNut);
+  [[0.04, r * 1.3, r * 2.2], [0.97, r * 1.4, r * 2.6]].forEach(([t, rad, len]) => {
+    const n = nut(rad, len);
+    n.position.copy(curve.getPointAt(t));
+    n.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), curve.getTangentAt(t).normalize());
+    g.add(n);
+  });
   return g;
 }
 
@@ -2983,10 +3155,11 @@ function placeProduct(product, finishId, wall, frame) {
         const oldArm = mesh.getObjectByName("armRig"); if (oldArm) mesh.remove(oldArm);
         mesh.add(showerArmRig(finishHex(finishId, product), width, width * ar, reach));
       }
-      if (product.catId === "hand-shower" || cfg.hose) {
-        // handset PNG alone floats — add the wall outlet + hose that feeds it
+      if ((product.catId === "hand-shower" || cfg.hose) && !cfg.ownRig) {
+        // a BARE handset floats — build it the bracket, outlet and hose it needs.
+        // `ownRig` marks the SKUs whose photograph already has all three.
         const old = mesh.getObjectByName("hsRig"); if (old) mesh.remove(old);
-        mesh.add(handShowerRig(finishHex(finishId, product), width, width * ar));
+        mesh.add(handShowerRig(finishHex(finishId, product), width, width * ar, img));
       }
       if (wall === "counter") {
         gotDepth = true;
@@ -3020,7 +3193,9 @@ function placeProduct(product, finishId, wall, frame) {
         extrudeCutout(mesh, mesh.material.map, width, width * ar, d + sinkFor(wall), finishHex(finishId, product), d);
         reliefFace(mesh);                                   // dial and buttons catch the light
         // ...and let it into the wall instead of leaving it sitting on it
-        seatPanel(mesh, mesh.material.map, width, width * ar, finishHex(finishId, product));
+        // the loaded Image, not the texture: seamTexture reads pixels, and this is
+        // the one copy of the artwork we know has finished decoding
+        seatPanel(mesh, img, width, width * ar);
       }
       if (cfg.billboard) {
         gotDepth = true;
@@ -3512,11 +3687,13 @@ function isPlaced(pid) { for (const r of placed.values()) if (r.product.id === p
    diverter families read as one "Diverters" list while each product keeps its own
    catId — and therefore its own wall anchor. */
 const RAIL_GROUPS = [
-  // The client asked for FOUR groups, in this order, and only these. A previous
-  // pass added Hand Showers, Taps & Valves and Wastes & Accessories so the other
-  // 19 products had a way into the room — a fair engineering instinct, but not
-  // what was asked for, so they are hidden again. They stay loaded, sized and
-  // anchored: adding a group back here is all it takes.
+  // FOUR groups, and the client reads them as STEPS (2026-09-09): diverter,
+  // then shower, then body jets, then spout / hand shower. `step` is the number
+  // the header prints; the array order is the order on screen, and the two must
+  // agree — the rail does not sort. Hand showers come back in here at the
+  // client's ask, folded into the spouts list rather than given a fifth group.
+  // Taps & Valves and Wastes stay hidden; they remain loaded, sized and
+  // anchored, so adding a group back here is all it takes.
   /* `solo` — ONE of these on the wall at a time, whichever category the pick
      comes from: choosing a second supersedes the first. Three of the four lists
      are solo because each describes a single fitting. Diverters needs it most,
@@ -3526,13 +3703,24 @@ const RAIL_GROUPS = [
      how the catalogue is filed, not a promise. Say it here, and folding hand
      showers into Showers (or a jet panel into Body Jets) can't quietly leave
      two overhead heads or eight jets on the same wall. */
-  { id: "diverters", name: "Diverters", cats: ["thermostatic", "diverter"], solo: true },
-  { id: "bodyjets",  name: "Body Jets", cats: ["body-jet"], solo: true },
-  { id: "showers",   name: "Showers",   cats: ["rain-shower"], solo: true },
-  // basin-mixer rides with the spouts because two products literally named
-  // "Axis Wall Spout" are filed there; without it this group shows ONE item and
-  // those two disappear from the planner altogether.
-  { id: "spouts",    name: "Spouts & Mixers", cats: ["bath-spout", "basin-mixer"] },
+  { id: "diverters", step: 1, name: "Diverter",  cats: ["thermostatic", "diverter"], solo: true },
+  { id: "showers",   step: 2, name: "Shower",    cats: ["rain-shower"], solo: true },
+  { id: "bodyjets",  step: 3, name: "Body Jet",  cats: ["body-jet"], solo: true },
+  /* basin-mixer rides with the spouts because two products literally named
+     "Axis Wall Spout" are filed there; without it this group shows ONE item and
+     those two disappear from the planner altogether.
+     `omit` is what keeps the DECK mixer out of it. ST-BM-001 is a tall basin
+     tap that stands on the vanity — it shares a category with the two wall
+     spouts and nothing else, and a basin tap in a list called Spouts is the
+     client's own complaint. Omitting the SKU rather than re-filing it leaves
+     its category, its counter mount and its OBJ exactly as they are, so it can
+     be listed again the day the rail grows a Basins group. */
+  /* Hand showers ride in this group too, as the client's step 4 names them.
+     NOT `solo`: a spout and a handset are two fittings on two brackets, and the
+     per-category rule in placeProduct already keeps each to one. The shattaf
+     (health-faucet) is deliberately not here — it is a WC fitting, not a hand
+     shower, and it was not asked for. */
+  { id: "spouts",    step: 4, name: "Spout / Hand Shower", cats: ["bath-spout", "basin-mixer", "hand-shower"], omit: ["ST-BM-001"] },
 ];
 /* Auto-arrange builds a SHOWER SET, so it stays on the shower categories even
    though the list now offers the whole range — otherwise the demo would drop a
@@ -3574,7 +3762,8 @@ let openGroup = RAIL_GROUPS[0].id;
 const groupOfCat = catId => (RAIL_GROUPS.find(g => g.cats.includes(catId)) || {}).id;
 
 function railItems(group) {
-  const items = group.cats.reduce((a, c) => a.concat(PRODUCTS[c] || []), []);
+  const items = group.cats.reduce((a, c) => a.concat(PRODUCTS[c] || []), [])
+    .filter(p => !(group.omit || []).includes(p.code));
   const q = railQuery.text.trim().toLowerCase();
   return items.filter(p => {
     if (!q) return true;
@@ -3627,7 +3816,10 @@ function renderChosen() {
 function renderRail() {
   const acc = $("#catAccordion");
   let shown = 0, total = 0;
-  RAIL_GROUPS.forEach(g => g.cats.forEach(c => (total += (PRODUCTS[c] || []).length)));
+  // count what the rail can actually OFFER — `omit` has to bite here too, or the
+  // header advertises a design the list does not contain
+  RAIL_GROUPS.forEach(g => g.cats.forEach(c => (total += (PRODUCTS[c] || [])
+    .filter(p => !(g.omit || []).includes(p.code)).length)));
 
   acc.innerHTML = RAIL_GROUPS.map((g, i) => {
     const items = railItems(g);
@@ -3651,7 +3843,7 @@ function renderRail() {
     return `<div class="cat-group ${openByDefault ? "open" : ""}" data-group="${g.id}">
       <button type="button" class="cat-title" data-toggle="${g.id}" aria-expanded="${openByDefault}">
         <span class="ic"><img src="${thumbOf((items[0].images && items[0].images[items[0].defaultFinish]) || "")}" alt=""></span>
-        <b>${g.name}</b><span class="n">${items.length}</span><span class="chev" aria-hidden="true">▶</span>
+        <b>${g.step ? `<span class="step">Step ${g.step}</span>` : ""}${g.name}</b><span class="n">${items.length}</span><span class="chev" aria-hidden="true">▶</span>
       </button>
       <div class="cat-items">${cards}</div>
     </div>`;
@@ -4459,20 +4651,22 @@ function renderEmptyState() {
   el.id = "empty"; el.className = "empty";
   el.innerHTML =
     '<p class="e-kicker">Start your bathroom</p>' +
-    '<h2>Choose an overhead shower</h2>' +
+    '<h2>Step 1 — choose your diverter</h2>' +
     '<p class="e-body">Pick anything from the products list and it locks into its correct place. ' +
     'Tap it in the room to try it in another finish. Nothing is priced here — Stout supplies ' +
     'and installs the whole design, and your consultant quotes it.</p>' +
     '<div class="e-row">' +
-      '<button type="button" data-e="first">Add a rain shower</button>' +
+      '<button type="button" data-e="first">Choose a diverter</button>' +
       '<button type="button" data-e="set">Auto-arrange a full set</button>' +
     '</div>';
   $(".stage3d").appendChild(el);
   el.querySelector('[data-e="first"]').onclick = () => {
-    const list = PRODUCTS["rain-shower"] || []; const p = list[0]; if (!p) return;
-    openGroup = groupOfCat(p.catId) || openGroup;   // same rule as picking from the rail
-    placeProduct(p, cardFinish(p), skuCfg(p).mount || "back", true);
-    toast(`${p.name} added`); renderRail();
+    // Step 1 is a CHOICE, so this opens the Diverter list rather than placing
+    // one for you — the old button dropped the first rain shower in, which
+    // both skipped the client's step 1 and picked their product for them.
+    openGroup = RAIL_GROUPS[0].id; renderRail();
+    const first = $(".cat-group.open .pcard .pc-main");
+    if (first) first.focus();
   };
   el.querySelector('[data-e="set"]').onclick = () => autoArrange();
 }

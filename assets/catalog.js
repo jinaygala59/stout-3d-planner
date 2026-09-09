@@ -149,6 +149,11 @@ const RAW_PRODUCTS = [
 
   // ---- Hand Showers (handsets) — added from the Stout asset library 2026-07-10 ----
   { code: "ST-HS3211", cat: "hand-shower", name: "Aria Multi-Spray Hand Shower", finishes: ["chrome"],                                              badge: "New" },
+  /* From the Drive folder's PHS5380CP — the one handset in it that had never
+     been imported (PSH5230 and psh3211 sit alongside it and are FIXED heads,
+     not handsets, so they are not filed here). Chrome is the only finish the
+     folder carries of it. */
+  { code: "ST-HS5380", cat: "hand-shower", name: "Aria Slim Hand Shower",       finishes: ["chrome"], variant: "round face · slim handle" },
   { code: "ST-1040",   cat: "hand-shower", name: "Aeon Multi-Function Hand Shower", finishes: ["chrome","gunGrey","gold","champagne","roseGold","brushedRoseGold","matteBlack"], badge: "Bestseller" },
   { code: "ST-1018",   cat: "hand-shower", name: "Axis Hand Shower",            finishes: ["chrome","gunGrey","champagne","brushedRoseGold"] },
   { code: "ST-1025",   cat: "hand-shower", name: "Cascada Slim Hand Shower",    finishes: ["chrome"] },
