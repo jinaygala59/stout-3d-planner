@@ -6,3 +6,4 @@ dist/
 _drive
 _quarantine/
 .vercel
+.env*
