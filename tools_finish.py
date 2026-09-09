@@ -54,7 +54,26 @@ THUMB_W = 220   # the rail, the tool's finish preview and the spec sheet all rea
                 # broken tile the moment it is a product's default
 
 PROD = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", "products")
-REF = "ST-C1008-gold.png"      # the client's own polished-gold render (matches their reference shot)
+# ---------------------------------------------------------------------------
+# ONE REFERENCE PER FINISH. Each is a REAL render out of the client's Drive — a
+# photograph of a product the factory actually shot in that colour — never one
+# of this script's own outputs. Fitting a curve to a generated file would be
+# deriving a derivation, and the error would compound silently.
+# Where a choice exists, the reference is a big overhead plate off ONE SKU
+# (ST-C1008), so the only thing that differs between these curves is the finish.
+# Two are not showers, because no shower in the folder was shot in them: brushed
+# gold comes off the wall spout and champagne off the flat overhead panel.
+REFS = {
+    "chrome":          "ST-C1019-chrome.png",
+    "gunGrey":         "ST-C1008-gunGrey.png",
+    "gold":            "ST-C1008-gold.png",
+    "roseGold":        "ST-C1008-roseGold.png",
+    "brushedRoseGold": "ST-C1008-brushedRoseGold.png",
+    "matteBlack":      "ST-C1008-matteBlack.png",
+    "champagne":       "ST-FDP-champagne.png",
+    "brushedGold":     "ST-WM-001-brushedGold.png",
+}
+REF = REFS["gold"]             # the polished-gold curve, kept as the default
 BINS = 256
 NEUTRAL_KEEP = 0.22            # below this luminance the tint fades out, so bores/slots stay neutral
 CEIL_PCTL = 0.995              # the highlight ceiling, as a percentile of the reference's own luminance
@@ -129,6 +148,26 @@ def lum_cdf(path):
         run += h; cdf.append(run / n)
     return cdf
 
+# TRUE clipping only. At L>0.90 this caught ordinary bright chrome — a polished
+# plate is legitimately 60-80% brighter than 0.90 and has full detail in it — and
+# would have switched matching off for renders that need it. Measured at L>0.98
+# the two populations separate cleanly: the healthy chrome donors sit at 0.1-5%,
+# and the four the studio blew out sit at 22-46%.
+CLIP_L = 0.98
+CLIP_MAX = 0.15
+
+def clipped_share(path):
+    """Fraction of the render's opaque pixels that are blown to near-white."""
+    im = Image.open(path).convert("RGBA"); px = im.load(); W, H = im.size
+    hot = n = 0
+    for y in range(H):
+        for x in range(W):
+            r, g, b, a = px[x, y]
+            if a < 200: continue
+            n += 1
+            if lum(r, g, b) > CLIP_L: hot += 1
+    return hot / n if n else 0.0
+
 def match_map(donor_cdf, ref_cdf):
     """donor luminance bin -> reference luminance bin, by equal cumulative share."""
     out = []; j = 0
@@ -181,6 +220,10 @@ HAVE_REAL = ["ST-C1001", "ST-C1002", "ST-C1008", "ST-C1010"]
 DONOR_ORDER = ["chrome", "gunGrey", "champagne", "gold", "brushedRoseGold", "roseGold", "matteBlack"]
 NEW = "polishedGold"
 
+def real_skus(fin):
+    """SKUs whose render in `fin` came from the Drive, not from this script."""
+    return [s for s, _ in showers() if os.path.exists(f"{s}-{fin}.png") and fin != NEW]
+
 def showers():
     """(sku, [finishes]) for every rain-shower row in the catalogue."""
     import re
@@ -205,8 +248,88 @@ def thumb(path):
     t.save(base + ".png")
     t.save(base + ".webp", quality=92, method=6)
 
+def tone_for(src, ref_cdf):
+    """The donor's tone map onto the reference — or None when it must not have one.
+
+    Histogram matching is the right move for a normally-exposed donor: it gives
+    the variant the FINISH's tonal response rather than the donor's. It is the
+    wrong move for a BLOWN-OUT one. Several chrome renders here are half studio
+    softbox — ST-C1016 is 49% clipped — and inside that band the donor holds
+    almost no real variation, just render noise. Matching stretches that noise
+    across the reference's whole upper range, and out comes a soft pale ellipse
+    in the middle of the plate: a stain in no photograph of the product, worst on
+    matte black, where it reads as a grey smear on a black plate.
+    A clipped donor gets a LINEAR range match instead: its 1st-to-99th percentile
+    mapped onto the reference's. Linear is the whole point — every luminance is
+    moved by the same rule, so nothing inside the highlight can be stretched into
+    detail, while the plate still lands at the level the finish actually sits at.
+    Skipping the map entirely was not enough: the curve then reads the blown area
+    at its own near-white luminance and returns the finish's brightest tone for
+    it, so matte black on the Lumina plates came out a pale sage grey at value
+    0.64 against 0.20-0.38 for every matte black the client actually shot. Range
+    matched, it lands where it belongs."""
+    if clipped_share(src) <= CLIP_MAX:
+        return match_map(lum_cdf(src), ref_cdf)
+    da, db = pctl_bins(src); ra, rb = pctl_bins_cdf(ref_cdf)
+    k = (rb - ra) / max(1, db - da)
+    return [min(BINS - 1, max(0, int(round(ra + (i - da) * k)))) for i in range(BINS)]
+
+def pctl_bins_cdf(cdf, lo=0.01, hi=0.99):
+    a = next((i for i, c in enumerate(cdf) if c >= lo), 0)
+    b = next((i for i, c in enumerate(cdf) if c >= hi), BINS - 1)
+    return a, b
+
+def pctl_bins(path, lo=0.01, hi=0.99):
+    return pctl_bins_cdf(lum_cdf(path), lo, hi)
+
+def run_finish(fin, write):
+    """Fit `fin`'s curve off its real reference, validate it against every shower
+       the client DID shoot in it, then fill in the ones they did not."""
+    ref = REFS[fin]
+    if not os.path.exists(ref):
+        print(f"  !! no reference render for {fin} ({ref}) — skipped"); return
+    curve = fit(ref); ref_cdf = lum_cdf(ref)
+    toner = lambda src: match_map(lum_cdf(src), ref_cdf)
+    real = real_skus(fin)
+    print(f"\n=== {fin}  (curve off {ref})")
+    # VALIDATE FIRST, and against held-out SKUs: regenerate the finish for the
+    # ones whose real render we already have and measure the error against it.
+    errs = []
+    for sku in real:
+        fins = dict(showers()).get(sku, [])
+        d = donor_for(sku, [f for f in fins if f != fin])
+        if not d: continue
+        got = median_hsv(apply_curve(f"{sku}-{d}.png", curve, tone_for(f"{sku}-{d}.png", ref_cdf)))
+        want = median_hsv(Image.open(f"{sku}-{fin}.png"))
+        dh = (got[0] - want[0] + 180) % 360 - 180
+        errs.append((sku, d, dh, got[1] - want[1], got[2] - want[2]))
+    if errs:
+        for sku, d, dh, ds, dv in errs:
+            print(f"    check {sku:10} from {d:16} dHue {dh:+6.1f}  dSat {ds:+.3f}  dVal {dv:+.3f}")
+        n = len(errs)
+        print(f"    mean |dHue| {sum(abs(e[2]) for e in errs)/n:.1f}  "
+              f"|dSat| {sum(abs(e[3]) for e in errs)/n:.3f}  |dVal| {sum(abs(e[4]) for e in errs)/n:.3f}")
+    else:
+        print("    (no held-out SKU to check against — this finish has one reference only)")
+    if not write: return
+    made = 0
+    for sku, fins in showers():
+        if os.path.exists(f"{sku}-{fin}.png"): continue      # the client's own render wins
+        d = donor_for(sku, fins)
+        if not d: print(f"    !! no donor for {sku}"); continue
+        src = f"{sku}-{d}.png"
+        out = apply_curve(src, curve, tone_for(src, ref_cdf))
+        out.save(f"{sku}-{fin}.png"); out.save(f"{sku}-{fin}.webp", quality=92, method=6)
+        thumb(f"{sku}-{fin}.png"); made += 1
+        print(f"    made {sku}-{fin:16} from {d}")
+    print(f"    {made} generated")
+
 def main():
     os.chdir(PROD)
+    if "--all" in sys.argv:
+        write = "--write" in sys.argv
+        for fin in REFS: run_finish(fin, write)
+        return
     curve = fit(REF)
     ref_cdf = lum_cdf(REF)
     toner = lambda src: match_map(lum_cdf(src), ref_cdf)
