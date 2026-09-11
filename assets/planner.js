@@ -1053,11 +1053,46 @@ function fittingEnv() {
   return _fitEnv;
 }
 const fittingEnvI = () => 0.50 + 0.40 * (THEME && THEME.art != null ? THEME.art : 1);
-/* how polished each finish is — a brushed metal and a matte black cannot share
-   the mirror roughness a chrome needs, or they read as chrome in another colour */
-const FINISH_ROUGH = { chrome: 0.10, gold: 0.16, roseGold: 0.16, champagne: 0.20, brushedGold: 0.38,
-                       brushedRoseGold: 0.38, gunGrey: 0.30, matteBlack: 0.60, brushedSteel: 0.40 };
+/* HOW POLISHED EACH FINISH IS — and a coloured PVD is a SATIN, not a mirror.
+   A brushed metal and a matte black cannot share the roughness a chrome needs,
+   or they read as chrome in another colour. But the coloured ones were set
+   almost as sharp as chrome (rose gold 0.16), and at that sharpness a fitting
+   stops showing its own colour and shows the ROOM instead: the plain spout in a
+   Rose Gold room rendered as a near-white box beside a rose-gold panel, because
+   a mirror in a white bathroom is white. That is physically honest and useless
+   — the client picked a colour and the piece would not wear it.
+   These are calibrated, not guessed. With the thermostatic panel's photograph
+   as the reference (it renders at saturation 0.128), the spout was swept across
+   metalness 0.12-1.0 and roughness 0.13-0.45: roughness is the lever, metalness
+   barely moves it, and an effective 0.45 puts the spout at 0.128 exactly. The
+   table is pre-multiplier, and metalMat scales it by 0.8.
+   Chrome stays sharp. It IS a mirror, and its own photograph is a mirror too —
+   it is the one finish the room's reflection belongs in. */
+const FINISH_ROUGH = { chrome: 0.10, gold: 0.52, roseGold: 0.55, champagne: 0.50, brushedGold: 0.50,
+                       brushedRoseGold: 0.50, gunGrey: 0.42, matteBlack: 0.60, brushedSteel: 0.46,
+                       polishedGold: 0.46 };
 const finishRough = fid => FINISH_ROUGH[fid] == null ? 0.20 : FINISH_ROUGH[fid];
+
+/* THE COLOUR A MODELLED PIECE IS MADE OF — one per FINISH, not one per SKU.
+   FINISHES[fid].tone is a UI swatch: it has to look right as a 22 px dot in the
+   tool, and it was never matched to the photography. Tinting geometry with it
+   put a hue-12 spout beside a hue-24 photographed panel in the same Rose Gold
+   room.
+   Tinting each model from its OWN artwork instead was worse, and it was my
+   mistake: a body jet's render is mostly black spray face, so its average came
+   out at #948176 while the spout's came out #cf9f86 — two modelled pieces, one
+   finish, two different colours BY CONSTRUCTION. The client asked for the
+   opposite of that.
+   So the tone is measured once per finish off ST-PLAIN, which is the only SKU
+   the folder ships in all eight and is a plain shape with no black face or
+   printed dial to drag an average around. Every modelled piece in a finish now
+   starts from the same colour, and that colour is the range's own. */
+const METAL_TONE = {
+  chrome: 0xcdcece, gunGrey: 0x818181, brushedGold: 0xa57c3f, champagne: 0xaa9c86,
+  gold: 0xd6c28d, roseGold: 0xd09f86, brushedRoseGold: 0xbf967c, matteBlack: 0x434343,
+  polishedGold: 0xd8bd7c,          // measured with the rest — see catalog.js
+};
+const metalHex = (fid, fallback) => METAL_TONE[fid] != null ? METAL_TONE[fid] : fallback;
 
 /* NOT EVERY FINISH IS A METAL.
    Roughness was per-finish but metalness was 1.0 for all of them, and in a PBR
@@ -1079,6 +1114,7 @@ const finishMetal = fid => FINISH_METAL[fid] == null ? 1.0 : FINISH_METAL[fid];
 const envForMetal = m => fittingEnvI() * (0.34 + 0.66 * m);
 
 function metalMat(hex, rough, fid) {
+  hex = metalHex(fid, hex);                 // the range's own colour, not the swatch
   const metal = fid == null ? 1.0 : finishMetal(fid);
   const m = new THREE.MeshStandardMaterial({ color: hex, metalness: metal, roughness: rough == null ? 0.18 : rough * 0.8,
                                              envMap: fittingEnv(), envMapIntensity: envForMetal(metal) });
@@ -3045,20 +3081,10 @@ function build3DHolder(product, finishId, wall, spec, uid, onReady) {
     });
     applyDecals(holder, product, finishId, spec);
     holder.userData.reface = fid => applyDecals(holder, product, fid, spec);
-    /* TINT THE GEOMETRY FROM THE SKU'S OWN PHOTOGRAPH, not from the swatch.
-       A finish reaches the wall by two different roads: a photographic product
-       wears its factory render, and a modelled one is metal tinted by
-       FINISHES[fid].tone. Those are two different statements of what the colour
-       IS, and they disagree — measured on a Rose Gold room, the thermostatic
-       panel rendered at hue 29 and the spout beside it at hue 10, because the
-       tone swatch is a hand-picked UI colour (hue 12) while the range's real
-       rose gold photographs at hue 21-24. One room, one finish, two colours,
-       which is exactly what the client saw.
-       averageColor reads the SKU's own render of that finish, so both roads now
-       start from the same place. It is the pattern the procedural jets already
-       used (tintFromArtwork); this puts the loaded models on it too. */
-    holder.userData.retint = path => tintFromArtwork(holder, path);
-    tintFromArtwork(holder, product.images && product.images[finishId]);
+    /* NO per-SKU tint here. It was tried, and it is METAL_TONE's note that
+       explains why it went: a jet's own render is mostly black face, so tinting
+       each model from its own artwork gave two modelled pieces in one finish
+       two different colours. The finish is the constant, not the SKU. */
     /* INSTALL: orient the ProductRoot from the surface normal, then put local
        z = 0 — where every instance's mount face already is — on the TILE, not on
        the artwork anchor 2.5 cm in front of it. */
@@ -3734,7 +3760,7 @@ function changeFinish(uid, fid, commit) {
   rec.finishId = fid;
   sessionFinish = fid;
   if (rec.is3D) {
-    const hex = finishHex(fid, rec.product);
+    const hex = metalHex(fid, finishHex(fid, rec.product));
     rec.mesh.traverse(o => {
       if (!o.userData.metal || !o.material) return;
       o.material.color.setHex(hex);
@@ -4635,8 +4661,15 @@ async function downloadSpecSheet() {
         doc.setFontSize(7.8); doc.setTextColor(160, 158, 152);
         doc.text(rec.product.variant, tx + 6, y + 7.2);
       }
-      // finish swatch + label (right aligned)
-      const sw = hex2rgb(fin.tone || "#c9ced3");
+      /* The chip is the RANGE's colour, not the UI swatch. FINISHES[fid].tone
+         has to read as a 22 px dot in the tool and was never matched to the
+         photography — rose gold is #cf9a8c there against #d09f86 measured off
+         the product renders, and gold is #d4af37 against #d6c28d. On screen
+         that is a swatch; printed next to the finish's name on a specification
+         the client hands to a fitter, it is a statement about the product. */
+      const sw = hex2rgb(METAL_TONE[rec.finishId] != null
+        ? "#" + METAL_TONE[rec.finishId].toString(16).padStart(6, "0")
+        : (fin.tone || "#c9ced3"));
       doc.setFillColor(...sw); doc.setDrawColor(200, 196, 186); doc.setLineWidth(0.2);
       doc.roundedRect(PW - M - 40, y - 4.4, 5.4, 5.4, 0.9, 0.9, "FD");
       doc.setTextColor(...INK); doc.setFont("helvetica", "normal"); doc.setFontSize(9.5);
