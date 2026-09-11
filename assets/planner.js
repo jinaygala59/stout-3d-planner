@@ -1024,14 +1024,26 @@ let _fitEnv = null;
 function fittingEnv() {
   if (_fitEnv) return _fitEnv;
   const W = 256, H = 128, c = mkCanvas(W, H), x = c.getContext("2d");
+  /* A LIT BATHROOM, NOT A PHOTO STUDIO. This used to fall to near-black below
+     the horizon (#34353a to #121316) because it was written as a product-shoot
+     surround. A fitting on a wall does not hang in a black studio: it hangs in
+     this room, whose floor, tray and tiles are all near-white, and a mirror
+     finish reflects mostly THAT. The dark half was being reflected straight
+     back and the spout rendered at 0.55 brightness against the thermostatic
+     panel's 0.91 — same finish, same room, one of them visibly grey. The
+     gradient still falls from ceiling to floor, so a curved fitting still has
+     somewhere to catch a highlight and reads as metal rather than as paint. */
   const g = x.createLinearGradient(0, 0, 0, H);
-  g.addColorStop(0.00, "#e2e2df"); g.addColorStop(0.30, "#b4b4b1"); g.addColorStop(0.50, "#666a70");
-  g.addColorStop(0.53, "#34353a"); g.addColorStop(1.00, "#121316");
+  g.addColorStop(0.00, "#f2f1ee"); g.addColorStop(0.30, "#dedcd8"); g.addColorStop(0.50, "#b4b3af");
+  g.addColorStop(0.53, "#a3a29e"); g.addColorStop(1.00, "#8b8a87");
   x.fillStyle = g; x.fillRect(0, 0, W, H);
   x.fillStyle = "rgba(255,255,255,0.96)";                       // soft-boxes overhead
   [[0.10, 0.10, 0.22, 0.13], [0.45, 0.06, 0.18, 0.12], [0.74, 0.12, 0.20, 0.11]]
     .forEach(([u, v, w, h]) => x.fillRect(u * W, v * H, w * W, h * H));
-  x.fillStyle = "rgba(18,18,22,0.85)";                          // dark verticals on the horizon: what gives a reflection shape
+  /* The verticals are what give a reflection its shape — without them a mirror
+     finish is a flat wash. Mid-grey now rather than near-black: dark enough to
+     read as structure, not so dark that they drag the whole piece down. */
+  x.fillStyle = "rgba(96,96,100,0.55)";
   [0.05, 0.33, 0.62, 0.88].forEach(u => x.fillRect(u * W, H * 0.30, W * 0.018, H * 0.30));
   const eq = canvasTex(c, false);
   eq.mapping = THREE.EquirectangularReflectionMapping;
@@ -3033,6 +3045,20 @@ function build3DHolder(product, finishId, wall, spec, uid, onReady) {
     });
     applyDecals(holder, product, finishId, spec);
     holder.userData.reface = fid => applyDecals(holder, product, fid, spec);
+    /* TINT THE GEOMETRY FROM THE SKU'S OWN PHOTOGRAPH, not from the swatch.
+       A finish reaches the wall by two different roads: a photographic product
+       wears its factory render, and a modelled one is metal tinted by
+       FINISHES[fid].tone. Those are two different statements of what the colour
+       IS, and they disagree — measured on a Rose Gold room, the thermostatic
+       panel rendered at hue 29 and the spout beside it at hue 10, because the
+       tone swatch is a hand-picked UI colour (hue 12) while the range's real
+       rose gold photographs at hue 21-24. One room, one finish, two colours,
+       which is exactly what the client saw.
+       averageColor reads the SKU's own render of that finish, so both roads now
+       start from the same place. It is the pattern the procedural jets already
+       used (tintFromArtwork); this puts the loaded models on it too. */
+    holder.userData.retint = path => tintFromArtwork(holder, path);
+    tintFromArtwork(holder, product.images && product.images[finishId]);
     /* INSTALL: orient the ProductRoot from the surface normal, then put local
        z = 0 — where every instance's mount face already is — on the TILE, not on
        the artwork anchor 2.5 cm in front of it. */
