@@ -3735,6 +3735,12 @@ function removeProduct(uid) {
    ========================================================================= */
 let activeWall = "back";
 function isPlaced(pid) { for (const r of placed.values()) if (r.product.id === pid) return true; return false; }
+/* A finish-card is "in the room" only when that SKU is there IN THAT COLOUR —
+   the chrome spout on the wall must not light up the gold card. */
+function isPlacedIn(pid, fid) {
+  for (const r of placed.values()) if (r.product.id === pid && r.finishId === fid) return true;
+  return false;
+}
 
 /* The rail shows FOUR groups only — showers, diverters, spouts and body jets.
    Everything else in the catalogue (basin mixers, hand showers, wall taps, health
@@ -3743,11 +3749,13 @@ function isPlaced(pid) { for (const r of placed.values()) if (r.product.id === p
    diverter families read as one "Diverters" list while each product keeps its own
    catId — and therefore its own wall anchor. */
 const RAIL_GROUPS = [
-  // FOUR groups, and the client reads them as STEPS (2026-09-09): diverter,
-  // then shower, then body jets, then spout / hand shower. `step` is the number
-  // the header prints; the array order is the order on screen, and the two must
-  // agree — the rail does not sort. Hand showers come back in here at the
-  // client's ask, folded into the spouts list rather than given a fifth group.
+  // FIVE groups, and the client reads them as STEPS: diverter, then shower,
+  // then body jets, then spout, then hand shower. `step` is the number the
+  // header prints; the array order is the order on screen, and the two must
+  // agree — the rail does not sort. Hand showers were folded into the spouts
+  // list when they came back (2026-09-09) and were split out again at the
+  // client's ask (2026-09-11): one spout sharing a header with thirteen
+  // handsets read as a list of handsets with an oddity at the top.
   // Taps & Valves and Wastes stay hidden; they remain loaded, sized and
   // anchored, so adding a group back here is all it takes.
   /* `solo` — ONE of these on the wall at a time, whichever category the pick
@@ -3800,12 +3808,21 @@ const RAIL_GROUPS = [
      What is left is ONE spout — ST-PLAIN — which is what was asked for, and it
      now comes in all eight finishes rather than three (see catalog.js), so it
      can be placed in any room whatever the diverter locks the palette to. */
-  /* Hand showers ride in this group too, as the client's step 4 names them.
-     NOT `solo`: a spout and a handset are two fittings on two brackets, and the
-     per-category rule in placeProduct already keeps each to one. The shattaf
-     (health-faucet) is deliberately not here — it is a WC fitting, not a hand
-     shower, and it was not asked for. */
-  { id: "spouts",    step: 4, name: "Spout / Hand Shower", cats: ["bath-spout", "hand-shower"], omit: ["ST-2513", "ST-BSDV", "ST-SARM"] },
+  /* `byFinish` — list one card PER COLOUR instead of one card with a hidden
+     chooser. Asked for directly (2026-09-11: "i can only see 1 color in spout
+     there are many colors, so add the colors as different products"). It earns
+     its place here because the step holds a single SKU: one lonely card said
+     "this is all Stout makes", when the truth is one spout in eight finishes.
+     Adding the flag to another group is all it takes — it is deliberately NOT
+     on the lists that already run to a dozen designs, where eight colours each
+     would bury the shapes under a wall of near-identical thumbnails. */
+  { id: "spouts",    step: 4, name: "Spout",      cats: ["bath-spout"], omit: ["ST-2513", "ST-BSDV", "ST-SARM"], byFinish: true },
+  /* Its own step now. NOT `solo`, and neither is Spout: a spout and a handset
+     are two fittings on two brackets, so choosing one must not supersede the
+     other — the per-category rule in placeProduct already keeps each to one.
+     The shattaf (health-faucet) is deliberately not here: it is a WC fitting,
+     not a hand shower, and it was not asked for. */
+  { id: "handshowers", step: 5, name: "Hand Shower", cats: ["hand-shower"] },
 ];
 /* Auto-arrange builds a SHOWER SET, so it stays on the shower categories even
    though the list now offers the whole range — otherwise the demo would drop a
@@ -3852,6 +3869,10 @@ const finName = fid => (FINISHES[fid] || {}).name || fid;
    rail, the swatch tray and the add path can never disagree about it. */
 function blockReason(p) {
   const lock = lockedFinish(), v = placedValve();
+  /* A finish-card that is not the room's colour is not "unavailable" — the SKU
+     is made in it, this room just isn't that colour. Say that, rather than the
+     generic line below, which would read as a gap in the range. */
+  if (p.finishOnly && lock && lock !== p.finishOnly) return `This room is ${finName(lock)}`;
   if (lock && !(p.finishes || []).includes(lock))
     return `Not made in ${finName(lock)}`;
   if (isValve(p) && v && p.outlets && p.outlets < outletsUsed())
@@ -3883,6 +3904,7 @@ let sessionFinish = null;
    the room, otherwise whatever swatch was last clicked on the card */
 const railFinish = new Map();
 function cardFinish(p) {
+  if (p.finishOnly) return p.finishOnly;          // the card IS the colour
   const rec = [...placed.values()].find(r => r.product.id === p.id);
   if (rec) return rec.finishId;
   // a valve on the wall overrules the card, the session and the default: there
@@ -3909,7 +3931,6 @@ const railQuery = { text: "" };
    product collapse the group you were working in and leave the FIRST group
    (openByDefault, i === 0) expanded instead: the one list you weren't using. */
 let openGroup = RAIL_GROUPS[0].id;
-const groupOfCat = catId => (RAIL_GROUPS.find(g => g.cats.includes(catId)) || {}).id;
 
 /* Every SKU a rail group has asked to hide, in one set. `omit` lives on the
    group, but "is this product on offer?" gets asked from more than one place:
@@ -3923,8 +3944,26 @@ const groupOfCat = catId => (RAIL_GROUPS.find(g => g.cats.includes(catId)) || {}
 const OMITTED = new Set(RAIL_GROUPS.reduce((a, g) => a.concat(g.omit || []), []));
 const offered = cid => (PRODUCTS[cid] || []).filter(p => !OMITTED.has(p.code));
 
+/* A finish-card is a shallow copy of the real product pinned to one colour. It
+   is only ever a CARD: `productFor` maps it back to the catalogue row before
+   anything is placed, so the room, the share link, undo and the PDF all still
+   carry the real SKU and never see these. */
+const FINISH_CARDS = new Map();          // card id -> real product
+function finishCard(p, fid) {
+  const id = p.id + "~" + fid;
+  FINISH_CARDS.set(id, p);
+  return { ...p, id, baseId: p.id, finishOnly: fid,
+           finishes: [fid], defaultFinish: fid,
+           variant: [p.variant, finName(fid)].filter(Boolean).join(" · ") };
+}
+/* everything a group can offer, before the search box narrows it */
+function groupOffer(group) {
+  const base = group.cats.reduce((a, c) => a.concat(offered(c)), []);
+  if (!group.byFinish) return base;
+  return base.reduce((a, p) => a.concat((p.finishes || [p.defaultFinish]).map(f => finishCard(p, f))), []);
+}
 function railItems(group) {
-  const items = group.cats.reduce((a, c) => a.concat(offered(c)), []);
+  const items = groupOffer(group);
   const q = railQuery.text.trim().toLowerCase();
   return items.filter(p => {
     if (!q) return true;
@@ -3979,7 +4018,7 @@ function renderRail() {
   let shown = 0, total = 0;
   // count what the rail can actually OFFER — `omit` has to bite here too, or the
   // header advertises a design the list does not contain
-  RAIL_GROUPS.forEach(g => g.cats.forEach(c => (total += offered(c).length)));
+  RAIL_GROUPS.forEach(g => (total += groupOffer(g).length));
 
   acc.innerHTML = RAIL_GROUPS.map((g, i) => {
     const items = railItems(g);
@@ -3997,12 +4036,14 @@ function renderRail() {
          tapping the card opens its swatches and tapping a swatch is what places
          it. Every other product still adds on one tap — it inherits the lock. */
       const valve = isValve(p);
-      return `<div class="pcard ${isPlaced(p.id) ? "placed" : ""}${why ? " blocked" : ""}" data-prod="${p.id}" data-cat="${p.catId}">
+      const here = p.finishOnly ? isPlacedIn(p.baseId, p.finishOnly) : isPlaced(p.id);
+      return `<div class="pcard ${here ? "placed" : ""}${why ? " blocked" : ""}" data-prod="${p.id}" data-cat="${p.catId}" data-fin="${fin}">
         <button type="button" class="pc-main" ${valve ? "data-arm" : "data-add"}${why ? " disabled" : ""}
                 ${valve && !why ? 'aria-haspopup="dialog"' : ""}
                 aria-label="${why ? p.name + ", unavailable: " + why
                               : (valve ? "Choose a finish for " : "Add ") + p.name + ", " + p.code
-                                + (isPlaced(p.id) ? ", already in the room" : "")}">
+                                + (p.finishOnly ? " in " + finName(p.finishOnly) : "")
+                                + (here ? ", already in the room" : "")}">
           <span class="pic"><img src="${thumbOf(img)}" loading="lazy" decoding="async" alt=""></span>
           <span class="nm">${p.name}</span>
           <span class="sub">${p.code}${p.variant ? " · " + p.variant : ""}</span>
@@ -4042,14 +4083,13 @@ function renderRail() {
     showOnly(g.classList.contains("open") ? null : g.dataset.group);   // tap the open one to close it
   });
 
-  const productFor = card => (PRODUCTS[card.dataset.cat] || []).find(x => x.id === card.dataset.prod);
+  const productFor = card => FINISH_CARDS.get(card.dataset.prod)
+    || (PRODUCTS[card.dataset.cat] || []).find(x => x.id === card.dataset.prod);
   const add = (p, fin) => {
     // Every category has ONE correct home (ceiling / back column / side wall) —
     // always mount there, regardless of which wall tab is active. Deterministic
     // placement: a spout can never end up on the wrong wall. placeProduct flies
     // the camera to frame the piece once its artwork is in (async).
-    // the group you picked from is the group you are working in — hold it open
-    // (placeProduct re-renders the rail, which reads openGroup back)
     const why = blockReason(p);
     if (why) { toast(`${p.name}: ${why.toLowerCase()}`); return; }
     const lock = lockedFinish();
@@ -4062,8 +4102,18 @@ function renderRail() {
       toast(`${strands.join(" and ")} ${strands.length > 1 ? "are" : "is"} not made in ${finName(fin)}`);
       return;
     }
-    const gid = groupOfCat(p.catId);
-    if (gid) openGroup = gid;
+    /* THE STEP YOU JUST ANSWERED FOLDS AWAY. Picking a diverter used to leave
+       its own list open under your finger — fourteen plates you have finished
+       choosing between, pushing the three steps you have NOT done off the
+       bottom of the rail. Closing it brings them up to meet you, which is the
+       whole point of numbering them.
+       It is set here rather than toggled in the DOM because placeProduct
+       re-renders the rail immediately after and reads openGroup back; a class
+       toggled on the old markup would be thrown away with it.
+       Null, not the next step: `add` is also the SWAP path — a client changing
+       their mind about a diverter they have already placed is not moving
+       forward, and marching them on would take the list away mid-decision. */
+    openGroup = null;
     const replaced = [...placed.values()].find(r => r.product.catId === p.catId && r.product.id !== p.id);
     const undo = snapshot();
     placeProduct(p, fin, skuCfg(p).mount || "back", true);
@@ -4079,7 +4129,9 @@ function renderRail() {
 
   acc.querySelectorAll("[data-add]").forEach(btn => btn.onclick = () => {
     const card = btn.closest(".pcard"), p = productFor(card); if (!p) return;
-    add(p, cardFinish(p));
+    // the colour the card is SHOWING is the colour that goes on the wall —
+    // read it off the card, because `p` is now the shared catalogue row
+    add(p, card.dataset.fin || cardFinish(p));
   });
   // a valve card opens the finish chooser; picking there is what places it
   acc.querySelectorAll("[data-arm]").forEach(btn => btn.onclick = () => {
@@ -4348,9 +4400,15 @@ function shotCeiling() {
       cx = c.x; cz = c.z; cy = c.y;
     }
   }
-  const pos = new THREE.Vector3(clamp(cx + 0.26, -HX + 0.35, HX - 0.35), 1.02,
-                                clamp(cz + 1.60, -HZ + 0.35, HZ - 0.35));
-  return captureFrom(pos, new THREE.Vector3(cx, cy - 0.05, cz), SHEET_ASPECT);
+  /* Stand ~1.1 m off the head, below and in front. At fov 52 on a 4:3 crop that
+     puts a 62 cm plate across about 40% of the frame — big enough to show the
+     blades and the finish, with enough slab and wall left around it to say
+     "this is the ceiling". The first pass stood 2.2 m back and the head was a
+     speck in an empty grey field. */
+  const pos = new THREE.Vector3(clamp(cx + 0.18, -HX + 0.35, HX - 0.35),
+                                clamp(cy - 0.85, 0.95, RH - 0.35),
+                                clamp(cz + 0.82, -HZ + 0.35, HZ - 0.35));
+  return captureFrom(pos, new THREE.Vector3(cx, cy - 0.04, cz), SHEET_ASPECT);
 }
 /* jsPDF needs pixels, and a transparent PNG would print on a black ground —
    composite each product render onto white first. */
