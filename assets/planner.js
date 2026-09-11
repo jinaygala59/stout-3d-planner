@@ -444,13 +444,66 @@ const holder = $("#canvasHolder");
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x0c0d0f);
 
-const camera = new THREE.PerspectiveCamera(52, 1, 0.05, 100);
+/* =============================================================================
+   FRAMING FOR THE VIEWPORT IT ACTUALLY HAS
+   -----------------------------------------------------------------------------
+   A PerspectiveCamera's `fov` is its VERTICAL field, so a phone held upright
+   does not show a taller slice of the room — it shows a much NARROWER one. At
+   16:9 these 52 degrees are 82 degrees across; on a 375-wide phone, where the
+   canvas is 375x760, they are 27. That is the whole of the mobile problem: the
+   opening view has the valve panel, four jets, the filler spout and the
+   overhead plate in it, and on a phone not one of them is on screen — you get
+   blank tile and the drain.
+   So the vertical field OPENS UP on a narrow viewport, by exactly enough to
+   hold the horizontal field steady, and is capped where the wide-angle
+   distortion would start to bend the room.
+   ========================================================================== */
+/* HOLD_ASPECT is where the widening STARTS, and it is deliberately not 16:9.
+   Anchoring it at 16:9 widened a 1440x900 laptop too — the rail takes 288 px, so
+   that stage is 1.37 across, and the opening view went from 52 degrees to 65.
+   Nobody asked for the desktop framing to change. At 1.2 every normal window
+   keeps the 52 degrees it was composed at, a square-ish window opens up a
+   little, and a phone still runs into the cap below. */
+const BASE_FOV = 52, HOLD_ASPECT = 1.2, MAX_FOV = 76;
+const halfXAt = (fovDeg, aspect) => Math.tan(fovDeg * Math.PI / 360) * aspect;
+const REF_HALF_X = halfXAt(BASE_FOV, HOLD_ASPECT);
+const fovFor = aspect => aspect >= HOLD_ASPECT ? BASE_FOV
+  : Math.min(MAX_FOV, 2 * Math.atan(REF_HALF_X / aspect) * 180 / Math.PI);
+/* What the cap could NOT recover, as a multiplier on how far back the camera
+   has to stand. It is never the whole answer: this room is 3 m square and the
+   camera lives inside it, so there is a limit to standing back — past the wall
+   you would be looking at the outside of a single-sided plane. Hence the
+   portrait hero below as well. */
+const widenPull = () => Math.min(1.6, Math.max(1, REF_HALF_X / halfXAt(camera.fov, camera.aspect)));
+
+const camera = new THREE.PerspectiveCamera(BASE_FOV, 1, 0.05, 100);
 /* The opening / reset view. From the front-left corner looking into the back-right
    one, so the back wall AND the right wall are both in frame — body jets and
    spouts live on the right wall, and the old straight-on hero hid them. */
 const HERO = { pos: [-1.25, 1.62, 1.35], tgt: [0.45, 1.22, -0.95] };
-const heroPos = () => new THREE.Vector3(...HERO.pos);
-const heroTgt = () => new THREE.Vector3(...HERO.tgt);
+/* PORTRAIT HERO. The landscape one is composed for a wide frame: it stands a
+   little inside the room and lets the width of the picture carry both walls.
+   In a tall frame that same spot crops to one blank panel of tile, so this
+   version backs into the front-left corner for every centimetre the room will
+   give (the walls are at +/-1.5, so 1.40 is as far as it goes without the
+   camera passing through one) and aims ACROSS at the valve column rather than
+   down into the corner — a tall frame wants the wall, not the tray. Compared
+   against three other compositions rendered at 375x812: aiming deeper into the
+   corner clipped the jets off the right edge and spent a third of the picture
+   on the floor; aiming further right lost the corner and cut the overhead
+   plate. This one holds the panel, all four jets, the filler spout and the
+   ceiling head at once. */
+const HERO_TALL = { pos: [-1.35, 1.55, 1.35], tgt: [0.85, 1.45, -0.45] };
+const heroOf = () => (camera.aspect < 1 ? HERO_TALL : HERO);
+/* Has the client taken the camera over? Turning a phone re-frames to the other
+   hero composition, and that must not happen under someone who has just spun
+   the room to look at something. Any programmatic flight (animateCam) hands
+   control back, so Reset and a fresh pick both clear it. Declared up here
+   because animateCam and resize both touch it, and a `let` read before its
+   declaration runs is a ReferenceError, not undefined. */
+let userMovedCam = false;
+const heroPos = () => new THREE.Vector3(...heroOf().pos);
+const heroTgt = () => new THREE.Vector3(...heroOf().tgt);
 camera.position.set(...HERO.pos);
 
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, preserveDrawingBuffer: true });
@@ -3470,7 +3523,13 @@ function frameProduct(rec) {
   // looking at. Take whichever is further: enough distance to read the piece, or
   // enough to keep most of the wall height in shot. The halo finds the piece.
   const MIN_FRAME_H = 2.25;                                  // metres of wall always in view
-  const dist = clamp(Math.max(r / (half * 0.26), MIN_FRAME_H / (2 * half)), 1.8, 3.2);
+  /* On a phone held upright the binding constraint is WIDTH. `half` is the
+     vertical half-field, and every distance below was derived from it, so on a
+     0.49 aspect the piece was framed to fill the height and lost its sides.
+     halfX is the same figure across the frame; taking whichever needs more
+     distance means one expression covers a desktop and a phone. */
+  const halfX = half * Math.min(1, camera.aspect);
+  const dist = clamp(Math.max(r / (halfX * 0.26), MIN_FRAME_H / (2 * half)), 1.8, 3.6);
   const tgt = c.clone();
   let pos;
   if (rec.wall === "ceiling") {
@@ -3828,6 +3887,16 @@ const RAIL_GROUPS = [
    though the list now offers the whole range — otherwise the demo would drop a
    waste and a bib tap into it and stop reading as one. */
 const DEMO_CATS = ["rain-shower", "thermostatic", "diverter", "bath-spout", "body-jet"];
+/* Auto-arrange picks ONE valve on purpose (see autoArrange). Listing both valve
+   categories in DEMO_CATS and placing each in turn used to decide it by
+   accident: the Diverter rail group is `solo` and spans both, so the second one
+   placed superseded the first, and "diverter" sits after "thermostatic" here —
+   every demo room ended up on ST-D5017, which feeds 2, while the demo itself
+   puts 3 fittings on the wall. The room was over-subscribed before the client
+   touched it, so the rail then refused the spout OR the hand shower, whichever
+   they asked for second. */
+const DEMO_VALVE_CATS = ["thermostatic", "diverter"];
+const DEMO_OUTLET_CATS = DEMO_CATS.filter(c => !DEMO_VALVE_CATS.includes(c));
 const RAIL_CATS = RAIL_GROUPS.reduce((a, g) => a.concat(g.cats), []);
 
 /* =========================================================================
@@ -4186,7 +4255,15 @@ function faceWall(wall) {
     right: { pos: [-0.55, 1.52, 0.30], tgt: [HX, 1.34, -0.55] },
   }[wall] || null;
   if (!targets) return;
-  animateCam(new THREE.Vector3(...targets.pos), new THREE.Vector3(...targets.tgt));
+  const tgt = new THREE.Vector3(...targets.tgt);
+  /* These three viewpoints were framed on a desktop. On a narrow screen the
+     same spot shows a third of the wall, so the eye backs off along its own
+     view line by what the field-of-view cap could not recover (widenPull).
+     Backing off is safe here in a way it is not for the hero: all three look in
+     through the room's OPEN front, so there is no wall behind the camera to
+     pass through. */
+  const pos = tgt.clone().add(new THREE.Vector3(...targets.pos).sub(tgt).multiplyScalar(widenPull()));
+  animateCam(pos, tgt);
 }
 /* =========================================================================
    SHARE A DESIGN AS A LINK
@@ -4599,7 +4676,25 @@ function autoArrange() {
   const undo = snapshot();
   [...placed.values()].forEach(r => removeProduct(r.uid));
   const skipped = [];
-  DEMO_CATS.forEach(cid => {
+
+  /* The valve decides how much of the range stays open, so choose it for the
+     room the client might end up with, not just the one we are about to build:
+     enough outlets for EVERY outlet category, so a hand shower is still on the
+     table after the demo has placed the shower, the jets and the spout. Take
+     the smallest valve that clears that bar — a 6-function panel where a
+     4-function one does is a different product, not a safer default — and fall
+     back to the most generous available when nothing clears it. */
+  const valves = DEMO_VALVE_CATS
+    .reduce((a, c) => a.concat(offered(c)), [])
+    .filter(p => (p.finishes || []).includes(fin));
+  const need = OUTLET_CATS.size;
+  const byOutlets = (a, b) => (a.outlets || 1) - (b.outlets || 1);
+  const valve = valves.filter(p => (p.outlets || 1) >= need).sort(byOutlets)[0]
+             || valves.sort(byOutlets).pop();
+  if (valve) placeProduct(valve, fin, skuCfg(valve).mount || "back");
+  else if (DEMO_VALVE_CATS.some(c => offered(c).length)) skipped.push("Diverter");
+
+  DEMO_OUTLET_CATS.forEach(cid => {
     const list = offered(cid).filter(p => (p.finishes || []).includes(fin));
     if (!list.length) { if (offered(cid).length) skipped.push(categoryName(cid)); return; }
     const p = list[0];
@@ -4769,7 +4864,13 @@ const TO_MENU = ["#wallTabs", "#ceilTabs", "#resetView", "#lookToggle", "#toggle
    already ~1185px of controls, so a sixth item only fits on a genuinely wide
    window. Below this it rides in the ··· menu, where it is labelled and has all
    the room it needs. Keep in step with the #ceilGroup media query in the CSS. */
-const CEIL_MQ = "(max-width:1420px)";
+/* 1500, not 1420. With the ceiling swatches in the bar it needs 1492 px, so
+   between 1420 and 1492 the bar overflowed the window: "Spec sheet" and the ...
+   button hung off the right edge with no way to scroll to them, and the whole
+   document picked up 52 px of horizontal scroll. The swatches are 206 px, so
+   moving them into the ... menu below 1500 leaves the bar fitting comfortably.
+   Keep this in step with the same query in planner.css. */
+const CEIL_MQ = "(max-width:1500px)";
 const menuMQ = sel => (sel === "#ceilTabs" ? CEIL_MQ : "(max-width:860px)");
 const MENU_LABEL = { resetView: "Reset the view", lookToggle: "Cursor turn",
                      toggleBasin: "Show or hide the vanity", downloadPdf: "Download the PDF" };
@@ -4830,6 +4931,7 @@ $("#toggleBasin").onclick = () => { setBasin(!basinVisible); saveDesign(); };
 let camAnim = null;
 function animateCam(pos, tgt) {
   camAnim = { from: camera.position.clone(), to: pos, fromT: controls.target.clone(), toT: tgt, t: 0 };
+  userMovedCam = false;          // the app is driving again
 }
 /* Fly the camera to frame a tapped fitting up close (keeps the current viewing
    direction, just re-targets + dollies in) — so you can actually inspect the
@@ -4901,7 +5003,7 @@ renderer.domElement.addEventListener("pointermove", e => {
 
   holder.classList.toggle("over-product", !!hovered);
 });
-controls.addEventListener("start", () => { lookSuspended = true; });
+controls.addEventListener("start", () => { lookSuspended = true; userMovedCam = true; });
 controls.addEventListener("end", () => { lookSuspended = false; look.hold = 20; });  // let the damping settle, then re-base
 
 function setLook(on) {
@@ -5006,10 +5108,30 @@ function paintDial(theta) {
    ========================================================================= */
 function resize() {
   const w = holder.clientWidth, h = holder.clientHeight;
+  if (!w || !h) return;                       // hidden tab / mid-rotation: don't divide by zero
+  const wasTall = camera.aspect < 1;
   renderer.setSize(w, h, false);
-  camera.aspect = w / h; camera.updateProjectionMatrix();
+  camera.aspect = w / h;
+  camera.fov = fovFor(camera.aspect);         // hold the horizontal field — see FRAMING above
+  camera.updateProjectionMatrix();
+  /* Turning the phone crosses between the two hero compositions, and the view
+     it was left in belongs to the other one. Re-frame, but only when the
+     ORIENTATION changed and only if the client has not taken over the camera
+     themselves — otherwise every keyboard-open resize would yank the view. */
+  if (wasTall !== (camera.aspect < 1) && !camAnim && !userMovedCam) {
+    animateCam(heroPos(), heroTgt());
+  }
 }
 window.addEventListener("resize", resize);
+/* A window `resize` is not a reliable signal that the CANVAS changed size, and
+   on a phone it is the canvas that moves: iOS Safari grows and shrinks the
+   viewport as its address bar hides, and an orientation change can fire resize
+   before the new layout has settled. Miss it and the drawing buffer keeps the
+   old shape while CSS stretches it to the new box — measured here after a
+   portrait-to-landscape flip, a 750x1520 buffer was being stretched across
+   812x323. Watching the container itself catches every one of those, whatever
+   caused it. */
+if (typeof ResizeObserver === "function") new ResizeObserver(resize).observe(holder);
 
 let started = false;
 function loop() {
@@ -5068,6 +5190,15 @@ function renderEmptyState() {
 
 /* boot */
 resize();
+/* The camera was constructed at the landscape hero, before the canvas had a
+   size to be measured. resize() has just measured it and set the field of view
+   for it, so put the eye where THIS viewport's composition wants it — snapped
+   rather than flown, because nobody should watch the room swing into place on
+   open. Without this a phone loaded the wide-frame viewpoint and showed blank
+   tile until something happened to re-frame it. */
+camera.position.copy(heroPos());
+controls.target.copy(heroTgt());
+controls.update();
 syncToolbar();
 renderRail();
 setBasin(true);   // vanity is part of the furnished room — shown by default
