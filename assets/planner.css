@@ -34,10 +34,13 @@ input{font-family:inherit}
    so nothing in the bar competes with picking a product.                   */
 .topbar{grid-column:1/-1;display:flex;align-items:center;gap:8px;padding:0 20px;
   background:rgba(13,14,16,.82);border-bottom:1px solid var(--line-soft);backdrop-filter:blur(12px);z-index:20}
-.brand{display:flex;align-items:baseline;gap:9px}
-.brand .mark{font-family:var(--serif);font-weight:700;font-size:25px;letter-spacing:.3em}
-.brand .mark b{color:var(--gold)}
-.brand .sub{font-size:9px;letter-spacing:.36em;color:var(--muted);text-transform:uppercase}
+.brand{display:flex;align-items:center;gap:11px}
+/* the mark is a wide lockup (707x268); it is sized by HEIGHT so the bar's rhythm
+   holds, and the width follows. `display:block` on the img kills the baseline gap. */
+.brand .logo{display:block;line-height:0}
+.brand .logo img{display:block;height:30px;width:auto}
+.brand .sub{font-size:9px;letter-spacing:.36em;color:var(--muted);text-transform:uppercase;
+  padding-top:2px}
 .topbar .spacer{flex:1}
 
 .group{display:flex;align-items:center;gap:7px;padding-left:18px;position:relative}
@@ -302,7 +305,7 @@ input{font-family:inherit}
   .topbar{gap:6px;overflow:visible;
     padding:0 max(11px,env(safe-area-inset-right)) 0 max(11px,env(safe-area-inset-left))}
   .menu{right:0;min-width:min(84vw,260px)}
-  .brand .mark{font-size:18px;letter-spacing:.14em}
+  .brand .logo img{height:22px}
   .brand .sub,.glabel{display:none}
   .group{padding-left:10px;gap:5px}
   .group + .group::before{height:18px}

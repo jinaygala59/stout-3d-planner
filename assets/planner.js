@@ -4287,13 +4287,86 @@ function hex2rgb(h) {
   const n = parseInt(String(h).replace("#", ""), 16);
   return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
 }
-function captureCanvas() {
-  // preserveDrawingBuffer is on, but render once more so the buffer is fresh
-  renderer.render(scene, camera);
-  return renderer.domElement.toDataURL("image/jpeg", 0.92);
+/* The sheet carries TWO angles, because one hero shot always hid half the
+   decision: the right wall is where the body jets, spouts and valves live, and
+   the overhead head is only legible looking UP at the ceiling slab.
+   Both print at the same shape whatever the window is, hence the crop. */
+const SHEET_ASPECT = 4 / 3;
+
+/* Capture the live canvas from an arbitrary eye/target WITHOUT disturbing the
+   user's view: the camera is moved, rendered and put back in one synchronous
+   pass, so the orbit controls never see it and no frame is drawn in between.
+   That also means the ceiling shot is free of controls.maxPolarAngle, which
+   would otherwise refuse to look that far up. */
+function captureFrom(pos, tgt, aspect) {
+  const el = renderer.domElement;
+  const savedPos = camera.position.clone(), savedTgt = controls.target.clone();
+  const savedAnim = camAnim;
+  camAnim = null;                          // an in-flight fly-to would fight us
+  let url = null;
+  try {
+    camera.position.copy(pos);
+    controls.target.copy(tgt);
+    camera.lookAt(tgt);
+    camera.updateMatrixWorld();
+    renderer.render(scene, camera);
+    const sw = el.width, sh = el.height;
+    let cw = sw, ch = Math.round(sw / aspect);
+    if (ch > sh) { ch = sh; cw = Math.round(sh * aspect); }
+    const c = mkCanvas(cw, ch);
+    c.getContext("2d").drawImage(el, (sw - cw) / 2, (sh - ch) / 2, cw, ch, 0, 0, cw, ch);
+    url = c.toDataURL("image/jpeg", 0.92);
+  } catch (e) {
+    console.warn("capture failed", e);
+  } finally {
+    camera.position.copy(savedPos);        // leave the room exactly as we found it
+    controls.target.copy(savedTgt);
+    camera.lookAt(savedTgt);
+    camera.updateMatrixWorld();
+    camAnim = savedAnim;
+    renderer.render(scene, camera);
+  }
+  return url;
+}
+
+/* Angle 1 — the right wall, same eye the "Right" view button uses. */
+function shotRightWall() {
+  return captureFrom(new THREE.Vector3(-0.55, 1.52, 0.30),
+                     new THREE.Vector3(HX, 1.34, -0.55), SHEET_ASPECT);
+}
+
+/* Angle 2 — stand back and below the ceiling head and look up, so it reads
+   against the slab with the wall behind it for scale. Falls back to the middle
+   of the shower zone when nothing is mounted overhead. */
+function shotCeiling() {
+  const rec = [...placed.values()].find(r => r.wall === "ceiling");
+  let cx = 0, cz = -0.55, cy = RH - 0.12;
+  if (rec) {
+    const box = localBox(rec.mesh).applyMatrix4(rec.mesh.matrixWorld);
+    if (!box.isEmpty()) {
+      const c = box.getCenter(new THREE.Vector3());
+      cx = c.x; cz = c.z; cy = c.y;
+    }
+  }
+  const pos = new THREE.Vector3(clamp(cx + 0.26, -HX + 0.35, HX - 0.35), 1.02,
+                                clamp(cz + 1.60, -HZ + 0.35, HZ - 0.35));
+  return captureFrom(pos, new THREE.Vector3(cx, cy - 0.05, cz), SHEET_ASPECT);
 }
 /* jsPDF needs pixels, and a transparent PNG would print on a black ground —
    composite each product render onto white first. */
+/* an image, as-is, as a JPEG data URL — for artwork that must not be re-framed */
+function imageDataURL(path) {
+  return new Promise(res => {
+    const img = new Image();
+    img.onload = () => {
+      const c = mkCanvas(img.naturalWidth, img.naturalHeight);
+      c.getContext("2d").drawImage(img, 0, 0);
+      res(c.toDataURL("image/jpeg", 0.95));
+    };
+    img.onerror = () => res(null);
+    img.src = path;
+  });
+}
 function thumbDataURL(path, px) {
   return new Promise(res => {
     const img = new Image();
@@ -4315,17 +4388,24 @@ async function downloadSpecSheet() {
   const items = [...placed.values()];
   if (!items.length) { toast("Add a few products first, then download"); return; }
 
-  // Fly to the hero view and give the animation a moment before we snapshot.
-  animateCam(heroPos(), heroTgt());
+  // No fly-to: captureFrom() borrows the camera and hands it straight back, so
+  // the client's view is still where they left it when the download finishes.
   const prev = selected; deselect();
-  toast("Building your spec sheet…");
-  const thumbs = await Promise.all(items.map(rec => {
-    const path = (rec.product.images && (rec.product.images[rec.finishId] || rec.product.images[rec.product.defaultFinish])) || "";
-    return path ? thumbDataURL(thumbOf(path), 300) : Promise.resolve(null);
-  }));
+  toast("Building your PDF…");
+  const [logo, ...thumbs] = await Promise.all([
+    // the client's mark, pre-composited on the header band's own colour so it
+    // prints identically whatever this jsPDF build does with PNG alpha
+    imageDataURL("assets/brand/logo-pdf.jpg"),
+    ...items.map(rec => {
+      const path = (rec.product.images && (rec.product.images[rec.finishId] || rec.product.images[rec.product.defaultFinish])) || "";
+      return path ? thumbDataURL(thumbOf(path), 300) : Promise.resolve(null);
+    }),
+  ]);
   setTimeout(() => {
-    let img = null;
-    try { img = captureCanvas(); } catch (e) { console.warn("capture failed", e); }
+    const shots = [
+      { url: shotRightWall(), label: "Right wall  ·  jets, spouts & valves" },
+      { url: shotCeiling(),   label: "Ceiling  ·  overhead shower" },
+    ].filter(s => s.url);
     if (prev) selectProduct(prev);
 
     const { jsPDF } = window.jspdf;
@@ -4335,11 +4415,13 @@ async function downloadSpecSheet() {
 
     // ---- header band ----
     doc.setFillColor(15, 15, 17); doc.rect(0, 0, PW, 26, "F");
-    doc.setTextColor(255, 255, 255);
-    doc.setFont("helvetica", "bold"); doc.setFontSize(20);
-    doc.text("STOUT", M, 15);
+    // the logo lockup is 707x268 — 12 mm tall gives 31.7 mm wide, centred in the
+    // 26 mm band. If it failed to load the band still gets the typed wordmark.
+    const LH = 12, LW = LH * (707 / 268);
+    if (logo) doc.addImage(logo, "JPEG", M, (26 - LH) / 2, LW, LH, undefined, "FAST");
+    else { doc.setTextColor(255, 255, 255); doc.setFont("helvetica", "bold"); doc.setFontSize(20); doc.text("STOUT", M, 15); }
     doc.setTextColor(...GOLD); doc.setFontSize(9); doc.setFont("helvetica", "normal");
-    doc.text("SANITARYWARE", M + 27, 15);
+    doc.text("SANITARYWARE", M + (logo ? LW + 4 : 27), 15);
     doc.setTextColor(210, 210, 214); doc.setFontSize(11); doc.setFont("helvetica", "bold");
     doc.text("Bathroom Design Specification", PW - M, 12, { align: "right" });
     doc.setFont("helvetica", "normal"); doc.setFontSize(8.5); doc.setTextColor(150, 150, 154);
@@ -4351,16 +4433,19 @@ async function downloadSpecSheet() {
     let y = 26 + 8;
     doc.setTextColor(...INK); doc.setFont("helvetica", "bold"); doc.setFontSize(12);
     doc.text("Your Design", M, y); y += 4;
-    if (img) {
-      const cw = renderer.domElement.width, ch = renderer.domElement.height;
-      const availW = PW - 2 * M;
-      let iw = availW, ih = availW * (ch / cw);
-      const maxH = 118;
-      if (ih > maxH) { ih = maxH; iw = maxH * (cw / ch); }
-      const ix = M + (availW - iw) / 2;
-      doc.setFillColor(245, 243, 238); doc.roundedRect(M, y, availW, ih + 6, 2, 2, "F");
-      doc.addImage(img, "JPEG", ix, y + 3, iw, ih, undefined, "FAST");
-      y += ih + 6 + 8;
+    if (shots.length) {
+      const availW = PW - 2 * M, gap = 6;
+      const frameW = shots.length > 1 ? (availW - gap) / 2 : availW * 0.64;
+      const imgW = frameW - 6, imgH = imgW / SHEET_ASPECT, frameH = imgH + 6;
+      const x0 = M + (shots.length > 1 ? 0 : (availW - frameW) / 2);
+      shots.forEach((s, i) => {
+        const x = x0 + i * (frameW + gap);
+        doc.setFillColor(245, 243, 238); doc.roundedRect(x, y, frameW, frameH, 2, 2, "F");
+        doc.addImage(s.url, "JPEG", x + 3, y + 3, imgW, imgH, undefined, "FAST");
+        doc.setTextColor(...MUTE); doc.setFont("helvetica", "normal"); doc.setFontSize(7.6);
+        doc.text(s.label, x + frameW / 2, y + frameH + 4, { align: "center" });
+      });
+      y += frameH + 4 + 8;
     } else { y += 6; }
 
     // ---- selected products ----
@@ -4431,7 +4516,7 @@ async function downloadSpecSheet() {
     }
 
     doc.save("Stout-Bathroom-Design.pdf");
-    toast("Spec sheet downloaded");
+    toast("PDF downloaded");
   }, 420);
 }
 $("#downloadPdf").onclick = downloadSpecSheet;
@@ -4629,7 +4714,7 @@ const TO_MENU = ["#wallTabs", "#ceilTabs", "#resetView", "#lookToggle", "#toggle
 const CEIL_MQ = "(max-width:1420px)";
 const menuMQ = sel => (sel === "#ceilTabs" ? CEIL_MQ : "(max-width:860px)");
 const MENU_LABEL = { resetView: "Reset the view", lookToggle: "Cursor turn",
-                     toggleBasin: "Show or hide the vanity", downloadPdf: "Download the spec sheet" };
+                     toggleBasin: "Show or hide the vanity", downloadPdf: "Download the PDF" };
 let toolbarHome = null;
 function syncToolbar() {
   const menu = $("#moreMenu"); if (!menu) return;

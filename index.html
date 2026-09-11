@@ -20,7 +20,11 @@
     <!-- ── top bar: brand · room · view · design ───────────────────────── -->
     <header class="topbar">
       <div class="brand">
-        <span class="mark">STO<b>U</b>T</span><span class="sub">3D Planner</span>
+        <!-- the client's own mark (assets/brand/logo.png, white on transparent — the
+             bar is dark). The text wordmark it replaces is kept as the alt. -->
+        <a class="logo" href="./" aria-label="Stout — 3D Planner home">
+          <img src="assets/brand/logo.png" alt="Stout" width="707" height="268" decoding="async">
+        </a><span class="sub">3D Planner</span>
       </div>
       <div class="spacer"></div>
 
@@ -70,7 +74,7 @@
 
       <div class="group" role="group" aria-label="Design">
         <button type="button" id="resetAll" class="btn ghost warn" title="Take every fitting back out of the room">Reset all</button>
-        <button type="button" id="downloadPdf" class="btn ghost">Spec sheet</button>
+        <button type="button" id="downloadPdf" class="btn ghost" title="Download this design as a PDF">Download PDF</button>
         <button type="button" id="moreBtn" class="btn ghost icon" aria-haspopup="menu"
                 aria-expanded="false" aria-controls="moreMenu" aria-label="More actions">···</button>
         <div class="menu" id="moreMenu" role="menu" hidden>
