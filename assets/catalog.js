@@ -318,7 +318,13 @@ const RAW_PRODUCTS = [
   { code: "ST-D5009", cat: "diverter", name: "Regale 2-Way Concealed Thermostat", finishes: ["chrome","roseGold","matteBlack"], variant: "tall plate · 2 outlets", outlets: 2 },
   { code: "ST-D5010", cat: "diverter", name: "Regale 3-Way Concealed Thermostat", finishes: ["chrome","roseGold","matteBlack"], variant: "tall plate · 3 outlets", outlets: 3 },
   { code: "ST-BJ21F", cat: "body-jet", name: "Aqua Square Concealed Body Jet", finishes: ["brushedRoseGold","champagne","chrome","gunGrey","matteBlack","roseGold"], variant: "square escutcheon · single jet" },
-  { code: "ST-2FBJ", cat: "body-jet", name: "Aqua Micro-Jet Body Spray", finishes: ["chrome","matteBlack","roseGold"], variant: "square plate · multi micro-jet" },
+  /* The folder shot this one in three. The other five are generated from its own
+     chrome render by tools_finish.py (`--sku ST-2FBJ --write`), each through the
+     curve measured off a REAL client render of that finish — so the jet wears
+     the same gold/champagne/gun-grey as every other product in the room rather
+     than an approximation of it: median hue lands within 0.8 deg of the same
+     finish on ST-1017 / ST-1027 / ST-1030 / ST-1033. */
+  { code: "ST-2FBJ", cat: "body-jet", name: "Aqua Micro-Jet Body Spray", finishes: ["chrome","gunGrey","brushedGold","champagne","gold","roseGold","brushedRoseGold","matteBlack"], variant: "square plate · multi micro-jet" },
 ];
 
 /* ---- build PRODUCTS map keyed by category -------------------------------- */

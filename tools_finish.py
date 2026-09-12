@@ -383,7 +383,71 @@ def spout_main(write):
         thumb(f"{SPOUT}-{f}.png")
         print("  generated %-26s from %s" % (f"{SPOUT}-{f}", SPOUT_REF[f]))
 
+# =============================================================================
+# ONE SKU, EVERY FINISH.
+# The shower path above walks the rain-shower rows and the spout path is pinned
+# to ST-PLAIN; neither helps when a single product elsewhere in the range needs
+# filling out. This does it for any code: take that SKU's most neutral real
+# render as the donor, and run each finish's own measured curve over it.
+# The error is reported for THAT PRODUCT before anything is written — the SKU's
+# own real renders are regenerated from a DIFFERENT donor and compared against
+# the photographs, so "close enough" is a number off this product, not a promise
+# borrowed from the showers.
+#
+#   python3 tools_finish.py --sku ST-2FBJ            # report only
+#   python3 tools_finish.py --sku ST-2FBJ --write    # fill in the missing finishes
+# =============================================================================
+def sku_finishes(sku):
+    """The finishes this SKU has a REAL render for, in donor-preference order."""
+    return [f for f in DONOR_ORDER + [f for f in REFS if f not in DONOR_ORDER]
+            if os.path.exists(f"{sku}-{f}.png")]
+
+def sku_variant(sku, finish, donor):
+    ref = REFS[finish]
+    curve = fit(ref)
+    src = f"{sku}-{donor}.png"
+    return apply_curve(src, curve, tone_for(src, lum_cdf(ref)))
+
+def sku_main(sku, write):
+    os.chdir(PROD)
+    real = sku_finishes(sku)
+    if not real:
+        print(f"  !! no render of any finish for {sku}"); return
+    donor = real[0]
+    print(f"{sku}: donor {donor}, real renders {', '.join(real)}")
+
+    # CHECK FIRST — regenerate the ones we can already see, from another donor
+    others = [f for f in real if f != donor]
+    print("\n  reproducing this product's OWN photographs:")
+    print("    %-16s %-28s %-28s" % ("finish", "generated (h,s,v,range)", "the folder's own"))
+    for f in others:
+        alt = next((d for d in real if d != f), donor)
+        got = median_hsv(sku_variant(sku, f, alt))
+        want = median_hsv(Image.open(f"{sku}-{f}.png"))
+        dh = (got[0] - want[0] + 180) % 360 - 180
+        print("    %-16s %6.1f %5.3f %5.3f %5.3f   %6.1f %5.3f %5.3f %5.3f   dHue %+6.1f dSat %+.3f dVal %+.3f"
+              % (f, *got, *want, dh, got[1] - want[1], got[2] - want[2]))
+    if not others:
+        print("    (only one real render — nothing to check against)")
+
+    missing = [f for f in REFS if f not in real]
+    print("\n  missing: %s" % (", ".join(missing) or "none"))
+    if not write:
+        print("  (report only — pass --write to generate)"); return
+    for f in missing:
+        if not os.path.exists(REFS[f]):
+            print(f"    !! no reference render for {f} — skipped"); continue
+        out = sku_variant(sku, f, donor)
+        out.save(f"{sku}-{f}.png")
+        out.save(f"{sku}-{f}.webp", quality=92, method=6)
+        thumb(f"{sku}-{f}.png")
+        print("    generated %-24s from %s via %s" % (f"{sku}-{f}", donor, REFS[f]))
+
 def main():
+    if "--sku" in sys.argv:
+        i = sys.argv.index("--sku")
+        if i + 1 >= len(sys.argv): raise SystemExit("--sku needs a product code")
+        return sku_main(sys.argv[i + 1], "--write" in sys.argv)
     if "--spout-check" in sys.argv: return spout_main(False)
     if "--spout-write" in sys.argv: return spout_main(True)
     os.chdir(PROD)
