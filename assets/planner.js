@@ -4154,10 +4154,22 @@ const isValve = p => VALVE_CATS.has(p.catId);
    spend an outlet the valve never had to give. */
 const OUTLET_CATS = new Set(["rain-shower", "body-jet", "bath-spout", "hand-shower"]);
 const placedValve = () => [...placed.values()].find(r => isValve(r.product)) || null;
-/* The four body jets are ONE outlet: a jet set is fed from a single port, which
-   is why they arrive as one selectable piece. Counting them as four would make
-   every valve in the range look two sizes too small. */
-const outletsUsed = () => [...placed.values()].filter(r => OUTLET_CATS.has(r.product.catId)).length;
+/* WHAT EACH FITTING SPENDS. A shower head spends its function count — a
+   3-function panel is three separate inlets, so it takes three of the valve's
+   outlets, not one (the client's rule, 2026-09-12: the valve is a budget and
+   the shower is priced by its functions). Everything else a valve feeds spends
+   one. The four body jets are ONE: a jet set is fed from a single port, which
+   is why they arrive as one selectable piece — counting them as four would
+   make every valve in the range look two sizes too small. */
+const outletCost = p => OUTLET_CATS.has(p.catId) ? (p.functions || 1) : 0;
+const outletsUsed = () => [...placed.values()].reduce((n, r) => n + outletCost(r.product), 0);
+/* what the room would spend with THIS product in it — a swap inside a category
+   hands the old piece's outlets back first, so a 2-function shower can be
+   traded for a 3-function one on a valve with exactly one outlet to spare */
+const outletsWith = p => {
+  const same = [...placed.values()].find(r => r.product.catId === p.catId);
+  return outletsUsed() - (same ? outletCost(same.product) : 0) + outletCost(p);
+};
 const outletCap = () => { const v = placedValve(); return v ? (v.product.outlets || 1) : Infinity; };
 /* the finish the whole room is committed to, or null while there is no valve */
 const lockedFinish = () => { const v = placedValve(); return v ? v.finishId : null; };
@@ -4178,9 +4190,12 @@ function blockReason(p) {
   if (lock && !(p.finishes || []).includes(lock))
     return `Not made in ${finName(lock)}`;
   if (isValve(p) && v && p.outlets && p.outlets < outletsUsed())
-    return `Feeds ${p.outlets}, the room has ${outletsUsed()}`;
-  if (OUTLET_CATS.has(p.catId) && !catPlaced(p.catId) && outletsUsed() >= outletCap())
-    return `${v ? v.product.name : "The valve"} feeds ${outletCap()}`;
+    return `Feeds ${p.outlets}, the room uses ${outletsUsed()}`;
+  if (OUTLET_CATS.has(p.catId) && outletsWith(p) > outletCap()) {
+    const left = outletCap() - outletsUsed() + (catPlaced(p.catId) ? outletCost([...placed.values()].find(r => r.product.catId === p.catId).product) : 0);
+    const need = outletCost(p);
+    return `Needs ${need} outlet${need > 1 ? "s" : ""} — ${v ? v.product.name : "the valve"} has ${Math.max(0, left)} left`;
+  }
   return null;
 }
 /* Could the room still match if the valve went in wearing THIS finish? Asked per
@@ -4349,7 +4364,7 @@ function renderRail() {
           <span class="pic"><img src="${thumbOf(img)}" loading="lazy" decoding="async" alt=""></span>
           <span class="nm">${p.name}</span>
           <span class="sub">${p.code}${p.variant ? " · " + p.variant : ""}</span>
-          ${p.outlets ? `<span class="fn">${p.outlets} function${p.outlets > 1 ? "s" : ""}</span>` : ""}
+          ${(p.outlets || p.functions) ? `<span class="fn">${p.outlets || p.functions} function${(p.outlets || p.functions) > 1 ? "s" : ""}</span>` : ""}
         </button>
         ${why ? `<span class="pc-why">${why}</span>` : ""}
       </div>`;
@@ -4927,7 +4942,11 @@ function autoArrange() {
   const valves = DEMO_VALVE_CATS
     .reduce((a, c) => a.concat(offered(c)), [])
     .filter(p => (p.finishes || []).includes(fin));
-  const need = OUTLET_CATS.size;
+  /* What the demo will SPEND, not how many categories there are: the shower it
+     is about to pick is priced by its functions (see outletCost), the rest are
+     one each, and a hand shower is kept on the table with one more. */
+  const firstIn = cid => offered(cid).filter(p => (p.finishes || []).includes(fin))[0];
+  const need = DEMO_OUTLET_CATS.reduce((n, cid) => { const p = firstIn(cid); return n + (p ? outletCost(p) : 0); }, 0) + 1;
   const byOutlets = (a, b) => (a.outlets || 1) - (b.outlets || 1);
   const valve = valves.filter(p => (p.outlets || 1) >= need).sort(byOutlets)[0]
              || valves.sort(byOutlets).pop();
@@ -4937,7 +4956,10 @@ function autoArrange() {
   DEMO_OUTLET_CATS.forEach(cid => {
     const list = offered(cid).filter(p => (p.finishes || []).includes(fin));
     if (!list.length) { if (offered(cid).length) skipped.push(categoryName(cid)); return; }
-    const p = list[0];
+    // the first one the valve can still feed — a fallback valve may be smaller
+    // than the one `need` asked for, and a shower it cannot plumb is not a demo
+    const p = list.find(q => !blockReason(q)) || null;
+    if (!p) { skipped.push(categoryName(cid)); return; }
     placeProduct(p, fin, skuCfg(p).mount || "back");
   });
   deselect();
