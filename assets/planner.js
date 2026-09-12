@@ -2211,10 +2211,78 @@ window.installSweep = async (wall, from, to, settleMs) => {
    ============================================================================= */
 const rollFor = cfg => cfg.roll || 0;
 
-function finishTexture(path) {
-  const t = texLoader.load(path);
+function finishTexture(path, fid) {
+  const t = texLoader.load(path, fid ? () => normaliseArtwork(t, fid) : undefined);
   t.encoding = THREE.sRGBEncoding; t.anisotropy = maxAniso;
+  t.userData = t.userData || {};            // r128 textures have none of their own; the finish print rides here
   return t;
+}
+
+/* ONE FINISH, ONE COLOUR — ACROSS THE CLIENT'S OWN PHOTOGRAPHS.
+   The renders were shot one product at a time, and the same finish does not
+   come out of the studio at the same brightness twice. Measured on the metal
+   of each render (linear mean of the 40th–90th luminance band, which skips the
+   spray holes and the clipped speculars), Rose Gold is:
+     ST-PLAIN spout       #ddac93   value 0.87
+     ST-BJ21F body jet    #dbaf92   value 0.86
+     ST-2FBJ  body jet    #a5836a   value 0.65   a third darker
+     ST-CP25  thermostat  #ffcfb1   value 1.00   blown to white
+   Same hue (20–25 deg), same saturation (0.31–0.36), a value range of 0.65 to
+   1.00 — so a Rose Gold room held a salmon jet, a cream panel and a pink spout,
+   and the client saw three colours. The pixels are not repainted; every
+   artwork is PRINTED at the exposure that puts its metal on the finish's own
+   colour, the way the room exposure already prints it for a dark wall. The
+   reference is ST-PLAIN in each finish — the same photograph METAL_BASE is
+   solved against — so a printed cutout and a built spout agree by construction.
+   The tint rides on the texture, so the flat cutout, its relief upgrade and
+   the extrusion behind it all carry it, and a theme switch recomputes from the
+   authored levels rather than compounding. Clamped: a correction outside
+   0.5–1.8x means the band caught something that is not metal (the blown
+   thermostat renders need about 0.6).
+   The target is what the WALL already shows for that finish: the same band
+   statistic read off the calibrated ST-PLAIN spout in the White room. Metal on
+   the wall bands brighter than its median (chrome most of all, being mostly
+   highlight), so aiming the print at METAL_TONE's median left a chrome panel
+   at #abaaa6 beside a #dddedd spout; aiming it at the spout's own band puts
+   the two on one number by construction. Measured in the Rose Gold room, a
+   printed thermostat bands at #cca68f beside a spout and jets at #c7a08b /
+   #c89a82 — hue 21-22, saturation 0.30-0.35 — where before the print it stood
+   at #facbac, a cream plate between two pink fittings.
+   Re-read these off the spout whenever METAL_BASE is re-solved. */
+const ART_TONE = {   // sRGB band means of the built ST-PLAIN, White room
+  chrome: 0xd9dad9, gunGrey: 0x8b8b8a, brushedGold: 0xb08847, champagne: 0xb09f87, gold: 0xd0bc85,
+  polishedGold: 0xd9bd74, roseGold: 0xc69c84, brushedRoseGold: 0xc5977c,
+  /* matt black is a coat, not a mirror, and how bright it bands on the wall
+     depends on the shape it is on (spout 0x62, jets 0x3e); the print aims at the
+     measured coat colour and sits between them */
+  matteBlack: 0x454545,
+};
+const srgbToLin = v => v <= 0.04045 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+const artTone = fid => {
+  const hex = ART_TONE[fid] != null ? ART_TONE[fid] : METAL_TONE[fid]; if (hex == null) return null;
+  return [16, 8, 0].map(s => srgbToLin(((hex >> s) & 255) / 255));
+};
+function artBandMean(img) {
+  const N = 96, c = mkCanvas(N, N), x = c.getContext("2d");
+  x.drawImage(img, 0, 0, N, N);
+  const d = x.getImageData(0, 0, N, N).data, px = [];
+  for (let i = 0; i < d.length; i += 4) if (d[i + 3] > 250) px.push([d[i] / 255, d[i + 1] / 255, d[i + 2] / 255]);
+  if (px.length < 40) return null;
+  const L = p => 0.2126 * p[0] + 0.7152 * p[1] + 0.0722 * p[2];
+  const ls = px.map(L).sort((a, b) => a - b);
+  const lo = ls[Math.floor(ls.length * 0.40)], hi = ls[Math.floor(ls.length * 0.90)];
+  const sum = [0, 0, 0]; let n = 0;
+  px.forEach(p => { const l = L(p); if (l >= lo && l <= hi) { n++; for (let k = 0; k < 3; k++) sum[k] += srgbToLin(p[k]); } });
+  return n ? sum.map(v => v / n) : null;
+}
+function normaliseArtwork(tex, fid) {
+  const target = artTone(fid), img = tex.image;
+  if (!target || !img || !img.width) return;
+  let mean;
+  try { mean = artBandMean(img); } catch (e) { return; }   // a cross-origin image cannot be read; leave it as shot
+  if (!mean) return;
+  tex.userData.tint = target.map((t, k) => Math.min(1.8, Math.max(0.5, t / Math.max(mean[k], 1e-3))));
+  exposeAllArtwork();                       // every material wearing this texture re-prints
 }
 
 /* The artwork a piece is actually mapped with — mirrored when the SKU asks for it.
@@ -2227,8 +2295,8 @@ function finishTexture(path) {
    shares this same texture object, so the body follows the flip for free.
    finishTexture() builds a fresh texture per call, so this is never someone
    else's map being rewritten. */
-function productTexture(path, cfg) {
-  const t = finishTexture(path);
+function productTexture(path, cfg, fid) {
+  const t = finishTexture(path, fid);
   if (cfg && cfg.flip) { t.wrapS = THREE.RepeatWrapping; t.repeat.x = -1; t.offset.x = 1; }
   return t;
 }
@@ -2257,6 +2325,12 @@ function artMaterial(mat, emissive) {
   mat.userData.artwork = { color: 1, emissive: emissive || 0 };
   return mat;
 }
+/* the print level for one artwork material: room exposure x the finish tint
+   its texture carries (see artTone), from the authored level every time */
+function exposeMaterial(m, e) {
+  const a = m.userData.artwork, t = (m.map && m.map.userData && m.map.userData.tint) || [1, 1, 1];
+  m.color.setRGB(a.color * e * t[0], a.color * e * t[1], a.color * e * t[2]);
+}
 function exposeArtwork(root) {
   const e = artExposure();
   root.traverse(o => {
@@ -2265,14 +2339,20 @@ function exposeArtwork(root) {
         ? envForMetal(o.material.metalness, o.material.roughness) : fittingEnvI();
     const a = o.material && o.material.userData && o.material.userData.artwork;
     if (!a) return;
-    o.material.color.setScalar(a.color * e);
+    exposeMaterial(o.material, e);
     /* Emission is dimmed HARDER than the surface — e squared. A lit surface in
        a dark room goes dark because little light reaches it, and that is the
        first factor. Emission does not: it is the piece giving off light of its
        own, and a chrome plate does not glow. It is here at all only to keep the
        dial and buttons legible, so in a dark room it should retreat almost to
        nothing while the diffuse face carries the piece. */
-    if (o.material.emissive) o.material.emissive.setScalar(a.emissive * e * e);
+    if (o.material.emissive) {
+      // a relief's emission IS its print, so it takes the finish tint and the
+      // plain room exposure like any cutout; a legibility glow dims by e squared
+      const t = (o.material.map && o.material.map.userData && o.material.map.userData.tint) || [1, 1, 1];
+      const ee = o.material.userData.relief ? a.emissive * e : a.emissive * e * e;
+      o.material.emissive.setRGB(ee * t[0], ee * t[1], ee * t[2]);
+    }
   });
 }
 /* every piece on the wall, re-printed for the room that just changed under it */
@@ -2411,17 +2491,30 @@ function extrudeCutout(mesh, map, w, h, depth, hex, faceZ) {
 function reliefFace(mesh) {
   const flat = mesh.material;
   if (!flat || !flat.map) return;
+  /* THE PRINT IS THE EMISSION; THE LIGHTS ONLY ADD THE SHEEN.
+     This used to carry the photograph twice — as a lit diffuse map under the
+     room's lights and, at 0.56, as emission to keep the dial legible — and the
+     lit half then went through ACES. A Rose Gold panel whose render is blown to
+     value 1.0 came out of that as #b6aaa0: red crushed hardest by the tone
+     curve, saturation 0.12 against 0.30 on the spout beside it. A cream plate
+     in a rose gold room, and no per-artwork print could reach it because the
+     print sat under a lighting model.
+     Now the diffuse is black, the emission IS the photograph (times the finish
+     print and the room exposure, exactly as the flat cutouts are), and it is
+     not tone mapped, so what the artwork says is what the wall shows. The bump
+     and the specular are kept: over a black diffuse the lights and environment
+     still catch the plate's edges and the dial's relief, which is the depth cue
+     this material exists for — a sheen on the print, not a relighting of it. */
   mesh.material = new THREE.MeshStandardMaterial({
-    map: flat.map,
+    map: flat.map, color: 0x000000,
     bumpMap: flat.map, bumpScale: 0.006,      // compared on screen at .0026/.006/.012
-    emissiveMap: flat.map, emissive: new THREE.Color(0x8f8f8f),
-    transparent: true, alphaTest: 0.45, side: THREE.DoubleSide,
-    metalness: 0.22, roughness: 0.42, envMapIntensity: 0.85,
+    emissiveMap: flat.map, emissive: new THREE.Color(0xffffff),
+    transparent: true, alphaTest: 0.45, side: THREE.DoubleSide, toneMapped: false,
+    metalness: 0.22, roughness: 0.42, envMapIntensity: 0.55,
   });
   mesh.material.userData.relief = true;
-  // 0x8f8f8f is 0.561 of full emission — record it as the authored level so the
-  // room exposure below scales from it instead of stacking on top of it
-  artMaterial(mesh.material, 0x8f / 255);
+  artMaterial(mesh.material, 1);
+  mesh.material.userData.artwork.color = 0;   // authored black diffuse — the print is the emission
   exposeArtwork(mesh);
   flat.dispose();                       // the texture is shared and stays alive
 }
@@ -3121,7 +3214,7 @@ function applyDecals(holder, product, fid, spec) {
   const oldTex = old.length ? old[0].material.map : null;
   old.forEach(o => { o.parent.remove(o); o.geometry.dispose(); o.material.dispose(); });
   if (oldTex) oldTex.dispose();
-  const tex = finishTexture(path);
+  const tex = finishTexture(path, fid);
   holder.children.forEach(inst => {
     if (inst.name !== "ProductRoot" || !inst.getObjectByName(spec.decal.on)) return;
     const b = partBox(inst, spec.decal.on);
@@ -3249,7 +3342,7 @@ function placeProduct(product, finishId, wall, frame) {
   // them with scene lights + ACES tone mapping washed them out to pale ghosts.
   // Basic + toneMapped:false shows the artwork exactly as shot (crisp, saturated).
   const mat = new THREE.MeshBasicMaterial({
-    map: productTexture(art, cfg), transparent: true, alphaTest: 0.45, side: THREE.DoubleSide, toneMapped: false,
+    map: productTexture(art, cfg, finishId), transparent: true, alphaTest: 0.45, side: THREE.DoubleSide, toneMapped: false,
   });
   artMaterial(mat);                        // it is a photograph, so it prints for the room it hangs in
   mat.color.setScalar(artExposure());
@@ -3711,7 +3804,7 @@ function cutoutFallback(rec) {
   clearGroup(rec.mesh);
   const width = rec.cfg.width || 0.34;
   const mat = new THREE.MeshBasicMaterial({
-    map: productTexture(roomArt(path, rec.cfg), rec.cfg), transparent: true, alphaTest: 0.45, side: THREE.DoubleSide, toneMapped: false,
+    map: productTexture(roomArt(path, rec.cfg), rec.cfg, rec.finishId), transparent: true, alphaTest: 0.45, side: THREE.DoubleSide, toneMapped: false,
   });
   artMaterial(mat);
   mat.color.setScalar(artExposure());
@@ -3875,7 +3968,7 @@ function changeFinish(uid, fid, commit) {
     const targetMat = rec.mesh.material || (jetChild && jetChild.material);
     if (!targetMat) return;
     const old = targetMat.map;
-    const next = productTexture(roomArt(path, rec.cfg), rec.cfg);   // face-on art and the mirror both survive a finish swap
+    const next = productTexture(roomArt(path, rec.cfg), rec.cfg, fid);   // face-on art, the mirror and the finish print all survive a swap
     targetMat.map = next;
     // a relief face drives its bump and emissive off the SAME image, and this
     // material is updated before the traverse below, so it would skip itself and
@@ -5300,7 +5393,8 @@ function loop() {
   if (!started) { started = true; $("#loading").classList.add("hide"); }
 }
 
-window.__STOUT3D = { scene, camera, controls, renderer, shell, lightRig, room, THEMES, applyTheme, animateCam };
+window.__STOUT3D = { scene, camera, controls, renderer, shell, lightRig, room, THEMES, applyTheme, animateCam,
+                     placed, placeProduct, changeFinish, PRODUCTS, exposeAllArtwork };   // the last five are for console checks only
 
 /* ---- empty state: an invitation, not an instruction paragraph -----------
    NOT an auto-placed demo — products must never appear on their own when the
