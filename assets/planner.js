@@ -1090,17 +1090,44 @@ const finishRough = fid => FINISH_ROUGH[fid] == null ? 0.20 : FINISH_ROUGH[fid];
 const METAL_TONE = {
   chrome: 0xcdcece, gunGrey: 0x818181, brushedGold: 0xa57c3f, champagne: 0xaa9c86,
   gold: 0xd6c28d, roseGold: 0xd09f86, brushedRoseGold: 0xbf967c,
-  /* Matt black is the one that cannot be its photograph's average. Every other
-     finish here is a metal, and a metal has no diffuse — its colour only tints
-     what it reflects, so the measured average lands about right. Matt black is
-     a powder coat at metalness 0.10, which means it IS lit diffusely, and the
-     room's light adds on top of the base instead of being tinted by it: at the
-     measured #434343 the spout rendered 0.12 of value ABOVE the matt-black
-     panel beside it. Scaled down by the ratio the frame actually showed. */
-  matteBlack: 0x343434,
+  /* This table is the MEASUREMENT and nothing else — it is what the PDF swatch
+     prints and what a colour is checked against. It is no longer what the
+     shader is handed: that is METAL_BASE below, solved per finish so the wall
+     shows these numbers. Matt black was once scaled down here (0x343434) to
+     compensate for its diffuse lighting; that compensation now lives in its
+     base like every other finish's, and the measured value stands. */
+  matteBlack: 0x434343,
   polishedGold: 0xd8bd7c,          // measured with the rest — see catalog.js
 };
-const metalHex = (fid, fallback) => METAL_TONE[fid] != null ? METAL_TONE[fid] : fallback;
+/* WHAT THE SHADER IS HANDED SO THAT THE WALL SHOWS METAL_TONE.
+   METAL_TONE is what the artwork measures, in sRGB, and that is the number the
+   client compares against. It is NOT what a MeshStandardMaterial can be given:
+   three r128 has no colour management, so Color.setHex() puts those sRGB bytes
+   into the shader as LINEAR reflectance, which lifts every midtone and drains
+   the saturation — the gold spout rendered #c0b9a3 (saturation 0.11) beside a
+   card showing #d0bd8b (0.33); rose gold #beab9e for #c69c86; matt black came
+   out #817e7a, a mid grey. On top of that the fitting environment is dimmer than
+   the white sweep the photographs were shot against, so even a linearised base
+   lands dark.
+   Neither is corrected by hand. tools: place ST-PLAIN in the White room, mask
+   its pixels, and iterate the base colour (and one shared env gain) until the
+   on-wall MEDIAN equals the median of ST-PLAIN-<finish>.png for every finish at
+   once — it converges to the artwork exactly, and the Grey and Black rooms then
+   sit within a few percent, darker, which is what their exposure asks for.
+   These are the solved values (linear bytes, for setHex). Re-solve them if the
+   fitting env, the roughness table, the tone mapping or the exposure changes:
+   they are a measurement of THIS pipeline, not a description of the metal. */
+const METAL_BASE = { chrome: 0xf5ffff, gunGrey: 0x3b3c3d, brushedGold: 0x6a3707, champagne: 0x725a3e, gold: 0xb98938, polishedGold: 0xd88b26, roseGold: 0x9a523a, brushedRoseGold: 0x9a4e33, matteBlack: 0x151617 };
+const METAL_ENV_GAIN = 1.234;
+/* the linear reflectance for an sRGB hex — the fallback path, for a finish
+   without a solved base */
+const srgbHexToLinear = hex => {
+  const c = new THREE.Color(hex);
+  const f = v => v <= 0.04045 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+  return new THREE.Color(f(c.r), f(c.g), f(c.b)).getHex();
+};
+const metalHex = (fid, fallback) => METAL_BASE[fid] != null ? METAL_BASE[fid]
+  : METAL_TONE[fid] != null ? srgbHexToLinear(METAL_TONE[fid]) : fallback;
 
 /* NOT EVERY FINISH IS A METAL.
    Roughness was per-finish but metalness was 1.0 for all of them, and in a PBR
@@ -1141,7 +1168,7 @@ const finishMetal = fid => FINISH_METAL[fid] == null ? 1.0 : FINISH_METAL[fid];
    the frame; solving for zero on both gives:
      roughness 0.08 (chrome)      -> 0.87
      roughness 0.44 (the satins)  -> 1.04                                    */
-const envForMetal = (m, rough) =>
+const envForMetal = (m, rough) => METAL_ENV_GAIN *
   fittingEnvI() * (0.26 + 0.99 * m) * (0.83 + 0.49 * (rough == null ? 0.45 : rough));
 
 function metalMat(hex, rough, fid) {
@@ -1151,6 +1178,7 @@ function metalMat(hex, rough, fid) {
   const m = new THREE.MeshStandardMaterial({ color: hex, metalness: metal, roughness: rgh,
                                              envMap: fittingEnv(), envMapIntensity: envForMetal(metal, rgh) });
   m.userData.fittingEnv = true;
+  m.userData.metalFinish = true;   // exposeArtwork keeps the calibrated env on a theme switch
   return m;
 }
 function disposeTree(obj) {
@@ -2232,7 +2260,9 @@ function artMaterial(mat, emissive) {
 function exposeArtwork(root) {
   const e = artExposure();
   root.traverse(o => {
-    if (o.material && o.material.userData && o.material.userData.fittingEnv) o.material.envMapIntensity = fittingEnvI();
+    if (o.material && o.material.userData && o.material.userData.fittingEnv)
+      o.material.envMapIntensity = o.material.userData.metalFinish
+        ? envForMetal(o.material.metalness, o.material.roughness) : fittingEnvI();
     const a = o.material && o.material.userData && o.material.userData.artwork;
     if (!a) return;
     o.material.color.setScalar(a.color * e);
@@ -2293,9 +2323,10 @@ function shadowTexture() {
    it does not cover. */
 function finishHex(fid, product) {
   const id = fid || (product && product.defaultFinish);
-  if (METAL_TONE[id] != null) return METAL_TONE[id];
+  if (METAL_BASE[id] != null) return METAL_BASE[id];
+  if (METAL_TONE[id] != null) return srgbHexToLinear(METAL_TONE[id]);
   const f = FINISHES[id];
-  return parseInt(((f && f.tone) || "#c6a15b").replace("#", ""), 16);
+  return srgbHexToLinear(parseInt(((f && f.tone) || "#c6a15b").replace("#", ""), 16));
 }
 
 /* a mesh in the chosen metal, tagged so a finish change recolours it */
@@ -2818,12 +2849,16 @@ function buildBodyJet(hex, w, opts) {
      environment turned down goes dead flat in the Black room, which is where the
      first pass's unlit fill fell apart worst. `userData.shade` tints each part
      and is what changeFinish re-applies on a swatch. */
+  /* The same surface as every other built metal in this finish — metalMat, so
+     the calibrated base, the finish's roughness, its metalness and the env gain
+     all arrive here too. This used to be its own MeshStandardMaterial at a fixed
+     roughness 0.14 and the bare env intensity, so a round jet in Gold was a
+     darker mirror beside a calibrated Gold spout. */
   const part = (geo, shade, map) => {
-    const mesh = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({
-      color: new THREE.Color(hex).multiplyScalar(shade),
-      map: map || null, metalness: 1.0, roughness: 0.14, envMap: fittingEnv(), envMapIntensity: fittingEnvI(),
-    }));
-    mesh.material.userData.fittingEnv = true;
+    const mat = metalMat(hex, opts.fid ? finishRough(opts.fid) : 0.175, opts.fid || null);
+    mat.color.multiplyScalar(shade);
+    if (map) mat.map = map;
+    const mesh = new THREE.Mesh(geo, mat);
     mesh.userData.metal = true;
     mesh.userData.shade = shade;
     return mesh;
@@ -3059,12 +3094,12 @@ function modelInstance(model, spec, hex, rule, rough, fid) {
 }
 
 /* the procedural bodies — only where the RAR has no export for the form */
-function buildProcBody(kind, hex) {
+function buildProcBody(kind, hex, fid) {
   if (kind === "roundJet") {
     /* ST-J06, from its render: a 78 mm head on a 40 mm neck-and-ball off a
        62 mm round flange. The spray face is not drawn — the SKU's own is laid on. */
     return buildBodyJet(hex, 0.16, { round: true, face: false, plateW: 0.062, headW: 0.078,
-                                     headD: 0.040, neckR: 0.013, neckD: 0.040 });
+                                     headD: 0.040, neckR: 0.013, neckD: 0.040, fid });
   }
   throw new Error("unknown procedural body " + kind);
 }
@@ -3116,7 +3151,7 @@ function build3DHolder(product, finishId, wall, spec, uid, onReady) {
   else { showLoading("Loading 3D model…"); source = loadOBJ(MODELS_BASE + spec.url + ".obj"); }
   source.then(raw => {
     (set ? JET_GRID : [[0, 0]]).forEach(([ox, oy]) => {
-      const body = spec.proc ? buildProcBody(spec.proc, hex) : raw.clone(true);
+      const body = spec.proc ? buildProcBody(spec.proc, hex, finishId) : raw.clone(true);
       const inst = modelInstance(body, spec, hex, rule, finishRough(finishId), finishId);
       inst.position.set(ox, oy, 0);
       inst.userData.jet = set;             // a member of a set — installReport checks the four agree
@@ -3255,7 +3290,7 @@ function placeProduct(product, finishId, wall, frame) {
       const AIM_YAW = 0.10, AIM_PITCH = 0.08;              // rad: ~6 deg / ~4.5 deg
       OFFS.forEach(([ox, oy]) => {
         const jm = buildBodyJet(hex, jetW, {
-          round: cfg.jetShape === "round", rows: cfg.jetRows,
+          round: cfg.jetShape === "round", rows: cfg.jetRows, fid: finishId,
           sink: sinkFor(wall),                              // seat it IN the tile, not on it
           yaw: -(ox / SPREAD) * AIM_YAW,
           pitch: (oy / RISE) * AIM_PITCH,
@@ -3817,9 +3852,10 @@ function changeFinish(uid, fid, commit) {
       if (!o.userData.metal || !o.material) return;
       o.material.color.setHex(hex);
       if (o.userData.shade != null) o.material.color.multiplyScalar(o.userData.shade);
-      if (o.material.userData.fittingEnv && !o.userData.shade) {
+      if (o.material.userData.metalFinish) {
         // the SURFACE changes with the finish, not only its colour: swapping
-        // chrome for matte black turns a mirror into a powder coat
+        // chrome for matte black turns a mirror into a powder coat. Shaded
+        // parts (a jet's neck, ball, head) are metalMat too and change with it.
         o.material.roughness = finishRough(fid) * 0.8;
         o.material.metalness = finishMetal(fid);
         o.material.envMapIntensity = envForMetal(o.material.metalness, o.material.roughness);
