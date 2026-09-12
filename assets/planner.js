@@ -1089,7 +1089,15 @@ const finishRough = fid => FINISH_ROUGH[fid] == null ? 0.20 : FINISH_ROUGH[fid];
    starts from the same colour, and that colour is the range's own. */
 const METAL_TONE = {
   chrome: 0xcdcece, gunGrey: 0x818181, brushedGold: 0xa57c3f, champagne: 0xaa9c86,
-  gold: 0xd6c28d, roseGold: 0xd09f86, brushedRoseGold: 0xbf967c, matteBlack: 0x434343,
+  gold: 0xd6c28d, roseGold: 0xd09f86, brushedRoseGold: 0xbf967c,
+  /* Matt black is the one that cannot be its photograph's average. Every other
+     finish here is a metal, and a metal has no diffuse — its colour only tints
+     what it reflects, so the measured average lands about right. Matt black is
+     a powder coat at metalness 0.10, which means it IS lit diffusely, and the
+     room's light adds on top of the base instead of being tinted by it: at the
+     measured #434343 the spout rendered 0.12 of value ABOVE the matt-black
+     panel beside it. Scaled down by the ratio the frame actually showed. */
+  matteBlack: 0x343434,
   polishedGold: 0xd8bd7c,          // measured with the rest — see catalog.js
 };
 const metalHex = (fid, fallback) => METAL_TONE[fid] != null ? METAL_TONE[fid] : fallback;
@@ -1110,14 +1118,38 @@ const metalHex = (fid, fallback) => METAL_TONE[fid] != null ? METAL_TONE[fid] : 
    ambient goes grey. */
 const FINISH_METAL = { matteBlack: 0.10 };
 const finishMetal = fid => FINISH_METAL[fid] == null ? 1.0 : FINISH_METAL[fid];
-/* how much env a surface should take, given how metallic it is */
-const envForMetal = m => fittingEnvI() * (0.34 + 0.66 * m);
+/* How much env a surface should take, given how metallic it is — CALIBRATED
+   against the photographic products, because the two have to sit on one wall.
+   A photographed fitting is unlit and prints at its studio brightness; a built
+   one is lit by the room, and it was landing consistently darker: measured
+   across six finishes, a body jet's metal came out 0.04 to 0.10 of value below
+   the thermostatic panel beside it, which is what "different colours" looks
+   like once the hue and saturation already agree.
+   Swept on the Rose Gold pair: at 1.2x the gap more than halves (-0.066 to
+   -0.039) while saturation lands within 0.002. The line is fitted through that
+   and through matte black, which sits at metalness 0.10 and was running 0.035
+   too BRIGHT, so the low end comes down as the high end goes up:
+     f(1.0) = 1.25   polished metal, was 1.00
+     f(0.1) = 0.36   a powder coat, was 0.41
+   ROUGHNESS scales it too, because that lift is calibrated on the coloured
+   satins and a MIRROR gathers the same environment far more sharply. Applied
+   flat it sent the chrome spout 0.118 of value ABOVE the chrome panel — the
+   same mismatch, in the other direction, on the one finish that had been fine.
+   The second factor is fitted through two measured points rather than guessed,
+   after a first attempt at 0.72 + 0.62r overshot the other way and left chrome
+   0.10 BELOW its panel. Each finish was placed against the panel and read off
+   the frame; solving for zero on both gives:
+     roughness 0.08 (chrome)      -> 0.87
+     roughness 0.44 (the satins)  -> 1.04                                    */
+const envForMetal = (m, rough) =>
+  fittingEnvI() * (0.26 + 0.99 * m) * (0.83 + 0.49 * (rough == null ? 0.45 : rough));
 
 function metalMat(hex, rough, fid) {
   hex = metalHex(fid, hex);                 // the range's own colour, not the swatch
   const metal = fid == null ? 1.0 : finishMetal(fid);
-  const m = new THREE.MeshStandardMaterial({ color: hex, metalness: metal, roughness: rough == null ? 0.18 : rough * 0.8,
-                                             envMap: fittingEnv(), envMapIntensity: envForMetal(metal) });
+  const rgh = rough == null ? 0.18 : rough * 0.8;
+  const m = new THREE.MeshStandardMaterial({ color: hex, metalness: metal, roughness: rgh,
+                                             envMap: fittingEnv(), envMapIntensity: envForMetal(metal, rgh) });
   m.userData.fittingEnv = true;
   return m;
 }
@@ -2248,8 +2280,21 @@ function shadowTexture() {
 }
 /* the metal tone for a finish id — every product's own artwork carries its
    finish, but the parts we build (housings, arms, hoses, 3D models) need the hex */
+/* THE COLOUR ANY METAL WE BUILD IS MADE OF — and there is only one answer.
+   This feeds every metal part the app creates that is not a loaded model: the
+   extrusion behind a photographic cutout, the wall boss, the shower arm, the
+   hand-shower bracket and hose, and the procedural round jet. All of those were
+   taking FINISHES[fid].tone — the UI swatch — while loaded models had moved to
+   METAL_TONE, the colour measured off the range's own renders. So a room could
+   hold a jet built from one statement of Rose Gold beside a spout built from
+   another, which is the mismatch the client kept seeing: it was never the
+   finish that differed, it was which table the piece happened to read.
+   METAL_TONE first, for everything. The swatch stays the fallback for anything
+   it does not cover. */
 function finishHex(fid, product) {
-  const f = FINISHES[fid || (product && product.defaultFinish)];
+  const id = fid || (product && product.defaultFinish);
+  if (METAL_TONE[id] != null) return METAL_TONE[id];
+  const f = FINISHES[id];
   return parseInt(((f && f.tone) || "#c6a15b").replace("#", ""), 16);
 }
 
@@ -2799,7 +2844,14 @@ function buildBodyJet(hex, w, opts) {
   g.add(plate);
   // --- the neck stands square on the plate; the BALL is at the top of it ---
   const neckR = opts.neckR || w * 0.15, neckD = opts.neckD || w * 0.14;
-  const neck = part(new THREE.CylinderGeometry(neckR, neckR * 1.22, neckD, 24), 0.62);
+  /* The shades below used to do the shading themselves — 0.62 on the neck, 0.68
+     on the ball — from when this jet was built out of nearly unlit fill and
+     needed the parts told apart by hand. They are lit by the room and its
+     environment now, so those multipliers darkened a second time on top of real
+     shading: the chrome round jet measured 0.10 of value below the chrome panel
+     beside it while every other piece matched. Lifted to a light touch, which
+     is all a form this simple needs to separate its parts. */
+  const neck = part(new THREE.CylinderGeometry(neckR, neckR * 1.22, neckD, 24), 0.88);
   neck.name = "neck";
   neck.rotation.x = Math.PI / 2;
   neck.position.z = proud + neckD / 2;
@@ -2814,11 +2866,11 @@ function buildBodyJet(hex, w, opts) {
   aim.position.z = proud + neckD;
   aim.rotation.set(pitch, yaw, 0);
   g.add(aim);
-  const ball = part(new THREE.SphereGeometry(neckR * 1.05, 20, 14), 0.68);
+  const ball = part(new THREE.SphereGeometry(neckR * 1.05, 20, 14), 0.90);
   aim.add(ball);
   const headW = opts.headW || w * 0.54, headD = opts.headD || w * 0.32;
   const head = part(round ? new THREE.CylinderGeometry(headW / 2, headW / 2 * 0.94, headD, 36)
-                          : new THREE.BoxGeometry(headW, headW, headD), 0.86);
+                          : new THREE.BoxGeometry(headW, headW, headD), 0.96);
   if (round) head.rotation.x = Math.PI / 2;
   head.position.z = headD / 2;
   head.name = "head";
@@ -3770,7 +3822,7 @@ function changeFinish(uid, fid, commit) {
         // chrome for matte black turns a mirror into a powder coat
         o.material.roughness = finishRough(fid) * 0.8;
         o.material.metalness = finishMetal(fid);
-        o.material.envMapIntensity = envForMetal(o.material.metalness);
+        o.material.envMapIntensity = envForMetal(o.material.metalness, o.material.roughness);
         o.material.needsUpdate = true;
       }
     });
