@@ -140,7 +140,7 @@ const RAW_PRODUCTS = [
   { code: "ST-C1011", cat: "rain-shower", name: "Cascada Maxima Panel",        finishes: ["chrome","gunGrey","brushedGold","champagne","gold","polishedGold","roseGold","brushedRoseGold","matteBlack"], variant: "waterfall blades + LED + centre jet" },
 
   // ---- Concealed Diverter (single-lever) ----
-  { code: "ST-D5017", cat: "diverter",    name: "Regale Concealed Diverter",   finishes: ["chrome","gunGrey","champagne","brushedRoseGold","matteBlack"],                                          badge: "Signature", outlets: 2 },
+  { code: "ST-D5017", cat: "diverter",    name: "Regale Concealed Diverter",   finishes: ["chrome","gunGrey","champagne","gold","roseGold","brushedRoseGold","matteBlack"],                                          badge: "Signature", outlets: 2 },
 
   // ---- Thermostatic Diverter panels (D-series) ----
   { code: "ST-D5018", cat: "thermostatic", name: "Regale Grande Thermostatic Panel", finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], badge: "Bestseller", outlets: 6 },
@@ -174,7 +174,7 @@ const RAW_PRODUCTS = [
      folder carries of it. */
   { code: "ST-HS5380", cat: "hand-shower", name: "Aria Slim Hand Shower",       finishes: ["chrome"], variant: "round face · slim handle" },
   { code: "ST-1040",   cat: "hand-shower", name: "Aeon Multi-Function Hand Shower", finishes: ["chrome","gunGrey","gold","champagne","roseGold","brushedRoseGold","matteBlack"], badge: "Bestseller" },
-  { code: "ST-1018",   cat: "hand-shower", name: "Axis Hand Shower",            finishes: ["chrome","gunGrey","champagne","brushedRoseGold"] },
+  { code: "ST-1018",   cat: "hand-shower", name: "Axis Hand Shower",            finishes: ["chrome","gunGrey","champagne","gold","roseGold","brushedRoseGold","matteBlack"] },
   { code: "ST-1025",   cat: "hand-shower", name: "Cascada Slim Hand Shower",    finishes: ["chrome"] },
   { code: "ST-1026",   cat: "hand-shower", name: "Cascada Square Hand Shower",  finishes: ["chrome"] },
   { code: "ST-1028",   cat: "hand-shower", name: "Cascada Round Hand Shower",   finishes: ["chrome"] },
@@ -325,6 +325,45 @@ const RAW_PRODUCTS = [
      than an approximation of it: median hue lands within 0.8 deg of the same
      finish on ST-1017 / ST-1027 / ST-1030 / ST-1033. */
   { code: "ST-2FBJ", cat: "body-jet", name: "Aqua Micro-Jet Body Spray", finishes: ["chrome","gunGrey","brushedGold","champagne","gold","roseGold","brushedRoseGold","matteBlack"], variant: "square plate · multi micro-jet" },
+
+  /* ===== STOUT 2026 catalogue, second pass (2026-09-12) =====================
+     Added from the client's own PDF, and only in the four steps the rail
+     offers: ceiling showers, diverters, spouts and hand showers. Every other
+     family in that document — basins, kitchen mixers, taps, wastes, health
+     faucets — was left out on the client's instruction, and anything already
+     in the range above was skipped rather than duplicated.
+     Artwork is lifted from the PDF's own studio renders (pure black ground,
+     keyed to alpha), so these wear the factory's photography, not a recolour.
+     `functions` on a ceiling shower is the PDF's "Requires N Input Supply
+     Lines"; `outlets` on a diverter is its "Control Unit For N Outlets" — NOT
+     the "N Function Can Be Operated Simultaneously" line, which is a different
+     number on the same page.
+     ------------------------------------------------------------------------ */
+  { code: "ST-C1005", cat: "rain-shower", name: "Cascada Wide Ceiling Shower",   finishes: ["chrome"], variant: "550x450mm · rainfall, waterfall & mist", functions: 3 },
+  { code: "ST-C1006", cat: "rain-shower", name: "Lumina Compact Ceiling Shower", finishes: ["chrome"], variant: "380x250mm · LED · rainfall, waterfall & mist", functions: 3 },
+  { code: "ST-C1009", cat: "rain-shower", name: "Lumina Grand Ceiling Shower",   finishes: ["chrome"], variant: "700x450mm · LED · needs an electric point", functions: 4 },
+  { code: "ST-C1020", cat: "rain-shower", name: "Cascada Powder Rain Ceiling Shower", finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "650x380mm · rain, rain-column, mist & powder-rain", functions: 4, badge: "New" },
+
+  { code: "ST-D5008", cat: "diverter", name: "Regale Flow Control Diverter", finishes: ["chrome","roseGold","matteBlack"], variant: "thermostatic & volume · 3 outlets together", outlets: 3 },
+  { code: "ST-D5014", cat: "diverter", name: "Regale Progressive Diverter",  finishes: ["chrome"], variant: "single lever · progressive cartridge", outlets: 4 },
+
+  /* The PDF prints no code for either spout — the page carries the finishes and
+     nothing else — so this one is filed as ST-BUTTON beside ST-PLAIN, which is
+     the name the range already uses for the plain one. Confirm the real code
+     with the client before it reaches an order. */
+  { code: "ST-BUTTON", cat: "bath-spout", name: "Axis Button Wall Spout", finishes: ["chrome","gunGrey","champagne","gold","roseGold","brushedRoseGold","matteBlack"], variant: "150mm · brass · cube button" },
+
+  /* ST-1019 / ST-1020 / ST-1021 are ONE handset. The client's catalogue gives a
+     separate code per finish rather than per model — the three renders are the
+     same square brass handset on the same bracket — so it is one row here and
+     the per-finish codes ride in `variant`, where the spec sheet still prints
+     them for the consultant. */
+  { code: "ST-1019", cat: "hand-shower", name: "Aria Brass Hand Shower", finishes: ["gold","roseGold","matteBlack"], variant: "brass · ST-1019 french gold / ST-1020 rose gold / ST-1021 matt black" },
+  { code: "ST-1011", cat: "hand-shower", name: "Aria Round Hand Shower",        finishes: ["chrome"], variant: "ABS · 1.5m tube & hook" },
+  { code: "ST-1024", cat: "hand-shower", name: "Aria Single-Spray Hand Shower", finishes: ["chrome"], variant: "ABS · 1.5m tube & hook" },
+  { code: "ST-1032", cat: "hand-shower", name: "Aria Sector-Spray Hand Shower", finishes: ["chrome"], variant: "ABS · 1.5m tube & hook" },
+  { code: "ST-3015", cat: "hand-shower", name: "Aria Wide-Grip Hand Shower",    finishes: ["chrome"], variant: "ABS · 1.5m tube & hook" },
+  { code: "ST-3017", cat: "hand-shower", name: "Aria Ribbed Hand Shower",       finishes: ["chrome"], variant: "ABS · 1.5m tube & hook" },
 ];
 
 /* ---- build PRODUCTS map keyed by category -------------------------------- */
