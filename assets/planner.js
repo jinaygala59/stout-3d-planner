@@ -1563,18 +1563,17 @@ function buildBathroomDetails(t) {
   const seat = new THREE.Mesh(new THREE.CylinderGeometry(0.172, 0.172, 0.028, 36), porcelain);
   seat.scale.x = 1.55; seat.position.set(HX - 0.31, 0.508, wcZ); grp.add(seat);
 
-  /* towel rail + towel on the left wall */
-  const railMat = new THREE.MeshStandardMaterial({ color: F.rail, metalness: 0.9, roughness: 0.3, envMapIntensity: 1.2 });
-  const bar = new THREE.Mesh(new THREE.CylinderGeometry(0.011, 0.011, 0.62, 16), railMat);
-  bar.rotation.x = Math.PI / 2; bar.position.set(-HX + 0.075, 1.18, 0.55); grp.add(bar);
-  [0.3, 0.8].forEach(z => {
-    const p = new THREE.Mesh(new THREE.CylinderGeometry(0.009, 0.009, 0.075, 12), railMat);
-    p.rotation.z = Math.PI / 2; p.position.set(-HX + 0.038, 1.18, z); grp.add(p);
-  });
-  const towel = buildTowel(F.towel, 0.30, 0.46);
-  towel.position.set(-HX + 0.075, 1.18, 0.55);
-  towel.rotation.y = Math.PI / 2;              // width runs along the rail, faces the room
-  grp.add(towel);
+  /* NO TOWEL RAIL ON THE LEFT WALL. The client asked for it out (2026-09-16):
+     it hung at eye height on the one clear wall, and this is a tool for showing
+     Stout's fittings, not a dressed room — a towel is the kind of prop that
+     reads as clutter the moment it is not what you came to look at. The rail
+     went with it rather than staying behind: it existed only to hold that
+     towel, and a bare bar on an otherwise empty wall is worse than either.
+     buildTowel() and its terry-cloth texture are left in place, unused, the
+     same way buildBodyJet sits behind `jet3d` — restoring this is a matter of
+     putting the eleven lines back, not rebuilding the towel. The rolled towels
+     on the vanity are a different prop and are untouched; the client did not
+     ask about those. */
 
   /* ---- the shower zone: fittings used to float on an undefined wall over an
      undefined floor. A shallow recessed tray in a wetter, darker tile — with
@@ -4161,15 +4160,35 @@ const placedValve = () => [...placed.values()].find(r => isValve(r.product)) || 
    one. The four body jets are ONE: a jet set is fed from a single port, which
    is why they arrive as one selectable piece — counting them as four would
    make every valve in the range look two sizes too small. */
-const outletCost = p => OUTLET_CATS.has(p.catId) ? (p.functions || 1) : 0;
-const outletsUsed = () => [...placed.values()].reduce((n, r) => n + outletCost(r.product), 0);
+/* A SPOUT WITH A BUTTON IS ITSELF A DIVERTER. ST-BUTTON carries a button on top
+   whose whole job is to send the flow on to a handset, so the hand shower hangs
+   off the SPOUT, not off another of the valve's outlets — the pair spends one
+   between them. Without this the client picks the button spout, the budget is
+   spent, and the rail refuses the very handset the button exists to feed
+   (2026-09-16, asked for directly). Flagged in the catalogue as `feedsHandset`
+   rather than tested by code here, so the day another spout ships with a
+   diverter button it inherits this by saying so in its row. */
+/* Cost is a property of the ROOM, not of a fitting on its own: whether the
+   handset is free depends on whether a button spout is in the set beside it.
+   So price a whole set at once and derive the rest from that — a per-product
+   cost plus deltas gets the swap wrong, and silently: trading the button spout
+   back for the plain one has to make the handset start costing again, and if
+   that is not recomputed the room quietly ends up over the valve's budget. */
+const costOfSet = list => {
+  const fed = list.some(x => x.feedsHandset);
+  return list.reduce((n, x) => n + (!OUTLET_CATS.has(x.catId) ? 0
+    : (x.catId === "hand-shower" && fed) ? 0
+    : (x.functions || 1)), 0);
+};
+const roomSet = () => [...placed.values()].map(r => r.product);
+/* what ONE fitting spends in the room as it stands — for the messages */
+const outletCost = p => costOfSet(roomSet().filter(x => x.id !== p.id).concat(p))
+                      - costOfSet(roomSet().filter(x => x.id !== p.id));
+const outletsUsed = () => costOfSet(roomSet());
 /* what the room would spend with THIS product in it — a swap inside a category
    hands the old piece's outlets back first, so a 2-function shower can be
    traded for a 3-function one on a valve with exactly one outlet to spare */
-const outletsWith = p => {
-  const same = [...placed.values()].find(r => r.product.catId === p.catId);
-  return outletsUsed() - (same ? outletCost(same.product) : 0) + outletCost(p);
-};
+const outletsWith = p => costOfSet(roomSet().filter(x => x.catId !== p.catId).concat(p));
 const outletCap = () => { const v = placedValve(); return v ? (v.product.outlets || 1) : Infinity; };
 /* the finish the whole room is committed to, or null while there is no valve */
 const lockedFinish = () => { const v = placedValve(); return v ? v.finishId : null; };

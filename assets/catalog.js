@@ -350,7 +350,7 @@ const RAW_PRODUCTS = [
      nothing else — so this one is filed as ST-BUTTON beside ST-PLAIN, which is
      the name the range already uses for the plain one. Confirm the real code
      with the client before it reaches an order. */
-  { code: "ST-BUTTON", cat: "bath-spout", name: "Axis Button Wall Spout", finishes: ["chrome","gunGrey","champagne","gold","roseGold","brushedRoseGold","matteBlack"], variant: "150mm · brass · cube button" },
+  { code: "ST-BUTTON", cat: "bath-spout", name: "Axis Button Wall Spout", finishes: ["chrome","gunGrey","champagne","gold","roseGold","brushedRoseGold","matteBlack"], variant: "150mm · brass · cube button", feedsHandset: true },
 
   /* ST-1019 / ST-1020 / ST-1021 are ONE handset. The client's catalogue gives a
      separate code per finish rather than per model — the three renders are the
@@ -406,6 +406,10 @@ function buildProducts() {
          things, and a planner that lets you draw six is drawing a bathroom
          nobody can install. Only the two valve categories carry it. */
       outlets: rp.outlets || null,
+      /* A spout whose button diverts the flow on to a handset. The pair then
+         spends ONE of the valve's outlets between them, not two — see
+         outletCost in planner.js. */
+      feedsHandset: rp.feedsHandset || false,
       /* HOW MANY OUTLETS A SHOWER SPENDS. Counted off each render (2026-09-12):
          the rain field is one, each waterfall slot or blade family is one, a
          ring of jet or mist nozzles is one — every spray zone on a Stout panel
