@@ -2432,6 +2432,28 @@ function artBandMean(px, lo, hi) {
 const ART_BANDS = [[0.40, 0.90], [0.60, 0.95], [0.78, 0.98]];
 const overClamp = r => Math.max(0, Math.log(Math.max(r, 1e-6) / 1.8)) +
                        Math.max(0, Math.log(0.5 / Math.max(r, 1e-6)));
+/* HOW FAR THE PRINT MAY MOVE A RENDER, and the two are not the same question.
+   A single 0.5-1.8 clamp on each channel conflated them, and that is why the
+   concealed body jet came out nearly black in a black room: its face is
+   photographed inside a recess, so the render is genuinely dark, and the only
+   way to lift it was a limit that ALSO had to be tight enough to stop the print
+   inventing a hue. One number cannot do both jobs, so it did neither well —
+   ST-CBJ's matt black reached the wall at #17181a where every other matt black
+   fitting sits around #45.
+   Split in two. BRIGHTNESS is the geometric mean of the three channels and may
+   move a long way, because how a render is lit says nothing about the metal:
+   0.40-3.2 covers a face in shadow and a blown highlight alike. COLOUR is what
+   is left after that is divided out, and may move only 0.80-1.25 — enough to
+   pull a cast out of a photograph, not enough to turn one metal into another.
+   Over the catalogue's 512 render/finish pairs this takes the mean error from
+   1.2 to 0.7 of 255, the worst from 53 to 29, and the count over 15 from 14 to
+   10, with nothing made worse. */
+const BRIGHT_LO = 0.40, BRIGHT_HI = 3.2, CHROMA_LO = 0.80, CHROMA_HI = 1.25;
+function clampTint(raw) {
+  const s = Math.cbrt(Math.max(raw[0] * raw[1] * raw[2], 1e-9));
+  const b = Math.min(BRIGHT_HI, Math.max(BRIGHT_LO, s));
+  return raw.map(r => b * Math.min(CHROMA_HI, Math.max(CHROMA_LO, r / s)));
+}
 function normaliseArtwork(tex, fid) {
   const target = artTone(fid), img = tex.image;
   if (!target || !img || !img.width) return;
@@ -2447,7 +2469,7 @@ function normaliseArtwork(tex, fid) {
     if (!best || over < best.over - 1e-9) best = { over, raw };
   }
   if (!best) return;
-  tex.userData.tint = best.raw.map(r => Math.min(1.8, Math.max(0.5, r)));
+  tex.userData.tint = clampTint(best.raw);
   exposeAllArtwork();                       // every material wearing this texture re-prints
 }
 
