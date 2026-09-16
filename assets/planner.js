@@ -1078,6 +1078,32 @@ function fittingEnv() {
      read as structure, not so dark that they drag the whole piece down. */
   x.fillStyle = "rgba(96,96,100,0.55)";
   [0.05, 0.33, 0.62, 0.88].forEach(u => x.fillRect(u * W, H * 0.30, W * 0.018, H * 0.30));
+  /* CONTRAST, ABOUT THIS STUDIO'S OWN MEAN. Everything above is a gentle
+     gradient, and after the PMREM blur a gentle gradient reflects almost the
+     same radiance whichever way a face points: every modelled fitting came out
+     FLAT. Measured on the plain spout in French Gold, the render spanned p05 187
+     to p95 210 — 23 levels — where its own photograph spans 116 to 240. The
+     median was right (188 against the photograph's 189); what was missing was
+     modelling, so a cube button read as the same tone on all three of its faces
+     and the piece looked painted rather than metal.
+     Roughness is NOT the lever here: swept 0.10-0.42 the spread only moved 35 to
+     23, because a soft gradient is soft at every sharpness. The environment is.
+     So expand each pixel about the canvas mean and leave the mean alone, which
+     widens the spread without moving the level the finishes are calibrated to —
+     METAL_ENV_GAIN then carries the small correction for what the tone mapping
+     does to the wider range. At 2.2 the spout reads p05 186 / p50 188 / p95 222.
+     Raising this further keeps buying spread, but it costs saturation: the
+     brighter a reflection, the whiter it is. 2.2 is where the spread is as wide
+     as it goes with the median and the saturation both still on their marks. */
+  const d = x.getImageData(0, 0, W, H); let mean = 0;
+  for (let i = 0; i < W * H; i++) mean += d.data[i * 4] * 0.2126 + d.data[i * 4 + 1] * 0.7152 + d.data[i * 4 + 2] * 0.0722;
+  mean /= W * H;
+  for (let i = 0; i < W * H; i++)
+    for (let ch = 0; ch < 3; ch++) {
+      const v = d.data[i * 4 + ch];
+      d.data[i * 4 + ch] = Math.max(0, Math.min(255, mean + STUDIO_CONTRAST * (v - mean)));
+    }
+  x.putImageData(d, 0, 0);
   const eq = canvasTex(c, false);
   eq.mapping = THREE.EquirectangularReflectionMapping;
   const pm = new THREE.PMREMGenerator(renderer);
@@ -1151,7 +1177,16 @@ const METAL_TONE = {
    fitting env, the roughness table, the tone mapping or the exposure changes:
    they are a measurement of THIS pipeline, not a description of the metal. */
 const METAL_BASE = { chrome: 0xf5ffff, gunGrey: 0x3b3c3d, brushedGold: 0x6a3707, champagne: 0x725a3e, gold: 0xb98938, polishedGold: 0xd88b26, roseGold: 0x9a523a, brushedRoseGold: 0x9a4e33, matteBlack: 0x151617 };
-const METAL_ENV_GAIN = 1.234;
+/* How far fittingEnv's studio is pushed away from its own mean. See the note
+   where it is applied: this is what stops every modelled fitting rendering flat. */
+const STUDIO_CONTRAST = 2.2;
+/* Re-solved with STUDIO_CONTRAST in place: the wider environment range loses a
+   little more to the tone-mapping shoulder, so the gain carries the piece back
+   to the level every finish was calibrated at. Measured, not guessed — the plain
+   spout in French Gold sits at p50 188 either side of the change, which is the
+   photograph's 189. Re-solve BOTH of these together if the environment, the
+   roughness table or the exposure moves; neither means anything alone. */
+const METAL_ENV_GAIN = 1.505;
 /* the linear reflectance for an sRGB hex — the fallback path, for a finish
    without a solved base */
 const srgbHexToLinear = hex => {
@@ -4910,6 +4945,45 @@ function thumbDataURL(path, px) {
   });
 }
 
+/* The About page's photograph — the client's own showroom, full-bleed across
+   the top of page 1. jsPDF cannot crop, so the crop happens here: cover-fit
+   the box, centred, and hand the PDF a JPEG that is already the right shape.
+   Returns null if the file is not there, and page 1 then prints without it. */
+function coverDataURL(paths, wpx, hpx) {
+  const list = Array.isArray(paths) ? paths.slice() : [paths];
+  return new Promise(res => {
+    const tryNext = () => {
+      const path = list.shift();
+      if (!path) return res(null);
+      const img = new Image();
+      img.onload = () => {
+        const c = mkCanvas(wpx, hpx), x = c.getContext("2d");
+        x.fillStyle = "#12100e"; x.fillRect(0, 0, wpx, hpx);
+        const r = Math.max(wpx / img.naturalWidth, hpx / img.naturalHeight);
+        const w = img.naturalWidth * r, h = img.naturalHeight * r;
+        x.drawImage(img, (wpx - w) / 2, (hpx - h) / 2, w, h);
+        res(c.toDataURL("image/jpeg", 0.9));
+      };
+      img.onerror = tryNext;
+      img.src = path;
+    };
+    tryNext();
+  });
+}
+
+/* A STOUT catalogue number, or nothing.
+   Several products in here carry a working id rather than a catalogue code —
+   ST-PLAIN, ST-SARM, ST-BSDV, ST-BUTTON and the filename-derived ones — because
+   the factory has not issued a number for that piece yet (the spouts, the shower
+   arm and most body jets are printed in the catalogue with no code at all).
+   Printing "ST-PLAIN" on a sheet a client hands to a fitter invents a part
+   number; this prints the truth instead, and the consultant fills it in. */
+const CODE_RE = /^ST-[A-Z]{0,2}\d{3,5}$/i;
+function catalogCode(p) {
+  const c = String((p && p.code) || "").trim();
+  return CODE_RE.test(c) ? c : null;
+}
+
 async function downloadSpecSheet() {
   if (!window.jspdf || !window.jspdf.jsPDF) { toast("PDF engine not loaded"); return; }
   const items = [...placed.values()];
@@ -4919,10 +4993,11 @@ async function downloadSpecSheet() {
   // the client's view is still where they left it when the download finishes.
   const prev = selected; deselect();
   toast("Building your PDF…");
-  const [logo, ...thumbs] = await Promise.all([
+  const [logo, showroom, ...thumbs] = await Promise.all([
     // the client's mark, pre-composited on the header band's own colour so it
     // prints identically whatever this jsPDF build does with PNG alpha
     imageDataURL("assets/brand/logo-pdf.jpg"),
+    coverDataURL(["assets/brand/about-showroom.jpg", "assets/brand/about-showroom.png"], 1680, 704),
     ...items.map(rec => {
       const path = (rec.product.images && (rec.product.images[rec.finishId] || rec.product.images[rec.product.defaultFinish])) || "";
       return path ? thumbDataURL(thumbOf(path), 300) : Promise.resolve(null);
@@ -4940,29 +5015,110 @@ async function downloadSpecSheet() {
     const PW = 210, PH = 297, M = 14;
     const GOLD = [198, 161, 91], INK = [28, 28, 30], MUTE = [120, 120, 124], LINE = [222, 218, 208];
 
-    // ---- header band ----
-    doc.setFillColor(15, 15, 17); doc.rect(0, 0, PW, 26, "F");
-    // the logo lockup is 707x268 — 12 mm tall gives 31.7 mm wide, centred in the
-    // 26 mm band. If it failed to load the band still gets the typed wordmark.
-    const LH = 12, LW = LH * (707 / 268);
-    if (logo) doc.addImage(logo, "JPEG", M, (26 - LH) / 2, LW, LH, undefined, "FAST");
-    else { doc.setTextColor(255, 255, 255); doc.setFont("helvetica", "bold"); doc.setFontSize(20); doc.text("STOUT", M, 15); }
-    doc.setTextColor(...GOLD); doc.setFontSize(9); doc.setFont("helvetica", "normal");
-    doc.text("SANITARYWARE", M + (logo ? LW + 4 : 27), 15);
-    doc.setTextColor(210, 210, 214); doc.setFontSize(11); doc.setFont("helvetica", "bold");
-    doc.text("Bathroom Design Specification", PW - M, 12, { align: "right" });
-    doc.setFont("helvetica", "normal"); doc.setFontSize(8.5); doc.setTextColor(150, 150, 154);
-    const when = new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
-    doc.text(`${roomLabel()} bathroom  ·  ${when}`, PW - M, 18, { align: "right" });
-    doc.setDrawColor(...GOLD); doc.setLineWidth(0.8); doc.line(0, 26, PW, 26);
+    /* The dark lockup band, identical on both pages so the two read as one
+       document. `right` is the small line set against the right margin. */
+    function brandBand(top, h, right, sub) {
+      doc.setFillColor(15, 15, 17); doc.rect(0, top, PW, h, "F");
+      const LH = Math.min(12, h - 8), LW = LH * (707 / 268);   // the lockup is 707x268
+      if (logo) doc.addImage(logo, "JPEG", M, top + (h - LH) / 2, LW, LH, undefined, "FAST");
+      else { doc.setTextColor(255, 255, 255); doc.setFont("helvetica", "bold"); doc.setFontSize(20); doc.text("STOUT", M, top + h / 2 + 3); }
+      doc.setTextColor(...GOLD); doc.setFontSize(9); doc.setFont("helvetica", "normal");
+      doc.text("SANITARYWARE", M + (logo ? LW + 4 : 27), top + h / 2 + 1);
+      if (right) {
+        doc.setTextColor(210, 210, 214); doc.setFontSize(11); doc.setFont("helvetica", "bold");
+        doc.text(right, PW - M, top + h / 2 - 2, { align: "right" });
+      }
+      if (sub) {
+        doc.setFont("helvetica", "normal"); doc.setFontSize(8.5); doc.setTextColor(150, 150, 154);
+        doc.text(sub, PW - M, top + h / 2 + 4, { align: "right" });
+      }
+      doc.setDrawColor(...GOLD); doc.setLineWidth(0.8); doc.line(0, top + h, PW, top + h);
+    }
 
-    // ---- design snapshot ----
-    let y = 26 + 8;
+    /* ======================================================================
+       PAGE 1 — ABOUT STOUT
+       The showroom full-bleed across the top, then who Stout is, then the
+       engineering the client never sees. No products, no prices.
+       ====================================================================== */
+    const PHOTO_H = showroom ? 88 : 0;
+    if (showroom) doc.addImage(showroom, "JPEG", 0, 0, PW, PHOTO_H, undefined, "FAST");
+    brandBand(PHOTO_H, 24, null, null);
+    doc.setTextColor(...GOLD); doc.setFont("helvetica", "normal"); doc.setFontSize(8.5);
+    /* jsPDF measures a right-aligned string WITHOUT its letter spacing, so an
+       aligned tracked line runs off the page. Place it by measured width. */
+    const TAG = "INFINITE BATHING", TAG_SP = 1.2;
+    const tagW = doc.getTextWidth(TAG) + TAG_SP * (TAG.length - 1);
+    doc.text(TAG, PW - M - tagW, PHOTO_H + 14, { charSpace: TAG_SP });
+
+    let y = PHOTO_H + 24 + 16;
+    doc.setTextColor(...GOLD); doc.setFont("helvetica", "bold"); doc.setFontSize(9);
+    doc.text("ABOUT STOUT", M, y, { charSpace: 1.6 });
+    y += 9;
+    doc.setTextColor(...INK); doc.setFont("helvetica", "bold"); doc.setFontSize(15);
+    doc.text("More than a fitting. A statement of design.", M, y);
+    y += 4;
+    doc.setDrawColor(...GOLD); doc.setLineWidth(0.6); doc.line(M, y, M + 26, y);
+    y += 8;
+
+    const ABOUT = [
+      "At STOUT, we believe a bathroom is more than a functional space — it is an expression of architecture, lifestyle and individuality.",
+      "Our journey is driven by a simple philosophy: create products that combine refined design, dependable performance and lasting craftsmanship.",
+      "From thoughtfully engineered fittings to distinctive finishes and contemporary forms, every STOUT product is developed with attention to detail and an uncompromising focus on quality.",
+      "We work closely with our partners, retailers, architects and designers to understand what modern spaces demand — and transform those insights into products that are elegant, practical and built for everyday living.",
+      "STOUT is not about following trends. It is about creating designs that remain relevant.",
+      "With a growing presence and a commitment to continuous innovation, we aspire to make every bathroom a more considered, sophisticated and personal space.",
+    ];
+    doc.setFont("helvetica", "normal"); doc.setFontSize(9.6); doc.setTextColor(88, 88, 92);
+    ABOUT.forEach(p => {
+      const lines = doc.splitTextToSize(p, PW - 2 * M);
+      doc.text(lines, M, y);
+      y += lines.length * 4.7 + 2.6;
+    });
+    y += 2;
+    doc.setTextColor(...GOLD); doc.setFont("helvetica", "bold"); doc.setFontSize(11);
+    doc.text("STOUT — Infinite Bathing.", M, y);
+
+    /* The catalogue's own "Luxury engineered from within" spread, condensed:
+       the parts that decide whether a mixer still feels right in ten years. */
+    const ENG = [
+      ["Vernet THQ36 thermostatic cartridge",
+       "Ceramic-disc precision that holds the temperature you set through pressure changes, with a safety stop and a cartridge that services without dismantling the fitting."],
+      ["Neoperl FSG D8 volume control",
+       "Manual on/off with fine volume regulation — roughly 6 to 30 litres a minute at 3 bar — smooth to adjust at high and low pressure alike."],
+      ["Neoperl FSG D8 HD bolt",
+       "Heavy-duty, corrosion-resistant fastening with an anti-loosening thread, engineered for an exact, leak-free fit under vibration and pressure change."],
+    ];
+    const BOX_H = 44, boxY = PH - 24 - BOX_H;
+    doc.setFillColor(249, 247, 243); doc.roundedRect(M, boxY, PW - 2 * M, BOX_H, 2, 2, "F");
+    doc.setDrawColor(...GOLD); doc.setLineWidth(0.5); doc.line(M, boxY, M + 26, boxY);
+    doc.setTextColor(...INK); doc.setFont("helvetica", "bold"); doc.setFontSize(9.4);
+    doc.text("LUXURY ENGINEERED FROM WITHIN", M + 6, boxY + 9, { charSpace: 0.7 });
+    const colW = (PW - 2 * M - 12 - 2 * 6) / 3;
+    ENG.forEach(([title, body], i) => {
+      const x = M + 6 + i * (colW + 6);
+      doc.setTextColor(...INK); doc.setFont("helvetica", "bold"); doc.setFontSize(7.8);
+      const tl = doc.splitTextToSize(title, colW);
+      doc.text(tl, x, boxY + 17);
+      doc.setTextColor(...MUTE); doc.setFont("helvetica", "normal"); doc.setFontSize(7);
+      doc.text(doc.splitTextToSize(body, colW), x, boxY + 17 + tl.length * 3.4 + 2.2);
+    });
+
+    /* ======================================================================
+       PAGE 2 — THE CLIENT'S OWN SELECTION
+       ====================================================================== */
+    doc.addPage();
+    const when = new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
+    brandBand(0, 26, "Bathroom Design Specification", `${roomLabel()} bathroom  ·  ${when}`);
+
+    y = 26 + 8;
     doc.setTextColor(...INK); doc.setFont("helvetica", "bold"); doc.setFontSize(12);
     doc.text("Your Design", M, y); y += 4;
+    /* A long selection needs the room below more than it needs a big render, so
+       the two angles give height back once the list passes eight pieces. */
+    const shrink = items.length > 8 ? 0.72 : 1;
     if (shots.length) {
       const availW = PW - 2 * M, gap = 6;
-      const frameW = shots.length > 1 ? (availW - gap) / 2 : availW * 0.64;
+      const frameW = (shots.length > 1 ? (availW - gap) / 2 : availW * 0.64) * shrink;
       const imgW = frameW - 6, imgH = imgW / SHEET_ASPECT, frameH = imgH + 6;
       const x0 = M + (shots.length > 1 ? 0 : (availW - frameW) / 2);
       shots.forEach((s, i) => {
@@ -4977,10 +5133,18 @@ async function downloadSpecSheet() {
 
     // ---- selected products ----
     doc.setTextColor(...INK); doc.setFont("helvetica", "bold"); doc.setFontSize(12);
-    doc.text("Selected Products", M, y); y += 2;
+    doc.text("Selected Products", M, y);
+    doc.setFont("helvetica", "normal"); doc.setFontSize(8.5); doc.setTextColor(...MUTE);
+    doc.text(`${items.length} ${items.length === 1 ? "piece" : "pieces"}`, PW - M, y, { align: "right" });
+    y += 2;
     doc.setDrawColor(...LINE); doc.setLineWidth(0.3); doc.line(M, y + 1, PW - M, y + 1); y += 7;
 
-    const rowH = 20, thumbMM = 15;
+    /* Rows close up rather than spill onto a third page: the sheet is meant to
+       be two pages, About and this. Below 15 mm a 300 px thumbnail stops being
+       readable, so at that point a further page is the honest answer. */
+    const room = (PH - 26) - y;
+    const rowH = Math.max(15, Math.min(24, room / items.length));
+    const thumbMM = Math.min(18, rowH - 5);
     items.forEach((rec, i) => {
       if (y + rowH > PH - 22) { doc.addPage(); y = M + 8; }
       const fin = FINISHES[rec.finishId] || {};
@@ -4995,14 +5159,15 @@ async function downloadSpecSheet() {
       doc.text(String(i + 1).padStart(2, "0"), tx, y - 1.5);
       doc.setTextColor(...INK); doc.setFont("helvetica", "bold"); doc.setFontSize(10.5);
       doc.text(rec.product.name || "Product", tx + 6, y - 1.5);
+      const code = catalogCode(rec.product);
       doc.setTextColor(...MUTE); doc.setFont("helvetica", "normal"); doc.setFontSize(8.5);
-      doc.text(`${categoryName(rec.product.catId)}   ·   Code ${rec.product.code || "—"}`, tx + 6, y + 3);
+      doc.text(`${categoryName(rec.product.catId)}   ·   ${code ? "Code " + code : "Code on request"}`, tx + 6, y + 3);
       /* A set of two and a set of four are different fittings to buy and to
          plumb, so the sheet has to say which — it is the one line a fitter
          reads off this page. */
       const jetLine = rec.jetSet ? `set of ${jetCountOf(rec.jets)}` : "";
       const sub = [rec.product.variant, jetLine].filter(Boolean).join("  ·  ");
-      if (sub) {
+      if (sub && rowH >= 18) {
         doc.setFontSize(7.8); doc.setTextColor(160, 158, 152);
         doc.text(sub, tx + 6, y + 7.2);
       }
@@ -5023,20 +5188,6 @@ async function downloadSpecSheet() {
       y += rowH;
     });
 
-    // ---- who Stout is, and what "we'll take it from here" covers ----
-    if (y + 34 > PH - 24) { doc.addPage(); y = M + 8; }
-    y += 4;
-    doc.setFillColor(249, 247, 243); doc.roundedRect(M, y, PW - 2 * M, 28, 2, 2, "F");
-    doc.setTextColor(...INK); doc.setFont("helvetica", "bold"); doc.setFontSize(10);
-    doc.text("About Stout", M + 6, y + 8);
-    doc.setFont("helvetica", "normal"); doc.setFontSize(8.6); doc.setTextColor(...MUTE);
-    doc.text(doc.splitTextToSize(
-      "Stout is a single point of contact for the whole bathroom. We manufacture and supply the " +
-      "complete range of fittings shown here, and our own teams install them on site — so the pieces " +
-      "you have chosen, the delivery and the fitting are all handled by us, with one warranty behind them.",
-      PW - 2 * M - 12), M + 6, y + 14);
-    y += 34;
-
     // ---- footer on every page ----
     const pages = doc.getNumberOfPages();
     for (let p = 1; p <= pages; p++) {
@@ -5048,9 +5199,11 @@ async function downloadSpecSheet() {
       doc.text(`Page ${p} / ${pages}`, PW - M, PH - 7, { align: "right" });
       // the sheet is a picture of a decision; this line makes it the decision —
       // whoever holds the paper can reopen the room and keep working on it
-      if (p === 1) {
-        doc.setFontSize(7); doc.setTextColor(150, 150, 154);
-        doc.text("Reopen this room: " + shareURL(), M, PH - 19.5, { maxWidth: PW - 2 * M });
+      if (p === 2) {
+        doc.setFontSize(6.6); doc.setTextColor(150, 150, 154);
+        // two lines of link, sitting clear of the footer rule at PH-16
+        const ln = doc.splitTextToSize("Reopen this room: " + shareURL(), PW - 2 * M).slice(0, 2);
+        doc.text(ln, M, PH - 18.5 - (ln.length - 1) * 2.8);
       }
     }
 
