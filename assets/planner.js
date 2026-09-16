@@ -316,6 +316,18 @@ const SKU3D = {
      The frame aspect agreeing with the measured box to a few percent is the
      check that the right blob was measured. Tallest of the six is MANFRA at
      0.42 m, inside the 0.50 lane cap. */
+  /* TWO MORE OFF-SQUARE PLATES, found by measuring every flat trim in the range
+     rather than only the three bars above. ST-D5008's plate runs -7.3 deg along
+     the top and -10.3 along the bottom with its right side 10% short; ST-D5014
+     tapers 14% across three dials, which is what made the middle dial read
+     bigger than the outer two. Both are rectangular plates whose controls sit
+     inside the plate, so the alpha quad is the plate and the homography has
+     something real to undo — checked against the original side by side before
+     being turned on. The other plates the same measurement flagged (D5017,
+     D5003, D5009, D5010, and round-plate AZBS) are deliberately left alone: a
+     lever or knob that overhangs the plate puts a corner on the CONTROL, and
+     rectifying to that warps a plate that was already square. */
+  "ST-D5008": { faceOn: true }, "ST-D5014": { faceOn: true },
   "ST-D5021": { width: 0.47 }, "ST-D5022": { width: 0.47 },
   "ST-D5012": { width: 0.30 }, "ST-D5011": { width: 0.30 },
   "ST-D5015": { width: 0.14 }, "ST-D5016": { width: 0.14 },

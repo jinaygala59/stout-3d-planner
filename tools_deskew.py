@@ -21,7 +21,15 @@ does to a protruding fitting.
 import glob, math, os, sys
 from PIL import Image
 
-FLAT_PLATES = ["ST-D5018", "ST-D5019", "ST-D5020"]
+# Measured, not assumed — see the table in the audit: a plate earns a place
+# here only when its own alpha quad comes back off square AND the rectified
+# copy reads better than the original side by side. ST-D5008 measures top
+# -7.3 / bottom -10.3 deg with the right side 10% short; ST-D5014 is 0.4 /
+# -3.8 with a 14% taper. The other flagged plates (D5017, D5003, D5009,
+# D5010, AZBS) are NOT here on purpose: their protruding levers, knobs and
+# round plates put the quad corners on a control rather than on the plate,
+# so the "correction" warps a plate that was already square.
+FLAT_PLATES = ["ST-D5018", "ST-D5019", "ST-D5020", "ST-D5008", "ST-D5014"]
 OUT = os.path.join("assets", "products", "face")
 
 
