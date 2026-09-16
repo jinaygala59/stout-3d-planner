@@ -3385,7 +3385,18 @@ function applyDecals(holder, product, fid, spec) {
   const oldTex = old.length ? old[0].material.map : null;
   old.forEach(o => { o.parent.remove(o); o.geometry.dispose(); o.material.dispose(); });
   if (oldTex) oldTex.dispose();
-  const tex = finishTexture(path, fid);
+  /* NO PRINT NORMALISATION ON A DECAL — pass no finish id, so finishTexture
+     skips normaliseArtwork. That correction exists for a product PHOTOGRAPH
+     standing in for the whole product: it reads the picture's 40-90% luminance
+     band, assumes that band is the metal, and scales it to the finish's one
+     colour so a pale render and a dark one of the same finish agree on the wall.
+     A face decal is not that. It is the spray face only, laid on metal this app
+     has already coloured correctly — and on the dancing jet that face is a BLACK
+     rounded square, so the band it measures contains no metal at all. Asked to
+     make black read as rose gold, the correction returned a tint of
+     [1.50, 1.09, 0.87] and the decal came out #f4b28d: a flat peach square
+     sitting on a correct #9a523a jet, which is what the client saw. */
+  const tex = finishTexture(path);
   holder.children.forEach(inst => {
     if (inst.name !== "ProductRoot" || !inst.getObjectByName(spec.decal.on)) return;
     const b = partBox(inst, spec.decal.on);
