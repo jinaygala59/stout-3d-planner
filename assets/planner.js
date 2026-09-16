@@ -4115,12 +4115,16 @@ function renderTool() {
   };
   showFinish(rec.finishId);
 
-  /* EVERY FINISH THE SKU IS MADE IN, ALWAYS. The valve used to lock the room to
-     one colour and this row was replaced by a "Locked to Chrome" sentence; the
-     client asked for the swatches back (2026-09-17). The valve still SETS the
-     colour — it is what `sessionFinish` and `roomFinish` seed the next piece
-     from — but it no longer refuses one. A mixed-metal room is a thing people
-     specify on purpose. */
+  /* NO SWATCHES ONCE THE VALVE IS IN. The finish was committed to when the
+     valve went on the wall — for the valve and for everything the valve feeds —
+     so offering a row of alternatives here would be offering something the tool
+     is about to refuse. Say what it is locked to, and say the way out. */
+  const lock = lockedFinish();
+  if (lock) {
+    $("#toolFins").innerHTML =
+      `<span class="fin-lock">Locked to <b>${finName(lock)}</b> by the ` +
+      `${placedValve().product.name}. Clear the room to change it.</span>`;
+  } else
   $("#toolFins").innerHTML = rec.product.finishes.map(fid =>
     // a product referencing a finish the palette no longer defines must not take
     // the whole tool down — it renders as a plain chip and stays selectable
@@ -4154,11 +4158,16 @@ $("#tool").querySelectorAll("[data-a]").forEach(b => b.onclick = () => {
   setBaseScale(rec.mesh, next);
   saveDesign();
 });
-/* Any swatch, any time. `commit` used to be the one caller allowed through a
-   room-wide lock; the lock is gone, and the flag is kept only because the
-   restore path and the valve both pass it. */
+/* `commit` is the valve setting the room's finish — the one caller allowed
+   through the lock, because it is the thing that CREATES the lock. Every other
+   route (a swatch, a restored design) is refused while a valve is on the wall. */
 function changeFinish(uid, fid, commit) {
   const rec = placed.get(uid); if (!rec) return;
+  const lock = lockedFinish();
+  if (lock && !commit && fid !== lock) {
+    toast(`The room is locked to ${finName(lock)} — clear it to change finish`);
+    return;
+  }
   if (!(rec.product.finishes || []).includes(fid)) return;   // no art, no finish
   rec.finishId = fid;
   sessionFinish = fid;
@@ -4414,11 +4423,14 @@ const outletsUsed = () => costOfSet(roomSet());
    traded for a 3-function one on a valve with exactly one outlet to spare */
 const outletsWith = p => costOfSet(roomSet().filter(x => x.catId !== p.catId).concat(p));
 const outletCap = () => { const v = placedValve(); return v ? (v.product.outlets || 1) : Infinity; };
-/* The finish the room is being designed in — the valve's, if one is on the wall.
-   ADVISORY: it seeds the next piece's swatch, and nothing else. It used to be a
-   lock that refused every other colour; see the swatch row above for why it is
-   not one any more. */
-const roomFinish = () => { const v = placedValve(); return v ? v.finishId : null; };
+/* The finish the whole room is committed to, or null while there is no valve.
+   THIS IS DELIBERATE AND IT HAS BEEN ASKED FOR TWICE. It was taken out on
+   2026-09-17 ("I want all the colour options which were previously visible")
+   and put back the same day, on the clearer statement of what was wanted:
+   pick the diverter in matt black and every product is offered in matt black
+   only, with no other swatch visible. Reset all is the way out. Do not remove
+   it again without the client saying so in those terms. */
+const lockedFinish = () => { const v = placedValve(); return v ? v.finishId : null; };
 /* is anything from this category already in the room? A swap inside a category
    costs no outlet — the old piece comes off as the new one goes on. */
 const catPlaced = cid => [...placed.values()].some(r => r.product.catId === cid);
@@ -4428,11 +4440,13 @@ const finName = fid => (FINISHES[fid] || {}).name || fid;
    or null when it can. Everything that refuses a product answers here, so the
    rail, the swatch tray and the add path can never disagree about it. */
 function blockReason(p) {
-  const v = placedValve();
-  /* No finish reason here any more. A product used to be refused for being made
-     in the wrong colour for the room ("Not made in Rose Gold"); with the lock
-     gone every SKU can go in wearing any finish it is made in, and the only
-     thing that can still refuse one is the valve's outlet budget. */
+  const lock = lockedFinish(), v = placedValve();
+  /* A finish-card that is not the room's colour is not "unavailable" — the SKU
+     is made in it, this room just isn't that colour. Say that, rather than the
+     generic line below, which would read as a gap in the range. */
+  if (p.finishOnly && lock && lock !== p.finishOnly) return `This room is ${finName(lock)}`;
+  if (lock && !(p.finishes || []).includes(lock))
+    return `Not made in ${finName(lock)}`;
   if (isValve(p) && v && p.outlets && p.outlets < outletsUsed())
     return `Feeds ${p.outlets}, the room uses ${outletsUsed()}`;
   if (OUTLET_CATS.has(p.catId) && outletsWith(p) > outletCap()) {
@@ -4442,13 +4456,19 @@ function blockReason(p) {
   }
   return null;
 }
-/* GONE WITH THE LOCK: finishStrands(fid) listed the pieces on the wall that a
-   proposed valve finish would "strand", so the picker could grey that swatch
-   out. Nothing is stranded now — each piece keeps the colour it was placed in —
-   and its only two callers, the picker and add(), no longer ask. */
+/* Could the room still match if the valve went in wearing THIS finish? Asked per
+   swatch, because the answer differs per swatch: the valve sets the finish for
+   everything, so a colour one of the pieces already on the wall is not made in
+   would stand the room up in two finishes. */
+const finishStrands = fid =>
+  [...placed.values()].filter(r => !(r.product.finishes || []).includes(fid)).map(r => r.product.name);
 
-/* the finishes a product may be offered in: all of them, always */
-function finishesFor(p) { return p.finishes || []; }
+/* the finishes a product may still be offered in, under whatever lock is on */
+function finishesFor(p) {
+  const lock = lockedFinish();
+  if (!lock) return p.finishes || [];
+  return (p.finishes || []).includes(lock) ? [lock] : [];
+}
 
 /* The finish the visitor is designing in. Picking any swatch sets it, and every
    piece added afterwards arrives in that finish when it is available — a set of
@@ -4462,13 +4482,12 @@ function cardFinish(p) {
   if (p.finishOnly) return p.finishOnly;          // the card IS the colour
   const rec = [...placed.values()].find(r => r.product.id === p.id);
   if (rec) return rec.finishId;
-  // a swatch the visitor actually clicked on this card wins over everything —
-  // it is the most specific thing they have said about this product
+  // a valve on the wall overrules the card, the session and the default: there
+  // is one finish in this room now and it is not up for negotiation
+  const lock = lockedFinish();
+  if (lock && (p.finishes || []).includes(lock)) return lock;
   const picked = railFinish.get(p.id);
   if (picked) return picked;
-  // otherwise follow the room: the valve's finish, then the session's
-  const room = roomFinish();
-  if (room && (p.finishes || []).includes(room)) return room;
   if (sessionFinish && (p.finishes || []).includes(sessionFinish)) return sessionFinish;
   return p.defaultFinish;
 }
@@ -4648,11 +4667,16 @@ function renderRail() {
     // the camera to frame the piece once its artwork is in (async).
     const why = blockReason(p);
     if (why) { toast(`${p.name}: ${why.toLowerCase()}`); return; }
-    /* The finish asked for is the finish placed. Both of the rules that used to
-       sit here — force the valve's colour onto the piece, and refuse a valve
-       whose colour would "strand" something already up — only made sense while
-       the room had one finish. Nothing is stranded now: each piece keeps the
-       colour it was placed in. */
+    const lock = lockedFinish();
+    if (lock) fin = lock;                     // one finish in this room, no exceptions
+    /* Placing the valve is the moment the room commits. Refuse a finish that
+       would strand something already on the wall rather than placing it and
+       leaving the client to notice their shower is a different colour. */
+    const strands = isValve(p) && !lock ? finishStrands(fin) : [];
+    if (strands.length) {
+      toast(`${strands.join(" and ")} ${strands.length > 1 ? "are" : "is"} not made in ${finName(fin)}`);
+      return;
+    }
     /* THE STEP YOU JUST ANSWERED FOLDS AWAY. Picking a diverter used to leave
        its own list open under your finger — fourteen plates you have finished
        choosing between, pushing the three steps you have NOT done off the
@@ -5410,8 +5434,9 @@ if ($("#clearAll")) $("#clearAll").onclick = () => {
 
 /* ---- confirm dialog ----------------------------------------------------- */
 /* THE FINISH CHOOSER.
-   Big, and modal, because of what it decides. A row of 20 px dots on a rail card
-   is the wrong size for it — you cannot tell Champagne from Brushed Rose Gold at
+   Big, and modal, because of what it decides: not this piece's colour but the
+   colour of every fitting in the room. A row of 20 px dots on a rail card is
+   the wrong size for that — you cannot tell Champagne from Brushed Rose Gold at
    20 px, and you certainly cannot tell what either does to THIS product. So the
    choice is made full size, with the piece itself shown in each finish. */
 let finPickRun = null;
@@ -5419,22 +5444,24 @@ function openFinishPick(p, run) {
   const m = $("#finPick"); if (!m) { run(cardFinish(p)); return; }
   finPickRun = run;
   const fins = finishesFor(p);
-  const room = roomFinish();
+  const lock = lockedFinish();
   $("#finPickTitle").textContent = `${p.name} — choose your finish`;
-  /* Every finish the SKU is made in is offered and none is disabled. This panel
-     used to collapse to a single tile once a valve was on the wall, and to grey
-     out any colour that would "strand" another piece; both went with the lock. */
-  $("#finPickBody").textContent = room
-    ? `The room is in ${finName(room)}. Pick that to match, or another to mix.`
-    : `This is the finish the piece goes on the wall in. Everything you add ` +
-      `afterwards starts in it, and you can change any of them later.`;
+  $("#finPickBody").textContent = lock
+    ? `The room is already in ${finName(lock)}, so that is the finish this goes in.`
+    : `This is the finish the whole room is designed in — every fitting after it ` +
+      `matches. It locks when the piece goes on the wall, and clearing the room is the way back.`;
   $("#finPickGrid").innerHTML = fins.map(fid => {
+    // a finish nothing already on the wall can wear is shown, and shown as refused,
+    // rather than quietly missing — the client should see why it is not an option
+    const strands = lock ? [] : finishStrands(fid);
     const src = thumbOf((p.images && p.images[fid]) || "");
-    return `<button type="button" class="fin-tile" data-fid="${fid}"
-        aria-label="${p.name} in ${finName(fid)}">
+    return `<button type="button" class="fin-tile${strands.length ? " no" : ""}" data-fid="${fid}"
+        ${strands.length ? "disabled" : ""}
+        aria-label="${p.name} in ${finName(fid)}${strands.length ? ", unavailable" : ""}">
         <span class="ft-pic"><img src="${src}" alt="" decoding="async"></span>
         <span class="ft-sw" style="background:${(FINISHES[fid] || {}).swatch || "#888"}"></span>
         <span class="ft-nm">${finName(fid)}</span>
+        ${strands.length ? `<span class="ft-no">${strands.join(", ")} not made in it</span>` : ""}
       </button>`;
   }).join("");
   $("#finPickGrid").querySelectorAll("[data-fid]").forEach(b => b.onclick = () => {
