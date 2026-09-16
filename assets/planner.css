@@ -373,10 +373,21 @@ input{font-family:inherit}
   *{animation-duration:.001ms !important;transition-duration:.001ms !important}
 }
 
-/* ---- rotator dock (right edge of the stage) ------------------------------
+/* ---- rotator dock (LEFT edge of the stage) -------------------------------
    Turning the room by dragging across it works, but it fights product picking
-   and there is nothing to grab on a touchpad. This gives a fixed handle. */
-.rotator{position:absolute;right:16px;top:50%;transform:translateY(-50%);z-index:8;
+   and there is nothing to grab on a touchpad. This gives a fixed handle.
+
+   WHY LEFT, ON EVERY SIZE. It docked right, vertically centred, and that is
+   exactly where the fittings are: everything the planner places hangs on the
+   RIGHT wall or in the back wall's right corner, so in the opening view the
+   dock sat on top of them. Measured in the hero framing of a full set, the
+   dock spanned x 1022-1118 / y 313-561 while the thermostatic bar spanned
+   928-1127 / 381-441 and the four body jets 925-1141 / 302-530 — the control
+   you reach for was parked over the products you came to look at, and the
+   client saw the room that way before touching anything. The left third is
+   the back wall and the vanity: room dressing, never a placed product. The
+   phone rule below reached this conclusion first; it belongs at every width. */
+.rotator{position:absolute;left:16px;top:50%;transform:translateY(-50%);z-index:8;
   display:flex;flex-direction:column;align-items:center;gap:8px;padding:12px 10px;
   background:rgba(13,14,16,.82);border:1px solid var(--line-soft);border-radius:20px;
   backdrop-filter:blur(10px);box-shadow:0 18px 44px -20px rgba(0,0,0,.85)}
@@ -395,12 +406,9 @@ input{font-family:inherit}
 .rot-btn:hover{color:var(--ink);border-color:var(--line)}
 .rot-btn.wide{width:70px;height:26px;font-size:11px;letter-spacing:.04em}
 @media (max-width:820px){
-  /* LEFT edge on a phone, not right. The room's fittings all hang on the RIGHT
-     wall, and in the portrait opening view they sit across the right third of
-     the picture — exactly where this dock used to be, so the control you reach
-     for was parked on top of the products you came to look at. The left third
-     is the back wall, which is blank tile below the niche. */
-  .rotator{left:8px;right:auto;gap:6px;padding:8px 7px;border-radius:16px}
+  /* Same left dock as everywhere else, just tighter — a phone has less room to
+     give the control and the fittings crowd further into frame. */
+  .rotator{left:8px;gap:6px;padding:8px 7px;border-radius:16px}
   .rot-dial{width:56px;height:56px}
   .rot-btn{width:27px;height:26px;font-size:12.5px}
   .rot-btn.wide{width:60px;height:23px;font-size:10px}
