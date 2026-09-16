@@ -597,7 +597,24 @@ const heroTgt = () => new THREE.Vector3(...heroOf().tgt);
 camera.position.set(...HERO.pos);
 
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, preserveDrawingBuffer: true });
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+/* 2x on a desktop, 1.6x on a phone. The scene is real OBJ geometry under ACES
+   with soft shadow maps, and a modern phone reports devicePixelRatio 3: at that
+   ratio a 390-point screen renders 1170x2532, which is 3.0 megapixels of
+   shading every frame on the smallest GPU that ever opens this. 1.6 is 1.9 Mpx
+   on the same screen — still above the panel's own perceptual limit for edges
+   this soft, and it is the difference between the room turning smoothly under a
+   finger and the phone getting hot while it stutters. Desktop is untouched. */
+/* 2x on a desktop, 1.6x on a phone. The scene is real OBJ geometry under ACES
+   with soft shadow maps, and a modern phone reports devicePixelRatio 3: at that
+   ratio a 390-point screen renders 1170x2532, which is 3.0 megapixels of
+   shading every frame on the smallest GPU that ever opens this. 1.6 is 1.9 Mpx
+   on the same screen — still above the panel's own perceptual limit for edges
+   this soft, and it is the difference between the room turning smoothly under a
+   finger and the phone getting hot while it stutters. Desktop is untouched.
+   Applied in resize() as well as here, because a phone turned on its side is a
+   new viewport and this used to be read once at load and never again. */
+const pixelCap = () => Math.min(window.devicePixelRatio, innerWidth <= 820 ? 1.6 : 2);
+renderer.setPixelRatio(pixelCap());
 renderer.outputEncoding = THREE.sRGBEncoding;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.05;
@@ -5845,6 +5862,8 @@ function resize() {
   const w = holder.clientWidth, h = holder.clientHeight;
   if (!w || !h) return;                       // hidden tab / mid-rotation: don't divide by zero
   const wasTall = camera.aspect < 1;
+  const cap = pixelCap();
+  if (renderer.getPixelRatio() !== cap) renderer.setPixelRatio(cap);
   renderer.setSize(w, h, false);
   camera.aspect = w / h;
   camera.fov = fovFor(camera.aspect);         // hold the horizontal field — see FRAMING above
