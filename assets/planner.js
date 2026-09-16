@@ -203,7 +203,11 @@ const MAX_H = {
      metre, so the caps say so, and the widths below say what each plate really
      measures. The cap still bites on anything past that. */
   "thermostatic": 0.50, "diverter": 0.52, "body-jet": 0.34,
-  "bath-spout": 0.30, "hand-shower": 0.30, "health-faucet": 0.30,
+  // A handset's artwork is taller than it is wide, so THIS is what sets its
+  // size on the wall — its `width` never binds. 0.34 reads a touch larger in
+  // the room without leaving what a real handset measures (25-30 cm of body,
+  // and these renders include the hose tail).
+  "bath-spout": 0.30, "hand-shower": 0.34, "health-faucet": 0.30,
   "basin-mixer": 0.34, "wall-tap": 0.28, "waste": 0.30,
 };
 const maxHeight = (product, cfg) =>
@@ -3104,7 +3108,21 @@ const MODELS_BASE = "assets/models/";
    face-down → `axes`; a plain untextured block standing in for a SKU with a
    distinctive face → `decal`.
    ============================================================================= */
-const JET_GRID = [[-0.32, 0.32], [-0.32, -0.32], [0.32, 0.32], [0.32, -0.32]];   // the set of four; see placeProduct
+/* WHERE THE JETS IN A SET SIT, relative to the trim they straddle.
+   FOUR is the flanking square the range is drawn in: 0.32 out from centre both
+   across and up, so the set reads as a square rather than two stacked pairs and
+   leaves the same gap for the trim in both directions.
+   TWO is a column, asked for directly (2026-09-16): one jet directly ABOVE the
+   trim and one directly BELOW it, on the trim's own centre line — so ox is 0
+   for both and only the rise changes sign. Same rise as the four, so a client
+   switching between them sees the jets stay where they were vertically and
+   simply lose the outer pair. */
+const JET_SPREAD = 0.32, JET_RISE = 0.32;
+const JET_COUNTS = [2, 4];
+const jetCountOf = n => (JET_COUNTS.includes(+n) ? +n : 4);
+const jetOffsets = n => jetCountOf(n) === 2
+  ? [[0, JET_RISE], [0, -JET_RISE]]
+  : [[-JET_SPREAD, JET_RISE], [-JET_SPREAD, -JET_RISE], [JET_SPREAD, JET_RISE], [JET_SPREAD, -JET_RISE]];
 const SQUARE_JET = { url: "jet-sq", axes: { front: [0, 0, 1], up: [0, 1, 0] },
                      fit: { axis: "x", size: 0.10, object: "plate" }, mount: { object: "plate" }, set: "jets" };
 const MODEL_FOR_SKU = {
@@ -3260,7 +3278,7 @@ function applyDecals(holder, product, fid, spec) {
 
 /* a placed 3D root (Group). Loads async, then fills, orients and seats itself.
    ONE fitting, or the set of four for a jet SKU, all identical instances. */
-function build3DHolder(product, finishId, wall, spec, uid, onReady) {
+function build3DHolder(product, finishId, wall, spec, uid, onReady, jets) {
   const holder = new THREE.Group();
   holder.userData.uid = uid;
   const cfg = skuCfg(product);
@@ -3271,7 +3289,7 @@ function build3DHolder(product, finishId, wall, spec, uid, onReady) {
   if (spec.proc) source = Promise.resolve(null);
   else { showLoading("Loading 3D model…"); source = loadOBJ(MODELS_BASE + spec.url + ".obj"); }
   source.then(raw => {
-    (set ? JET_GRID : [[0, 0]]).forEach(([ox, oy]) => {
+    (set ? jetOffsets(jets) : [[0, 0]]).forEach(([ox, oy]) => {
       const body = spec.proc ? buildProcBody(spec.proc, hex, finishId) : raw.clone(true);
       const inst = modelInstance(body, spec, hex, rule, finishRough(finishId), finishId);
       inst.position.set(ox, oy, 0);
@@ -3313,7 +3331,12 @@ function build3DHolder(product, finishId, wall, spec, uid, onReady) {
   return holder;
 }
 
-function placeProduct(product, finishId, wall, frame) {
+/* `opts.jets` — how many jets a body-jet SET is plumbed as, 2 or 4. It is a
+   property of this PLACEMENT rather than of the SKU: the same jet is sold either
+   way, and the client chooses when they pick it. Anything that does not pass it
+   (a saved design from before the choice existed, the auto-arrange, the install
+   tests) gets the four the range is drawn in. */
+function placeProduct(product, finishId, wall, frame, opts) {
   const cfg = skuCfg(product);
   wall = wall || cfg.mount || "back";
   const w = WALLS[wall];
@@ -3335,6 +3358,7 @@ function placeProduct(product, finishId, wall, frame) {
   const uid = "u" + (uidSeq++);
   // REAL 3D MODEL path: if this category has a factory OBJ, place true geometry
   // (auto-aligned + brand metal finish) instead of the flat photo cutout.
+  const jets = jetCountOf(opts && opts.jets);
   const spec = specFor(product);
   // fired once the piece actually has geometry/artwork in it: pop it in and (when
   // the pick came from the product rail) fly the camera so it is unmistakably ON SCREEN
@@ -3347,11 +3371,11 @@ function placeProduct(product, finishId, wall, frame) {
     const mesh = build3DHolder(product, finishId, wall, spec, uid, err => {
       if (err) cutoutFallback(placed.get(uid));   // OBJ missing → show the product artwork instead
       reveal();
-    });
+    }, jets);
     // build3DHolder installs the holder inside its async callback — do NOT reset
     // the rotation here, that used to fight it
     room.add(mesh); meshes.push(mesh);
-    placed.set(uid, { uid, mesh, product, finishId, wall, cfg, is3D: true, onTile: true,
+    placed.set(uid, { uid, mesh, product, finishId, wall, cfg, is3D: true, onTile: true, jets,
                       jetSet: spec.set === "jets" && !cfg.single,
                       surface: surfaceOf(wall), rule: ruleFor(product, wall) });
     if (isBasinMixer(product, wall)) setStockMixer(false);
@@ -3388,9 +3412,11 @@ function placeProduct(product, finishId, wall, frame) {
        and not as two stacked pairs, and the gap a jet leaves for the trim in the
        middle is the same gap in both directions. 0.53 m of clear space either
        way: the widest panel in the range is 0.50 across and 0.50 tall, so even
-       that one is framed by the jets rather than fouling them. */
-    const SPREAD = 0.32, RISE = 0.32;
-    const OFFS = [[-SPREAD, RISE], [-SPREAD, -RISE], [SPREAD, RISE], [SPREAD, -RISE]];
+       that one is framed by the jets rather than fouling them.
+       A set of TWO is the same column without the outer pair — see jetOffsets,
+       which both render paths share so the two can never drift apart. */
+    const SPREAD = JET_SPREAD, RISE = JET_RISE;
+    const OFFS = jetOffsets(jets);
     if (cfg.jet3d) {
       // real geometry — see buildBodyJet for why the artwork cannot be used here
       const hex = finishHex(finishId, product);
@@ -3625,7 +3651,7 @@ function placeProduct(product, finishId, wall, frame) {
   // a jet SET is one record holding four separate fittings, so it swings per jet
   // rather than as a slab — stepBillboards needs to be told which it is
   const jetSet = product.catId === "body-jet" && !cfg.single;
-  placed.set(uid, { uid, mesh, product, finishId, wall, cfg, is3D, jetSet, surface, rule,
+  placed.set(uid, { uid, mesh, product, finishId, wall, cfg, is3D, jetSet, jets, surface, rule,
                     halfW: jetSet ? cfg.width / 2 : undefined });
   drawInstallDebug(placed.get(uid));
   if (isBasinMixer(product, wall)) setStockMixer(false);
@@ -5116,6 +5142,38 @@ function openFinishPick(p, run) {
   if (first) first.focus();
 }
 function closeFinishPick() { const m = $("#finPick"); if (m) m.hidden = true; finPickRun = null; }
+
+/* HOW MANY JETS. The same jet is sold as a pair or as a set of four, so this is
+   the client's decision and not the SKU's — it is asked once, when the jet is
+   picked, and it travels with the placement (the share link, the saved room and
+   the spec sheet all carry it). A jet that is a single fitting — the 16-jet
+   panel — never asks: there is nothing to count. */
+let jetCountRun = null;
+function openJetCount(p, run) {
+  const m = $("#jetCount");
+  if (!m) { run(4); return; }                      // no modal in this build: the range's default
+  jetCountRun = run;
+  $("#jetCountTitle").textContent = `${p.name} — how many?`;
+  $("#jetCountGrid").innerHTML = JET_COUNTS.map(n => `
+    <button type="button" class="fin-tile" data-jets="${n}"
+      aria-label="${n} body jets, ${n === 2 ? "one above the trim and one below" : "two to each side of the trim"}">
+      <span class="ft-nm">${n} jets</span>
+      <span class="ft-no">${n === 2 ? "in a column, above and below the trim" : "flanking the trim, two each side"}</span>
+    </button>`).join("");
+  $("#jetCountGrid").querySelectorAll("[data-jets]").forEach(b => b.onclick = () => {
+    const n = +b.dataset.jets, r = jetCountRun;
+    closeJetCount();
+    if (r) r(n);
+  });
+  m.hidden = false;
+  const first = $("#jetCountGrid").querySelector("[data-jets]");
+  if (first) first.focus();
+}
+function closeJetCount() { const m = $("#jetCount"); if (m) m.hidden = true; jetCountRun = null; }
+if ($("#jetCountNo")) $("#jetCountNo").onclick = closeJetCount;
+if ($("#jetCount")) $("#jetCount").onclick = e => { if (e.target === $("#jetCount")) closeJetCount(); };
+/* a set of jets, or a single fitting that has nothing to count */
+const asksJetCount = p => p && p.catId === "body-jet" && !skuCfg(p).single;
 if ($("#finPickNo")) $("#finPickNo").onclick = closeFinishPick;
 if ($("#finPick")) $("#finPick").onclick = e => { if (e.target === $("#finPick")) closeFinishPick(); };
 
@@ -5149,6 +5207,7 @@ if ($("#confirm")) $("#confirm").addEventListener("click", e => { if (e.target =
   document.addEventListener("keydown", e => {
     if (e.key !== "Escape") return;
     if (!menu.hidden) { close(); btn.focus(); }
+    else if ($("#jetCount") && !$("#jetCount").hidden) closeJetCount();
     else if ($("#confirm") && !$("#confirm").hidden) closeConfirm();
     else if (selected) deselect();
   });
