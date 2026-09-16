@@ -434,7 +434,10 @@ const RAW_PRODUCTS = [
      eight, and a finish is only listed here when there is a photograph of the
      product in it. The other four go in the day their renders arrive. */
   { code: "ST-AZBS", cat: "diverter", name: "Regale Round Concealed Mixer", finishes: ["chrome","matteBlack","roseGold","gold"], variant: "round plate · single lever", badge: "New", outlets: 1 },
-  { code: "ST-D5001", cat: "diverter", name: "Regale Round Concealed Diverter", finishes: ["chrome"], variant: "round plate · single lever", outlets: 3 },
+  // REMOVED at the client's request (16 Sep) — the round single-lever trim is
+  // out of the range as offered here. Commented rather than deleted: its
+  // renders are still in assets/products, so restoring it is this one line.
+  // { code: "ST-D5001", cat: "diverter", name: "Regale Round Concealed Diverter", finishes: ["chrome"], variant: "round plate · single lever", outlets: 3 },
   { code: "ST-D5002", cat: "diverter", name: "Regale Square Lever Diverter", finishes: ["chrome"], variant: "square plate · single lever", outlets: 3 },
   { code: "ST-D5003", cat: "diverter", name: "Regale 3-Way Concealed Diverter", finishes: ["chrome"], variant: "square plate · 3 buttons", outlets: 3 },
   { code: "ST-D5004", cat: "diverter", name: "Regale 6-Function Diverter Plate", finishes: ["chrome","roseGold","matteBlack"], variant: "tall plate · dial + 6 buttons", outlets: 6 },
