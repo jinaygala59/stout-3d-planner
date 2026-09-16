@@ -1,0 +1,35 @@
+# What must NOT ride to Vercel.
+#
+# The first production deploy uploaded 202 MB for a 34 MB site: the working
+# tree carries a quarantine of retired renders, the raw Drive drop, a previous
+# dist/ and the PSDs the finishes were cut from. None of it is served — the
+# build runs `python3 build.py`, which writes dist/ from assets/ — so all of it
+# was upload time and storage spent on nothing.
+#
+# Keep this in step with build.py: anything build.py does not read, and the
+# site does not serve, belongs here.
+
+_quarantine/
+_drive/
+_dev/
+dist/
+
+# generated locally by the build; Vercel builds its own
+*.bak-*
+*.psd
+*.rar
+*.zip
+
+.DS_Store
+__pycache__/
+*.pyc
+
+# the tools are how the assets were made, not part of the site
+tools_*.py
+
+# The PNG masters: 170 MB of the 202 MB first upload, and build.py already
+# skips every one of them (only the WebP copies ship). They are the source the
+# finishes are cut from, and that work happens on this machine, not on Vercel.
+assets/products/*.png
+assets/products/face/*.png
+assets/products/thumb/*.png

@@ -46,6 +46,18 @@ def main():
         for name in files:
             if name.endswith(SKIP_EXT) or name.startswith(".") or ".bak-" in name:
                 continue
+            # A SKIP_DIRS name can reach us as a FILE, and it broke the first
+            # Vercel build (2026-09-16): _drive is a symlink to a 15 GB scratch
+            # folder, so on a machine where that folder exists os.walk sees a
+            # directory and the line above prunes it — but Vercel uploads the
+            # link without its target, os.path.isdir() is then false, and a
+            # broken symlink is listed among `files` instead. It sailed past
+            # every filter here and copy2 died on it. Name it in both places.
+            if name in SKIP_DIRS:
+                continue
+            # and a dangling link anywhere else is nothing to copy either
+            if os.path.islink(os.path.join(base, name)) and not os.path.exists(os.path.join(base, name)):
+                continue
             # the PNG masters stay in the repo; only the WebP copies ship
             if "assets/products" in base.replace(os.sep, "/") and name.endswith(".png"):
                 continue
