@@ -28,13 +28,39 @@ THUMB_W = 220
 
 # the factory's finish codes -> the ids this app keys artwork and saved rooms on
 FINMAP = {"CP": "chrome", "GG": "gunGrey", "BV": "champagne", "FG": "gold",
-          "RG": "roseGold", "BRG": "brushedRoseGold", "MB": "matteBlack"}
+          "RG": "roseGold", "BRG": "brushedRoseGold", "MB": "matteBlack",
+          "BG": "brushedGold"}   # the catalogue captions BG "BRUSHED GOLD"
 
 # SKU -> the catalogue pages it spans (PDF page numbers, 1-based)
 JOBS = {
+    # thermostatic diverter panels
     "ST-D5021": [14, 15], "ST-D5022": [18, 19],
     "ST-D5012": [22, 23], "ST-D5011": [26, 27],
     "ST-D5015": [30, 31], "ST-D5016": [32, 33],
+    # deck basin mixers + the pillar tap. The catalogue gives these a code PER
+    # FINISH rather than per model (p77-82), so the row carries the first and
+    # lists the rest in `variant`; `alias` says which other codes are the same
+    # fitting, and the artwork is filed under the row's code.
+    "ST-MN-005": [80, 81], "ST-MN-006": [82, 83], "ST-MN-015": [84, 85],
+    # wall-mounted basin mixers - already here, but with 2 and 3 of their 8 and
+    # 7 finishes
+    "ST-WM-001": [88, 89], "ST-WM-002": [90, 91],
+    # ABS / brass overhead showers, on the four-up grid pages
+    "ST-1012": [100], "ST-3014": [100], "ST-3016": [100],
+    "ST-1023": [102], "ST-1031": [102],
+    "ST-1022": [105], "ST-1029": [108],
+    # taps and valves
+    "MN-2W": [130, 131], "ST-QB": [132],
+    "MN-AC": [134, 135], "QB-AC": [136, 137],
+}
+
+# codes the catalogue prints for the SAME fitting in another finish - the row is
+# filed under the first and these are recorded on it
+ALIAS = {
+    "ST-MN-005": ["ST-MN-007", "ST-MN-009", "ST-MN-011", "ST-MN-001", "ST-MN-003"],
+    "ST-MN-006": ["ST-MN-008", "ST-MN-010", "ST-MN-012", "ST-MN-002", "ST-MN-004"],
+    "ST-MN-015": ["ST-MN-016", "ST-MN-017", "ST-MN-018", "ST-MN-014", "ST-MN-013",
+                  "ST-MN-019"],
 }
 
 # The body jets and the spouts carry NO code anywhere in the catalogue - the
@@ -47,6 +73,19 @@ UNCODED = {
     # the flush recessed jet, 130x120x70.5mm - not the 16-jet panel already here
     # under ST-BJ-01, which has a different face and is not in this catalogue
     "ST-CBJ":   {"pages": [116, 117], "want": None},
+    # p103/104 print no code and p105 prints ST-1029-CP - and it is the SAME
+    # square plate in all six: same proportions, same 9x9 jet grid. So the
+    # catalogue DOES name this one, and its other five finishes are filed under
+    # that code rather than under a placeholder.
+    "ST-1029":  {"pages": [106, 107], "want": None},   # BRASS OVER HEAD SHOWER
+    "ST-SOH":   {"pages": [109],      "want": None},   # SS 304 OVER HEAD SHOWER
+    "ST-CSC":   {"pages": [133],      "want": None},   # CONCEALED STOP COCK, 200mm
+    "ST-CWO":   {"pages": [138, 139], "want": None},   # CONCEALED WALL OUT-LET
+    "ST-PUW":   {"pages": [140, 141], "want": None},   # POP UP WASTE COUPLING, 125mm
+    "ST-BTRAP": {"pages": [142, 143], "want": None},   # BOTTLE TRAP
+    "ST-HFSEL": {"pages": [146, 147], "want": None},   # SELORA HEALTH FAUCET
+    "ST-HFSQ":  {"pages": [148, 149], "want": None},   # SQUARE HEALTH FAUCET
+    "ST-HFEST": {"pages": [150],      "want": None},   # ESTONIA HEALTH FAUCET
     # NOT extracted, deliberately: the catalogue also carries finishes this app
     # does not have for the SINGLE FUNCTION jet (p117/118: chrome, french gold,
     # brushed bronze, brushed rose gold) and the DANCING jet (p119: chrome, matt
@@ -65,7 +104,10 @@ FINLABEL = {"CHROME": "chrome", "GUN GREY": "gunGrey", "BRUSHED BRONZE": "champa
 
 
 def codes_on(pn):
-    """[(x, finishId, code)] for the CODE: lines on a page, left to right."""
+    """[(x, y, finishId, base)] for the CODE: lines on a page.
+
+    The extractor sometimes carries a stray leading hyphen into the string
+    (p133 prints "-QB-AC-RG"), so the base is stripped of it."""
     out = []
     for b in doc[pn - 1].get_text("dict")["blocks"]:
         if b["type"] != 0:
@@ -75,26 +117,11 @@ def codes_on(pn):
                 t = " ".join(s["text"].split())
                 if t.upper().startswith("CODE:"):
                     c = t.split(":", 1)[1].strip()
-                    m = re.match(r"^(.*?)-(CP|GG|BV|FG|RG|BRG|MB)$", c)
+                    m = re.match(r"^(.*?)-(CP|GG|BV|FG|RG|BRG|MB|BG)$", c)
                     if m:
-                        out.append((s["bbox"][0], FINMAP[m.group(2)], c))
-    return sorted(out)
-
-
-def renders_on(pn):
-    """[(x, xref, smask)] for the product photographs, left to right.
-
-    The page also carries a full-bleed silk background, a marble podium strip
-    and the 9 px finish bullets; the width window drops all three."""
-    pg, out = doc[pn - 1], []
-    for im in pg.get_images(full=True):
-        xref, smask = im[0], im[1]
-        if not smask:
-            continue
-        for r in pg.get_image_rects(xref):
-            if 60 <= r.width <= 400:
-                out.append((r.x0, xref, smask))
-    return sorted(out)
+                        out.append((s["bbox"][0], s["bbox"][1],
+                                    FINMAP[m.group(2)], m.group(1).lstrip("-")))
+    return out
 
 
 def labels_on(pn):
@@ -112,45 +139,94 @@ def labels_on(pn):
 
 
 def renders_xy(pn):
-    """[(x, y, xref, smask)] for the product photographs on a page.
+    """[(x, y, [(xref, smask, rect)])] - one entry per PRODUCT on the page.
 
-    Same width window as renders_on, plus a height guard: the spout pages hang a
-    226 x 750 pt marble strip down the middle, which is inside the width band."""
-    pg, out = doc[pn - 1], []
+    The width window drops the full-bleed silk background, the marble podium
+    strip and the 9 px finish bullets; the height guard drops the 226 x 750 pt
+    marble column the spout pages hang down the middle.
+
+    A product photographed TWICE is one entry, not two. The health-faucet pages
+    draw each finish as a front view and a side view leaning together, and left
+    apart they would be counted as two finishes and the captions would not pair.
+    The test is not "do they overlap" - the podium spreads overlap at the corners
+    too, by as much as a quarter of a rect - it is "are these the same picture
+    twice": the same size to within 2%, the same top edge to within 2 pt, and
+    centres closer together than one of them is wide. Nothing on a podium page
+    passes that, because those are laid out at different heights. Such a pair
+    keeps its LEFTMOST member, which on those pages is the view down the spray
+    face - the one that reads as a health faucet on a wall."""
+    def twin(a, b):
+        near = lambda p, q, t: abs(p - q) <= t
+        return (near(a.width, b.width, 0.02 * a.width)
+                and near(a.height, b.height, 0.02 * a.height)
+                and near(a.y0, b.y0, 2)
+                and abs((a.x0 + a.x1) / 2 - (b.x0 + b.x1) / 2) < a.width)
+
+    pg, rects = doc[pn - 1], []
     for im in pg.get_images(full=True):
         xref, smask = im[0], im[1]
         if not smask:
             continue
         for r in pg.get_image_rects(xref):
             if 40 <= r.width <= 400 and r.height <= 400:
-                out.append((r.x0, r.y0, xref, smask))
+                rects.append((xref, smask, r))
+    groups = []
+    for xref, smask, r in sorted(rects, key=lambda t: (t[2].x0, t[2].y0)):
+        for g in groups:
+            if any(twin(r, o[2]) for o in g):
+                g.append((xref, smask, r))
+                break
+        else:
+            groups.append([(xref, smask, r)])
+    groups = [[min(g, key=lambda o: o[2].x0)] for g in groups]
+    out = []
+    for g in groups:
+        x0 = min(o[2].x0 for o in g)
+        y0 = min(o[2].y0 for o in g)
+        out.append((x0, y0, g))
     return out
 
 
-def pair_by_layout(pn):
-    """[(finishId, xref, smask)] for a page that prints no codes.
+def _zip_by_column(anchors, rends, pn):
+    """Pair captions-or-codes to renders down each column of the page.
 
-    The caption and the render it belongs to sit in the same column, so both are
-    bucketed by x and then read down the page. The body-jet spreads put three
-    podiums across and, where there is a fourth finish, one podium behind and
-    higher - which is why the sort is (column, y) and not x alone. The spout and
-    shower-arm spreads stack every caption in one left-hand column against a
-    stack of renders on the right, and there the column test collapses to a
-    plain top-to-bottom pairing."""
-    labs, rends = labels_on(pn), renders_xy(pn)
-    if len(labs) != len(rends):
-        raise SystemExit(f"p{pn}: {len(labs)} captions but {len(rends)} renders")
+    Both sit in the same columns, so both are bucketed by x and then read top to
+    bottom. The spreads put three podiums across and, where there is a fourth
+    product, one behind and higher - which is why the sort is (column, y) and not
+    x alone. The health-faucet and stop-cock spreads stack every caption in one
+    left-hand column against a stack of renders on the right, and there the
+    column test collapses to a plain top-to-bottom pairing."""
+    if len(anchors) != len(rends):
+        raise SystemExit(f"p{pn}: {len(anchors)} captions but {len(rends)} renders")
     col = lambda x: int(x // 150)
-    if len({col(l[0]) for l in labs}) == 1:
-        key_l, key_r = (lambda l: l[1]), (lambda r: r[1])
+    if len({col(a[0]) for a in anchors}) == 1:
+        key_a, key_r = (lambda a: a[1]), (lambda r: r[1])
     else:
-        key_l, key_r = (lambda l: (col(l[0]), l[1])), (lambda r: (col(r[0]), r[1]))
-    return [(l[2], r[2], r[3])
-            for l, r in zip(sorted(labs, key=key_l), sorted(rends, key=key_r))]
+        key_a, key_r = (lambda a: (col(a[0]), a[1])), (lambda r: (col(r[0]), r[1]))
+    return list(zip(sorted(anchors, key=key_a), sorted(rends, key=key_r)))
+
+
+def pairs(sku):
+    """[(finishId, group, page)] for every finish of one CODED SKU.
+
+    A page can carry four different products - p97 and p99 are four-up grids of
+    overhead showers - so every code on the page is paired to its render first
+    and the result is then filtered to this SKU. Pairing before filtering is the
+    point: the columns only line up when all of them are present."""
+    own = {sku, *ALIAS.get(sku, [])}
+    got = []
+    for pn in JOBS[sku]:
+        for (ax, ay, fid, base), (rx, ry, grp) in _zip_by_column(
+                codes_on(pn), renders_xy(pn), pn):
+            if base in own:
+                got.append((fid, grp, pn))
+    if not got:
+        raise SystemExit(f"{sku}: no code on pages {JOBS[sku]} matched")
+    return got
 
 
 def uncoded_pairs(sku):
-    """[(finishId, xref, smask, page)] for a SKU the catalogue gives no code.
+    """[(finishId, group, page)] for a SKU the catalogue gives no code.
 
     A page that carries two products can caption both the same way - p119 prints
     CHROME twice, once for the dancing jet on the tall podium and once for the 3
@@ -159,36 +235,36 @@ def uncoded_pairs(sku):
     the second chrome is the other product, which this app already has."""
     job, got, seen = UNCODED[sku], [], set()
     for pn in job["pages"]:
-        for fid, xref, smask in pair_by_layout(pn):
+        for (ax, ay, fid), (rx, ry, grp) in _zip_by_column(
+                labels_on(pn), renders_xy(pn), pn):
             if (pn, fid) in seen:
                 continue
             seen.add((pn, fid))
             if job["want"] is None or fid in job["want"]:
-                got.append((fid, xref, smask, pn))
+                got.append((fid, grp, pn))
     return got
 
 
-def cutout(xref, smask, tmp):
-    """The placed JPEG recombined with its soft mask, trimmed to the alpha."""
-    fitz.Pixmap(fitz.Pixmap(doc, xref), fitz.Pixmap(doc, smask)).save(tmp)
-    im = Image.open(tmp).convert("RGBA")
-    bb = im.split()[-1].getbbox()
-    return im.crop(bb) if bb else im
-
-
-def pairs(sku):
-    """[(finishId, xref, smask, page)] for every finish of one SKU."""
-    got = []
-    for pn in JOBS[sku]:
-        cs, rs = codes_on(pn), renders_on(pn)
-        if len(cs) != len(rs):
-            raise SystemExit(f"p{pn}: {len(cs)} codes but {len(rs)} renders - "
-                             "columns do not pair, look at the page")
-        for (_, fid, code), (_, xref, smask) in zip(cs, rs):
-            if not code.startswith(sku + "-"):
-                raise SystemExit(f"p{pn}: expected {sku}, found {code}")
-            got.append((fid, xref, smask, pn))
-    return got
+def cutout(group, tmp):
+    """One product, as the factory drew it: each placed JPEG recombined with its
+    own soft mask, laid out at the scale and offset the PAGE gives it, then
+    trimmed to the alpha. A single-image product is the ordinary case; a group of
+    two is a faucet drawn beside its hook."""
+    x0 = min(o[2].x0 for o in group); y0 = min(o[2].y0 for o in group)
+    x1 = max(o[2].x1 for o in group); y1 = max(o[2].y1 for o in group)
+    # page points -> pixels at the densest source in the group, so nothing is
+    # resampled down to the coarsest one
+    ppp = max(doc.extract_image(o[0])["width"] / o[2].width for o in group)
+    W, H = max(1, round((x1 - x0) * ppp)), max(1, round((y1 - y0) * ppp))
+    sheet = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    for xref, smask, r in group:
+        fitz.Pixmap(fitz.Pixmap(doc, xref), fitz.Pixmap(doc, smask)).save(tmp)
+        im = Image.open(tmp).convert("RGBA")
+        w, h = max(1, round(r.width * ppp)), max(1, round(r.height * ppp))
+        sheet.alpha_composite(im.resize((w, h), Image.LANCZOS),
+                              (round((r.x0 - x0) * ppp), round((r.y0 - y0) * ppp)))
+    bb = sheet.split()[-1].getbbox()
+    return sheet.crop(bb) if bb else sheet
 
 
 def band(img, lo=0.40, hi=0.90):
@@ -229,7 +305,10 @@ def main():
     ap.add_argument("--extract", action="store_true")
     ap.add_argument("--check", action="store_true")
     a = ap.parse_args()
-    tmp = os.path.join(ROOT, "_t.png")
+    # per-process, because the cutout path round-trips each image through it:
+    # two copies of this script running at once raced on a shared name and wrote
+    # one SKU's pixels under another SKU's filename
+    tmp = os.path.join(ROOT, f"_t{os.getpid()}.png")
 
     everything = ([(s, pairs(s)) for s in JOBS] +
                   [(s, uncoded_pairs(s)) for s in UNCODED])
@@ -237,20 +316,20 @@ def main():
     if a.list:
         for sku, got in everything:
             pgs = JOBS.get(sku) or UNCODED[sku]["pages"]
-            print(sku, "pages", pgs, [f for f, _, _, _ in got])
+            print(sku, "pages", pgs, [f for f, _, _ in got])
 
     if a.extract:
         os.makedirs(os.path.join(OUT, "thumb"), exist_ok=True)
         for sku, got in everything:
-            for fid, xref, smask, pn in got:
-                im = cutout(xref, smask, tmp)
+            for fid, grp, pn in got:
+                im = cutout(grp, tmp)
                 base = f"{sku}-{fid}"
                 im.save(os.path.join(OUT, base + ".png"))
-                im.save(os.path.join(OUT, base + ".webp"), quality=92, method=6)
+                im.save(os.path.join(OUT, base + ".webp"), quality=92, method=4)
                 th = im.copy()
                 th.thumbnail((THUMB_W, 10_000), Image.LANCZOS)
                 th.save(os.path.join(OUT, "thumb", base + ".png"))
-                th.save(os.path.join(OUT, "thumb", base + ".webp"), quality=90, method=6)
+                th.save(os.path.join(OUT, "thumb", base + ".webp"), quality=90, method=4)
                 print(f"{base:34s} {im.size[0]}x{im.size[1]}  p{pn}")
         if os.path.exists(tmp):
             os.remove(tmp)
@@ -259,7 +338,7 @@ def main():
         refs = {}
         print(f"{'file':34s} {'hue':>7s} {'sat':>6s}   {'range hue':>9s} {'sat':>6s}   dHue")
         for sku, got in everything:
-            for fid, _, _, _ in got:
+            for fid, _, _ in got:
                 p = os.path.join(OUT, f"{sku}-{fid}.png")
                 if not os.path.exists(p):
                     continue

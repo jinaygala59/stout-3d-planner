@@ -235,6 +235,24 @@ const SKU3D = {
   "ST-1017": { width: 0.34, mount: "back", y: 2.02 },
   "ST-1027": { width: 0.26, mount: "back", y: 2.00, shape: "head", reach: 0.30 },
   "ST-1033": { width: 0.24, mount: "back", y: 2.00, shape: "head", reach: 0.28 },
+  /* The seven overhead heads the July catalogue adds (p97-106). The five small
+     round ABS ones and the oval are the same kind of fitting as ST-1027 and
+     ST-1033 above — a head on a wall arm, not a ceiling plate — so they take
+     the same treatment: back wall at 2.00 with a procedural arm, rather than
+     the category's ceiling mount, which would hang a 130 mm ABS head off the
+     slab on nothing. Their cutouts are head-only, which is what `shape: "head"`
+     wants.
+     The two SQUARE plates are the other kind and stay on the ceiling: ST-1029 is
+     the brass plate the catalogue codes, and ST-SOH is the SS304 one, which
+     ships in five sizes from 150 to 400 mm — 250 is the middle of that and what
+     it is drawn at here. */
+  "ST-1012": { width: 0.22, mount: "back", y: 2.00, shape: "head", reach: 0.28 },
+  "ST-3014": { width: 0.22, mount: "back", y: 2.00, shape: "head", reach: 0.28 },
+  "ST-3016": { width: 0.21, mount: "back", y: 2.00, shape: "head", reach: 0.28 },
+  "ST-1023": { width: 0.21, mount: "back", y: 2.00, shape: "head", reach: 0.28 },
+  "ST-1031": { width: 0.20, mount: "back", y: 2.00, shape: "head", reach: 0.28 },
+  "ST-1022": { width: 0.24, mount: "back", y: 2.00, shape: "head", reach: 0.30 },
+  "ST-1029": { width: 0.20 }, "ST-SOH": { width: 0.25 },
   // not a rain head at all — it is a handset, so it hangs on a wall outlet + hose
   "ST-OP1":  { width: 0.18, mount: "right", y: 0.75, z: 0.52, hose: true },   // beside the WC, where a jet spray actually goes
   /* --- HAND SHOWERS. Ten of the thirteen are photographed as a BARE handset:
@@ -347,9 +365,36 @@ const SKU3D = {
   "ST-WM-001": { width: 0.28 },
   "ST-WM-002": { width: 0.26 },
   "ST-BM-001": { width: 0.16, mount: "counter" }, "ST-OB-D94": { width: 0.20, mount: "counter" },
+  /* The MANFRA trio are DECK mixers — they stand on the basin like ST-BM-001,
+     not on the wall like the WM pair — so they take `mount: "counter"` too.
+     Widths come from the catalogue's own dimension, which for a deck mixer is
+     its HEIGHT (178 mm, 290 mm, 290 mm), turned into a frame width by the
+     cutout's aspect: 0.178 x 0.971, 0.290 x 0.622, 0.290 x 0.637. All three
+     land at 0.29 m tall or less, inside the 0.34 basin-mixer cap. */
+  "ST-MN-005": { width: 0.17, mount: "counter" },
+  "ST-MN-006": { width: 0.18, mount: "counter" },
+  "ST-MN-015": { width: 0.185, mount: "counter" },
   // wall taps + angle valves: low on the wall, where a bib tap actually goes
   "ST-SZ-01": { width: 0.20 }, "ST-SZ1": { width: 0.20 },
   "ST-MN-AC": { width: 0.12, y: 0.55 }, "ST-JF1": { width: 0.12, y: 0.55 },
+  /* The July catalogue's taps and valves. The two-way taps are bib taps and sit
+     where ST-SZ-01 does; the angle valves are the small bodies that feed a
+     cistern or a health faucet, so they go higher up the wall at 0.55 like the
+     two angle valves already here. The stop cock is dimensioned (200 mm, which
+     is the plate-and-handle height, hence 0.20 x 0.669 across) and the wall
+     outlet is not, so that one is sized off the handset hook it carries. */
+  "MN-2W":  { width: 0.20 }, "ST-QB": { width: 0.20 },
+  "MN-AC":  { width: 0.10, y: 0.55 }, "QB-AC": { width: 0.10, y: 0.55 },
+  "ST-CSC": { width: 0.13, y: 0.55 }, "ST-CWO": { width: 0.11, y: 1.05 },
+  /* Basin wastes and the trap. Both hang off the basin rather than the wall:
+     the waste's 125 mm is its body length down the frame (0.125 x 0.609), and
+     the trap is sized on its 12-inch pipe. */
+  "ST-PUW": { width: 0.075 }, "ST-BTRAP": { width: 0.30 },
+  /* Health faucets. Each is a handset about 200-230 mm long photographed
+     upright, so the frame width is that length times a narrow aspect — which is
+     why these numbers look small beside a tap's. They hang beside the WC on the
+     category's own spot, like ST-OP1. */
+  "ST-HFSEL": { width: 0.07 }, "ST-HFSQ": { width: 0.075 }, "ST-HFEST": { width: 0.056 },
   // --- body jets: BJ-01 is ONE 16-jet panel (its own patch of wall, clear of the
   //     shower column); the small single jets still come as a flanking set of 4.
   //     `flip` is per SKU because the range is not shot from one side: see the

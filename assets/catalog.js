@@ -182,14 +182,31 @@ const RAW_PRODUCTS = [
   { code: "ST-D5016", cat: "thermostatic", name: "Manfra 4-Function Lever Diverter",        finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], badge: "New", variant: "single lever · push button · digital display", outlets: 4 },
 
   // ---- Wall-mounted BASIN MIXERS ----
-  // Both of these are called "Wall Spout" in the range and neither is one: look
-  // at the artwork. WM-001 carries two levers on its backplate, marked red and
-  // blue; WM-002 carries a single lever. A backplate with a handle on it is a
-  // basin tap, so they are filed as basin mixers and go over the basin — not on
-  // the shower wall with the diverters, where a spout belongs. The names are the
-  // client's own catalogue names, so they stay as they are.
-  { code: "ST-WM-001", cat: "basin-mixer", name: "Axis Wall Spout",            finishes: ["brushedGold","champagne"],                          badge: "Signature" },
-  { code: "ST-WM-002", cat: "basin-mixer", name: "Axis Slim Wall Spout",       finishes: ["gunGrey","champagne","brushedRoseGold"] },
+  // Both of these were called "Wall Spout" here and neither is one: look at the
+  // artwork. WM-001 carries two levers on its backplate, marked red and blue;
+  // WM-002 carries a single lever. A backplate with a handle on it is a basin
+  // tap, so they are filed as basin mixers and go over the basin — not on the
+  // shower wall with the diverters, where a spout belongs.
+  /* And the catalogue agrees, which settles the name: p85-88 head both pages
+     WALL MOUNTED BASIN MIXER, with sizes 247x100x70 mm and 230x100x190 mm. The
+     finish lists were also short — two of eight and three of seven — because
+     only the Drive's renders were here; the missing ones are now the factory's
+     own page photographs. The champagne WM-001 that WAS here was a corrupt
+     file (a 900x578 sheet of magenta and cyan blocks, live on the site) and is
+     replaced by the catalogue's brushed bronze render. */
+  { code: "ST-WM-001", cat: "basin-mixer", name: "Wall Mounted Basin Mixer",   finishes: ["chrome","gunGrey","brushedGold","champagne","gold","roseGold","brushedRoseGold","matteBlack"], badge: "Signature", variant: "247 x 100 x 70 mm · brass · twin lever" },
+  { code: "ST-WM-002", cat: "basin-mixer", name: "Wall Mounted Basin Mixer",   finishes: ["chrome","gunGrey","champagne","gold","roseGold","brushedRoseGold","matteBlack"], variant: "230 x 100 x 190 mm · brass · single lever" },
+
+  /* ---- MANFRA deck basin mixers, new 2026-09-16 from the July catalogue ----
+     The catalogue gives these a code PER FINISH rather than per model (p77-82):
+     p77 is one mixer in rose gold, matt black and chrome as ST-MN-005 / 007 /
+     009, and p78 is the SAME mixer in french gold, brushed bronze and brushed
+     gold as ST-MN-011 / 001 / 003. Six codes, one fitting. Filed the way
+     ST-1019 already is — one row under the first code, the rest recorded in
+     `variant` where the spec sheet still prints them. */
+  { code: "ST-MN-005", cat: "basin-mixer", name: "Manfra Basin Mixer",        finishes: ["chrome","brushedGold","champagne","gold","roseGold","matteBlack"], badge: "New", variant: "178 mm · brass · ST-MN-005/007/009/011/001/003" },
+  { code: "ST-MN-006", cat: "basin-mixer", name: "Manfra Tall Basin Mixer",   finishes: ["chrome","brushedGold","champagne","gold","roseGold","matteBlack"], badge: "New", variant: "290 mm · brass · ST-MN-006/008/010/012/002/004" },
+  { code: "ST-MN-015", cat: "basin-mixer", name: "Manfra High Pillar Tap",    finishes: ["chrome","gunGrey","champagne","gold","roseGold","brushedRoseGold","matteBlack"], badge: "New", variant: "290 mm · brass · pillar cock · ST-MN-013..019" },
 
   // ---- Thermostatic Control Trim (square dial) ----
   // Withdrawn from the list at the client's request (2026-09-05). It is left here
@@ -255,12 +272,65 @@ const RAW_PRODUCTS = [
   // ---- Wall Taps (single-lever wall bib tap) ----
   { code: "ST-SZ-01", cat: "wall-tap",    name: "Senza Wall Bib Tap",          finishes: ["chrome","matteBlack"],                                  badge: "New" },
 
+  /* ---- TAPS, VALVES AND OUTLETS, new 2026-09-16 from the July catalogue ----
+     p127-136. The two-way taps and the angle valves DO carry codes; the stop
+     cock and the wall outlet do not, so those two are placeholders — the
+     catalogue prints a name, a size, a material, the finishes and the price on
+     those pages and no CODE line at all, the same gap the spouts and body jets
+     have. QB-AC's code comes off the page as "-QB-AC-RG" on p133 and "QB-AC-MB"
+     on p134; the leading hyphen is the text extractor, not the code. */
+  { code: "MN-2W",   cat: "wall-tap", name: "Manfra 2-Way Tap",          finishes: ["chrome","gunGrey","champagne","gold","roseGold","brushedRoseGold","matteBlack"], badge: "New", variant: "brass · wall two-way" },
+  { code: "ST-QB",   cat: "wall-tap", name: "Axis 2-Way Tap",            finishes: ["chrome","champagne","gold","roseGold","matteBlack"], badge: "New", variant: "brass · square plate · wall two-way" },
+  { code: "MN-AC",   cat: "wall-tap", name: "Manfra Angle Valve",        finishes: ["chrome","gunGrey","champagne","gold","roseGold","brushedRoseGold","matteBlack"], badge: "New", variant: "brass · round body" },
+  { code: "QB-AC",   cat: "wall-tap", name: "Axis Angle Valve",          finishes: ["chrome","champagne","gold","roseGold","matteBlack"], badge: "New", variant: "brass · square body" },
+  { code: "ST-CSC",  cat: "wall-tap", name: "Concealed Stop Cock",       finishes: ["chrome","champagne","gold","roseGold","matteBlack"], badge: "New", variant: "200 mm · brass · round plate · code not in the catalogue" },
+  { code: "ST-CWO",  cat: "wall-tap", name: "Concealed Wall Out-let",    finishes: ["chrome","gunGrey","champagne","gold","roseGold","brushedRoseGold","matteBlack"], badge: "New", variant: "brass · outlet elbow + handset hook · code not in the catalogue" },
+
+  /* ---- WASTES AND TRAPS, new 2026-09-16 (p137-140) ----
+     Neither page prints a code. Both are basin fittings rather than wall ones,
+     which is why the range had none: the old ST-TSQ / ST-TXSQ-01 rows below
+     were pulled for exactly that reason. They go in because the client asked
+     for the whole catalogue, and they are honest about where they sit — the
+     waste drops into the basin, the trap hangs under it. */
+  { code: "ST-PUW",   cat: "waste", name: "Pop Up Waste Coupling",  finishes: ["chrome","gunGrey","champagne","gold","roseGold","brushedRoseGold","matteBlack"], badge: "New", variant: "125 mm · brass · code not in the catalogue" },
+  { code: "ST-BTRAP", cat: "waste", name: "Bottle Trap",            finishes: ["chrome","gunGrey","champagne","gold","roseGold","brushedRoseGold","matteBlack"], badge: "New", variant: "brass · 12\" + 6\" SS pipe · code not in the catalogue" },
+
+  /* ---- HEALTH FAUCETS, new 2026-09-16 (p143-147) ----
+     Three models, none of them coded. Each finish is photographed twice on the
+     page — a front view and a side view leaning together — and the cutout keeps
+     the front one, which is the view down the spray face. p148 and p149 carry
+     four and three more, all chrome, distinguishable only by their photographs
+     and with no code, name or size to tell them apart; those are left out until
+     the factory names them. */
+  { code: "ST-HFSEL", cat: "health-faucet", name: "Selora Health Faucet", finishes: ["chrome","gunGrey","gold","roseGold","brushedRoseGold","matteBlack"], badge: "New", variant: "ABS · 1 m SS tube & hook · code not in the catalogue" },
+  { code: "ST-HFSQ",  cat: "health-faucet", name: "Square Health Faucet", finishes: ["gunGrey","champagne","gold","roseGold","brushedRoseGold","matteBlack"], badge: "New", variant: "brass · 1 m SS tube & brass hook · code not in the catalogue" },
+  { code: "ST-HFEST", cat: "health-faucet", name: "Estonia Health Faucet", finishes: ["chrome","gold","matteBlack"], badge: "New", variant: "ABS · 1 m tube & ABS hook · code not in the catalogue" },
+
   // ---- Basin Wastes (square pop-up) ----
   // REMOVED (not a washroom fitting): basin pop-up waste — a part that sits inside the basin, not a wall fitting
   // { code: "ST-TXSQ-01", cat: "waste",     name: "Regale Square Pop-up Waste",  finishes: ["chrome","brushedGold","gold","roseGold","matteBlack","antiqueGold","brushedBronze"] },
 
   // ============ Added from the Stout asset library (2026-07-10) — descriptive placeholder names ============
   // fixed shower heads / arms
+  /* ---- THE REST OF THE OVERHEAD SHOWERS, new 2026-09-16 (p97-106) ----
+     Seven more heads sit on those grid pages beside the four already here, four
+     to a page with a code under each and nothing but the photograph to tell
+     them apart — the page heading is the only name any of them gets, "ABS OVER
+     HEAD SHOWER" or "BRASS OVER HEAD SHOWER". So the codes are the catalogue's
+     and the names describe what the render shows, the same way ST-1027 and
+     ST-1033 beside them already do.
+     ST-1029 is the one that turned out not to need a placeholder: p103/104 show
+     a brass square plate in five finishes with no code, p105 prints ST-1029-CP
+     under the same plate in chrome — same proportions, same 9x9 jet grid — so
+     all six are filed under the code the catalogue does give. */
+  { code: "ST-1012",  cat: "rain-shower",  name: "Aeon Multi-Jet Shower Head",  finishes: ["chrome"], badge: "New", variant: "ABS · round · stepped hub", functions: 1 },
+  { code: "ST-3014",  cat: "rain-shower",  name: "Aeon Swivel Shower Head",     finishes: ["chrome"], badge: "New", variant: "ABS · round · swivel joint", functions: 1 },
+  { code: "ST-3016",  cat: "rain-shower",  name: "Aeon Domed Shower Head",      finishes: ["chrome"], badge: "New", variant: "ABS · round · domed hub", functions: 1 },
+  { code: "ST-1023",  cat: "rain-shower",  name: "Aria Fine-Spray Shower Head", finishes: ["chrome"], badge: "New", variant: "ABS · round · plain face", functions: 1 },
+  { code: "ST-1031",  cat: "rain-shower",  name: "Aria Spiral-Jet Shower Head", finishes: ["chrome"], badge: "New", variant: "ABS · round · spiral jet pattern", functions: 1 },
+  { code: "ST-1022",  cat: "rain-shower",  name: "Aqua Oval Shower Head",       finishes: ["chrome","matteBlack"], badge: "New", variant: "ABS · oval · slim arm", functions: 1 },
+  { code: "ST-1029",  cat: "rain-shower",  name: "Aqua Square Shower Head",     finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], badge: "New", variant: "brass · square plate · 9 x 9 jets", functions: 1 },
+  { code: "ST-SOH",   cat: "rain-shower",  name: "SS304 Square Shower Head",    finishes: ["gold","roseGold","matteBlack"], badge: "New", variant: "SS304 · 150-400 mm · code not in the catalogue", functions: 1 },
   { code: "ST-1017",  cat: "rain-shower",  name: "Regale Wall Shower Head",     finishes: ["chrome","gunGrey","brushedGold","champagne","gold","polishedGold","roseGold","brushedRoseGold","matteBlack"], functions: 1 },
   { code: "ST-1027",  cat: "rain-shower",  name: "Aeon Round Shower Head",      finishes: ["chrome","gunGrey","brushedGold","champagne","gold","polishedGold","roseGold","brushedRoseGold","matteBlack"], functions: 1 },
   { code: "ST-1033",  cat: "rain-shower",  name: "Aeon Slim Round Head",        finishes: ["chrome","gunGrey","brushedGold","champagne","gold","polishedGold","roseGold","brushedRoseGold","matteBlack"], functions: 1 },
