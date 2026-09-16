@@ -275,7 +275,17 @@ const RAW_PRODUCTS = [
      It hangs as artwork rather than geometry because there is no OBJ for it in
      the client's RAR — which costs nothing here, since a flush plate lies in
      the wall plane and its render is already square-on. */
-  { code: "ST-CBJ",   cat: "body-jet",    name: "Concealed Body Jet",         finishes: ["chrome","gunGrey","champagne","gold","roseGold","brushedRoseGold","matteBlack"], badge: "New", variant: "130 x 120 mm · brass · flush recessed" },
+  /* The full eight, matching the other jets in the range. Its rose gold and
+     champagne were bad recolours — rose gold measured rgb(252,144,64), a
+     saturated ORANGE against the range-wide rose of (211,175,159), and
+     champagne came back a dark olive. Both are regenerated through the
+     measured curves in tools_finish.py off this SKU's own chrome render,
+     and brushed gold is filled in the same way; the two bad files are in
+     _quarantine/. Checked against ST-2FBJ, whose finishes are known good:
+     champagne and brushed gold now match it to the byte, rose gold to
+     within a shade. Polished gold is deliberately NOT offered — no jet in
+     the range carries it and there is no measured curve for it. */
+  { code: "ST-CBJ",   cat: "body-jet",    name: "Concealed Body Jet",         finishes: ["chrome","gunGrey","brushedGold","champagne","gold","roseGold","brushedRoseGold","matteBlack"], badge: "New", variant: "130 x 120 mm · brass · flush recessed" },
   { code: "ST-1030",  cat: "rain-shower", name: "Aqua Square Rain Shower",     finishes: ["chrome","gunGrey","brushedGold","champagne","gold","polishedGold","roseGold","brushedRoseGold","matteBlack"], defaultFinish: "matteBlack", variant: "square plate · waterfall blades + jets", functions: 3 },   // filed as a body jet; its render is a full overhead plate
 
   // ---- Wall Taps (single-lever wall bib tap) ----
