@@ -2374,26 +2374,56 @@ const artTone = fid => {
   const hex = ART_TONE[fid] != null ? ART_TONE[fid] : METAL_TONE[fid]; if (hex == null) return null;
   return [16, 8, 0].map(s => srgbToLin(((hex >> s) & 255) / 255));
 };
-function artBandMean(img) {
+/* THE PIXELS OF A RENDER, ONCE. 96x96 is plenty: the print is after one colour,
+   not detail, and the whole catalogue is measured on load. */
+function artPixels(img) {
   const N = 96, c = mkCanvas(N, N), x = c.getContext("2d");
   x.drawImage(img, 0, 0, N, N);
   const d = x.getImageData(0, 0, N, N).data, px = [];
   for (let i = 0; i < d.length; i += 4) if (d[i + 3] > 250) px.push([d[i] / 255, d[i + 1] / 255, d[i + 2] / 255]);
-  if (px.length < 40) return null;
-  const L = p => 0.2126 * p[0] + 0.7152 * p[1] + 0.0722 * p[2];
-  const ls = px.map(L).sort((a, b) => a - b);
-  const lo = ls[Math.floor(ls.length * 0.40)], hi = ls[Math.floor(ls.length * 0.90)];
+  return px.length < 40 ? null : px;
+}
+const artLum = p => 0.2126 * p[0] + 0.7152 * p[1] + 0.0722 * p[2];
+/* the linear mean of one luminance slice of those pixels */
+function artBandMean(px, lo, hi) {
+  const ls = px.map(artLum).sort((a, b) => a - b);
+  const a = ls[Math.floor(ls.length * lo)], b = ls[Math.floor(ls.length * hi)];
   const sum = [0, 0, 0]; let n = 0;
-  px.forEach(p => { const l = L(p); if (l >= lo && l <= hi) { n++; for (let k = 0; k < 3; k++) sum[k] += srgbToLin(p[k]); } });
+  px.forEach(p => { const l = artLum(p); if (l >= a && l <= b) { n++; for (let k = 0; k < 3; k++) sum[k] += srgbToLin(p[k]); } });
   return n ? sum.map(v => v / n) : null;
 }
+/* WHICH SLICE IS THE METAL.
+   The print assumes the band it measures IS the finish, and on a fitting that is
+   all metal the 40-90% slice is. On one that is not, it is not: the ABS handsets
+   are mostly a dark grey spray face, so the slice landed on the plastic and the
+   correction then tried to make PLASTIC read as chrome. ST-1035 banded #616162
+   against chrome's #d9dad9, every channel pinned at the 1.8 clamp, and what
+   reached the wall was a uniformly brightened grey handset.
+   So the slice is chosen per render rather than fixed: try three, keep the one
+   whose correction needs the least clamping — the clamp is exactly the signal
+   that the slice was not metal. Ties go to the LOWEST band, so every render that
+   already prints correctly keeps the slice it has and nothing that works today
+   moves. Measured over the 512 render/finish pairs in the catalogue: 41 improve,
+   none degrade, mean error against the finish falls 2.7 -> 1.3 of 255. */
+const ART_BANDS = [[0.40, 0.90], [0.60, 0.95], [0.78, 0.98]];
+const overClamp = r => Math.max(0, Math.log(Math.max(r, 1e-6) / 1.8)) +
+                       Math.max(0, Math.log(0.5 / Math.max(r, 1e-6)));
 function normaliseArtwork(tex, fid) {
   const target = artTone(fid), img = tex.image;
   if (!target || !img || !img.width) return;
-  let mean;
-  try { mean = artBandMean(img); } catch (e) { return; }   // a cross-origin image cannot be read; leave it as shot
-  if (!mean) return;
-  tex.userData.tint = target.map((t, k) => Math.min(1.8, Math.max(0.5, t / Math.max(mean[k], 1e-3))));
+  let px;
+  try { px = artPixels(img); } catch (e) { return; }   // a cross-origin image cannot be read; leave it as shot
+  if (!px) return;
+  let best = null;
+  for (const [lo, hi] of ART_BANDS) {
+    const mean = artBandMean(px, lo, hi);
+    if (!mean) continue;
+    const raw = target.map((t, k) => t / Math.max(mean[k], 1e-3));
+    const over = raw.reduce((a, r) => a + overClamp(r), 0);
+    if (!best || over < best.over - 1e-9) best = { over, raw };
+  }
+  if (!best) return;
+  tex.userData.tint = best.raw.map(r => Math.min(1.8, Math.max(0.5, r)));
   exposeAllArtwork();                       // every material wearing this texture re-prints
 }
 
