@@ -159,23 +159,20 @@ const CAT3D = {
   // --- the odds and ends the rail doesn't offer stay on the back wall, right
   //     end, clear of the niche (0.44–0.84) and of the vanity, which owns the left
   "wall-tap":     { mount: "back", width: 0.34, y: 0.42, x: 1.16, billboard: true },  // bucket tap, near the floor
-  /* THE HANDSET GOES ON THE WALL ITS MIXER IS ON, AND INSIDE THE ENCLOSURE.
-     It was on the BACK wall at x 0.82 — a metre and a half from the valve set,
-     on the far side of the corner. A hand shower is plumbed off the diverter:
-     its outlet comes out of the same rough-in as the trim, so on the opposite
-     wall it is not an installation, it is a handset hung where the tiling
-     happened to be blank.
-     The RIGHT wall is the shower wall. z -0.90 is the one stretch of it that is
-     both inside the wet tray (which runs z -1.48..-0.43) and clear of the whole
-     valve column: the back jet owns z -0.645..-0.495, so this sits 0.17 m
-     behind it with nothing above or below. Deliberately NOT on the valve lane
-     itself (z -0.25) — the tallest trim in the range, ST-D5017, hangs
-     1.09..1.59 there, and a handset on that centre line would foul it at every
-     height that is still a reachable one.
-     y 1.10 puts the bracket at 1.06, which is where a handset holder is
-     actually set. No swing: it hangs in a bracket, and a bracket does not
-     follow the camera. */
-  "hand-shower":  { mount: "right", width: 0.17, y: 1.10, z: -0.90, billboard: false },
+  /* THE HANDSET GOES IN THE BACK WALL'S RIGHT CORNER — the client's call, and it
+     overrides the plumbing argument that put it on the right wall: a hand shower
+     is fed off the diverter, so the tidy answer was the wall the valve set is
+     on. On the back wall it reads square-on from the opening view instead of
+     foreshortened along the side wall, which is what matters here.
+     x 1.25 IS the corner: positionOnWall keeps a 0.25 m margin off every wall
+     edge, so 1.25 is as far right as anything can be placed and anything larger
+     is clamped back to it. Clear of everything already on that wall — the niche
+     ends at 0.84, the waste sits at 0.86, and the bucket tap below at x 1.16
+     tops out at 0.56, well under this.
+     y 1.10 puts the bracket at 1.06, which is where a handset holder is actually
+     set. No swing: it hangs in a bracket, and a bracket does not follow the
+     camera. */
+  "hand-shower":  { mount: "back", width: 0.17, y: 1.10, x: 1.25, billboard: false },
   // over the basin, which is the wall-hung vanity on the LEFT (COUNTER.x -1.06)
   // — the only place a basin mixer can go, whatever the rest of the layout does.
   // The deck-mounted ones override this with mount:"counter".
