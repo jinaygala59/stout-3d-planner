@@ -5349,8 +5349,11 @@ async function downloadSpecSheet() {
       doc.setPage(p);
       doc.setDrawColor(...LINE); doc.setLineWidth(0.3); doc.line(M, PH - 16, PW - M, PH - 16);
       doc.setTextColor(...MUTE); doc.setFont("helvetica", "normal"); doc.setFontSize(7.8);
-      doc.text("Finishes shown are indicative. Your Stout consultant will confirm availability and quote for supply and installation.", M, PH - 11);
-      doc.text("Stout Sanitaryware  ·  skventuresdirect@gmail.com", M, PH - 7);
+      // The disclaimer and the contact line were dropped at the client's ask
+      // (2026-09-16). Page 1 already says the sheet is not a quotation and that
+      // the consultant prices it, so repeating it under every page read as
+      // small print on a document meant to look like a proposal. The page
+      // number stays — it is the only thing a footer here has to do.
       doc.text(`Page ${p} / ${pages}`, PW - M, PH - 7, { align: "right" });
       // the sheet is a picture of a decision; this line makes it the decision —
       // whoever holds the paper can reopen the room and keep working on it
