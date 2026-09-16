@@ -4384,7 +4384,7 @@ function renderChosen() {
         <button type="button" class="ch-go" data-go
                 aria-label="Show ${r.product.name} in the room">
           <i style="background:${f.swatch || "#888"}"></i>
-          <span class="ch-nm">${r.product.name}</span>
+          <span class="ch-nm">${r.product.name}${r.jetSet ? ` <em>&times;${jetCountOf(r.jets)}</em>` : ""}</span>
           <span class="ch-fin">${f.name || ""}</span>
         </button>
         <button type="button" class="ch-x" data-drop aria-label="Remove ${r.product.name}">×</button>
@@ -4476,7 +4476,7 @@ function renderRail() {
 
   const productFor = card => FINISH_CARDS.get(card.dataset.prod)
     || (PRODUCTS[card.dataset.cat] || []).find(x => x.id === card.dataset.prod);
-  const add = (p, fin) => {
+  const add = (p, fin, jets) => {
     // Every category has ONE correct home (ceiling / back column / side wall) —
     // always mount there, regardless of which wall tab is active. Deterministic
     // placement: a spout can never end up on the wrong wall. placeProduct flies
@@ -4507,7 +4507,7 @@ function renderRail() {
     openGroup = null;
     const replaced = [...placed.values()].find(r => r.product.catId === p.catId && r.product.id !== p.id);
     const undo = snapshot();
-    placeProduct(p, fin, skuCfg(p).mount || "back", true);
+    placeProduct(p, fin, skuCfg(p).mount || "back", true, { jets });
     // and bring the rest of the room to the finish the valve just set
     if (isValve(p)) [...placed.values()].forEach(r => {
       if (r.product.catId !== p.catId && r.finishId !== fin) changeFinish(r.uid, fin, true);
@@ -4518,15 +4518,21 @@ function renderRail() {
           { label: "Undo", run: () => restore(undo) });
   };
 
+  /* A body jet is picked in two steps, because a set has a SHAPE as well as a
+     finish: how many, and then — when the room has not already committed to one
+     — which colour. The count is asked first: it is what the client came to the
+     jets to decide, and asking it after the colour reads as an afterthought. */
+  const addAsking = (p, fid) => asksJetCount(p) ? openJetCount(p, n => add(p, fid, n)) : add(p, fid);
   acc.querySelectorAll("[data-add]").forEach(btn => btn.onclick = () => {
     const card = btn.closest(".pcard"), p = productFor(card); if (!p) return;
     // the colour the card is SHOWING is the colour that goes on the wall —
     // read it off the card, because `p` is now the shared catalogue row
-    add(p, card.dataset.fin || cardFinish(p));
+    addAsking(p, card.dataset.fin || cardFinish(p));
   });
   // a valve card opens the finish chooser; picking there is what places it
   acc.querySelectorAll("[data-arm]").forEach(btn => btn.onclick = () => {
     const card = btn.closest(".pcard"), p = productFor(card); if (!p) return;
+    if (asksJetCount(p)) { openJetCount(p, n => openFinishPick(p, fid => add(p, fid, n))); return; }
     openFinishPick(p, fid => add(p, fid));
   });
   describeRoom();
@@ -4548,13 +4554,14 @@ function describeRoom() {
 function snapshot() {
   return [...placed.values()].map(r => ({
     pid: r.product.id, cat: r.product.catId, fin: r.finishId, wall: r.wall, scale: baseScale(r.mesh),
+    jets: r.jets,
   }));
 }
 function restore(items) {
   [...placed.keys()].forEach(removeProduct);
   items.forEach(it => {
     const p = (PRODUCTS[it.cat] || []).find(x => x.id === it.pid); if (!p) return;
-    const uid = placeProduct(p, it.fin, it.wall, false);
+    const uid = placeProduct(p, it.fin, it.wall, false, { jets: it.jets });
     const rec = placed.get(uid); if (rec && it.scale) setBaseScale(rec.mesh, it.scale);
   });
   deselect(); renderRail(); saveDesign();
@@ -4575,6 +4582,17 @@ function faceWall(wall) {
     back:  { pos: [0, 1.55, 2.3], tgt: [0, 1.35, -HZ] },
     left:  { pos: [0.75, 1.52, 0.70], tgt: [-HX, 1.34, 0.15] },
     right: { pos: [-0.55, 1.52, 0.30], tgt: [HX, 1.34, -0.55] },
+    /* THE SHOWER, which is the one thing the three wall views never show: the
+       overhead sits on the CEILING at x 0, z -0.55, and all three look level or
+       slightly down. This one stands back at the room's open front and tilts up,
+       so the overhead, the valve on the right wall and the jets are in one
+       frame — the shower as a set rather than three separate fittings.
+       It cannot simply point at the ceiling: OrbitControls clamps the polar
+       angle (maxPolarAngle 0.62pi), so a camera more than ~21 degrees below its
+       target is snapped back the moment update() runs. Target y 1.95 keeps the
+       tilt at ~13 degrees and still carries the overhead near the top of frame,
+       26 degrees of half-FOV above the look direction. */
+    shower: { pos: [0.15, 1.42, 1.45], tgt: [0.32, 1.98, -0.70] },
   }[wall] || null;
   if (!targets) return;
   const tgt = new THREE.Vector3(...targets.tgt);
@@ -4604,8 +4622,15 @@ const productById = id => {
 };
 function designToHash() {
   const room = [THEME.id, ceilingChoice, basinVisible ? 1 : 0].join(".");
-  const items = [...placed.values()].map(r =>
-    [r.product.id, r.finishId, (+baseScale(r.mesh)).toFixed(2)].join(":"));
+  /* The jet count is a fourth field, and only written when it is not the
+     default four — so every link ever shared stays exactly as long as it was,
+     and a three-field chunk still reads correctly (as four) both here and in
+     anyone's older copy of the app. */
+  const items = [...placed.values()].map(r => {
+    const base = [r.product.id, r.finishId, (+baseScale(r.mesh)).toFixed(2)];
+    if (r.jetSet && jetCountOf(r.jets) !== 4) base.push(String(jetCountOf(r.jets)));
+    return base.join(":");
+  });
   return "d=" + room + (items.length ? "~" + items.join("~") : "");
 }
 function shareURL() {
@@ -4624,10 +4649,10 @@ function applyHash(raw) {
   setBasin(basin !== "0");
   let n = 0;
   parts.filter(Boolean).forEach(chunk => {
-    const [pid, fin, scale] = chunk.split(":");
+    const [pid, fin, scale, jets] = chunk.split(":");
     const p = productById(pid); if (!p) return;
     const finish = (p.finishes || []).includes(fin) ? fin : p.defaultFinish;
-    const uid = placeProduct(p, finish, skuCfg(p).mount || "back", false);
+    const uid = placeProduct(p, finish, skuCfg(p).mount || "back", false, { jets });
     const rec = placed.get(uid);
     const sc = parseFloat(scale);
     if (rec && sc > 0.3 && sc < 2) setBaseScale(rec.mesh, sc);
@@ -4927,9 +4952,14 @@ async function downloadSpecSheet() {
       doc.text(rec.product.name || "Product", tx + 6, y - 1.5);
       doc.setTextColor(...MUTE); doc.setFont("helvetica", "normal"); doc.setFontSize(8.5);
       doc.text(`${categoryName(rec.product.catId)}   ·   Code ${rec.product.code || "—"}`, tx + 6, y + 3);
-      if (rec.product.variant) {
+      /* A set of two and a set of four are different fittings to buy and to
+         plumb, so the sheet has to say which — it is the one line a fitter
+         reads off this page. */
+      const jetLine = rec.jetSet ? `set of ${jetCountOf(rec.jets)}` : "";
+      const sub = [rec.product.variant, jetLine].filter(Boolean).join("  ·  ");
+      if (sub) {
         doc.setFontSize(7.8); doc.setTextColor(160, 158, 152);
-        doc.text(rec.product.variant, tx + 6, y + 7.2);
+        doc.text(sub, tx + 6, y + 7.2);
       }
       /* The chip is the RANGE's colour, not the UI swatch. FINISHES[fid].tone
          has to read as a 22 px dot in the tool and was never matched to the
@@ -5054,7 +5084,7 @@ function saveDesign() {
   if (typeof syncHash === "function" && !restoring) syncHash();
   if (restoring) return;
   try {
-    const items = [...placed.values()].map(r => ({ pid: r.product.id, cat: r.product.catId, fin: r.finishId, wall: r.wall, scale: baseScale(r.mesh) }));
+    const items = [...placed.values()].map(r => ({ pid: r.product.id, cat: r.product.catId, fin: r.finishId, wall: r.wall, scale: baseScale(r.mesh), jets: r.jets }));
     localStorage.setItem(STORE_KEY, JSON.stringify({ items, basin: basinVisible }));
   } catch (_) { /* storage blocked — ignore */ }
 }
@@ -5066,7 +5096,7 @@ function loadDesign() {
   d.items.forEach(it => {
     const list = PRODUCTS[it.cat]; if (!list) return;
     const p = list.find(x => x.id === it.pid); if (!p) return;
-    const uid = placeProduct(p, FINISHES[it.fin] ? it.fin : p.defaultFinish, it.wall || skuCfg(p).mount || "back");
+    const uid = placeProduct(p, FINISHES[it.fin] ? it.fin : p.defaultFinish, it.wall || skuCfg(p).mount || "back", false, { jets: it.jets });
     const rec = placed.get(uid); if (rec && it.scale) rec.mesh.scale.setScalar(it.scale);
   });
   restoring = false;

@@ -66,6 +66,7 @@
           <button type="button" data-wall="back" class="on" aria-pressed="true">Back</button>
           <button type="button" data-wall="left" aria-pressed="false">Left</button>
           <button type="button" data-wall="right" aria-pressed="false">Right</button>
+          <button type="button" data-wall="shower" aria-pressed="false">Shower</button>
         </div>
         <button type="button" id="resetView" class="btn ghost" title="Back to the opening view">Reset view</button>
         <button type="button" id="lookToggle" class="btn ghost" aria-pressed="true"
@@ -186,6 +187,19 @@
   </div>
 
   <!-- confirm dialog (Clear) -->
+  <!-- How many body jets: asked when a jet is picked, because the same SKU is
+       plumbed either way and it is the client's decision, not the product's. -->
+  <div class="modal" id="jetCount" role="dialog" aria-modal="true" aria-labelledby="jetCountTitle" hidden>
+    <div class="modal-card">
+      <h2 id="jetCountTitle">How many body jets?</h2>
+      <p id="jetCountBody">Two sit in a column, one above the trim and one below it. Four flank it, two to each side.</p>
+      <div class="fin-grid" id="jetCountGrid"></div>
+      <div class="modal-row">
+        <button type="button" class="btn ghost" id="jetCountNo">Cancel</button>
+      </div>
+    </div>
+  </div>
+
   <div class="modal" id="confirm" role="dialog" aria-modal="true" aria-labelledby="confirmTitle" hidden>
     <div class="modal-card">
       <h2 id="confirmTitle">Clear the room?</h2>
