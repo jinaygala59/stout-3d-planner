@@ -3137,6 +3137,22 @@ const MODEL_FOR_SKU = {
   "ST-BJ-01":  { url: "jet-panel", axes: { front: [0, 1, 0], up: [0, 0, -1] },
                  fit: { axis: "x", size: 0.22, object: "plate" }, mount: { object: "plate" } },
   "ST-PLAIN":  { url: "spout-plain", axes: { front: [0, 0, 1], up: [0, 1, 0] }, fit: { axis: "z", size: 0.22 } },
+  /* THE BUTTON SPOUT IS THE PLAIN SPOUT WITH A BUTTON ON IT. Same 150 mm
+     square-section body, same flange, same handset nub underneath — the client's
+     two photographs differ only in the cube sitting on top — so it installs off
+     the SAME export, through the same axes/fit/mount, and therefore at the same
+     angle. It was missing from this table, so specFor() returned null and it fell
+     back to its own photograph, which is shot three-quarter: on the wall that
+     reads as a spout hanging at a different angle from the modelled one beside it
+     (2026-09-16, asked for directly). The RAR carries no export with the button —
+     folders 4-19 are rain plates, valve trims and a handset, and the button spout
+     is only in the STEP files, which nothing here can read — so the button alone
+     is built. `object: "body"` makes every measurement that positions the spout
+     read the body and ignore the button, which is what keeps this identical to
+     ST-PLAIN; add nothing here that can move the body or the two stop matching. */
+  "ST-BUTTON": { url: "spout-plain", axes: { front: [0, 0, 1], up: [0, 1, 0] },
+                 fit: { axis: "z", size: 0.22, object: "body" },
+                 mount: { object: "body" }, addOn: "spoutButton" },
   "ST-WM-002": { url: "mixer-wall", axes: { front: [0, 0, 1], up: [0, 1, 0] },
                  fit: { axis: "x", size: 0.20, object: "plate" }, mount: { object: "plate" } },
 };
@@ -3193,9 +3209,10 @@ function partBox(root, name) {
 function modelInstance(model, spec, hex, rule, rough, fid) {
   const hide = new Set(spec.hide || []);
   model.children.slice().forEach(c => { if (hide.has(c.name)) model.remove(c); });
+  let mat = null;
   if (!spec.proc) {
     // the MTLs point at Windows paths — the brand metal in the chosen finish instead
-    const mat = metalMat(hex, rough, fid);
+    mat = metalMat(hex, rough, fid);
     // two-sided: one of these exports is an inside-out shell, and a culled body
     // is a spout floating over its own base. Back faces get their normal flipped.
     mat.side = THREE.DoubleSide;
@@ -3229,7 +3246,35 @@ function modelInstance(model, spec, hex, rule, rough, fid) {
   const onY = rule.face === "roomward";
   fit.position.set(-c.x * s, (onY ? -mb.min.y : -c.y) * s, (onY ? -c.z : -mb.min.z) * s);
   const inst = new THREE.Group(); inst.name = "ProductRoot"; inst.add(fit);
+  // 4. ADD ON — parts the export lacks, in real metres, on the seated body
+  if (spec.addOn) addModelPart(inst, spec.addOn, mat || metalMat(hex, rough, fid));
   return inst;
+}
+
+/* GEOMETRY THE EXPORT DOES NOT CARRY, built in REAL METRES and added only once
+   the body is already fitted and seated — so it cannot disturb either, and the
+   piece it is added to installs exactly as the bare body would. The frame here
+   is the canonical one modelInstance just established: the mount face on z = 0,
+   the fitting running out to +z, up is +y, x centred on the mount part. */
+function addModelPart(inst, kind, mat) {
+  if (kind !== "spoutButton") throw new Error("unknown model part " + kind);
+  /* ST-BUTTON's diverter button, off the client's photograph: a square button a
+     little narrower than the spout it stands on, raised on a thin collar, set
+     between the flange and the middle of the body. Proportions of the body
+     rather than absolute millimetres, so the button follows if the spout is ever
+     re-fitted to another length. */
+  const b = partBox(inst, "body");
+  const bw = b.max.x - b.min.x, bl = b.max.z - b.min.z;
+  const CUBE = bw * 0.78, COLLAR = bw * 0.86, COLLAR_H = 0.004, ALONG = 0.42;
+  const z = b.min.z + bl * ALONG;
+  const g = new THREE.Group(); g.name = "button";
+  const collar = new THREE.Mesh(new THREE.BoxGeometry(COLLAR, COLLAR_H, COLLAR), mat);
+  collar.position.set(0, b.max.y + COLLAR_H / 2, z);
+  const cube = new THREE.Mesh(new THREE.BoxGeometry(CUBE, CUBE * 0.92, CUBE), mat);
+  cube.position.set(0, b.max.y + COLLAR_H + CUBE * 0.46, z);
+  [collar, cube].forEach(m => { m.castShadow = false; m.userData.metal = true; g.add(m); });
+  inst.add(g);
+  return g;
 }
 
 /* the procedural bodies — only where the RAR has no export for the form */
