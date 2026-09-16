@@ -140,12 +140,46 @@ const RAW_PRODUCTS = [
   { code: "ST-C1011", cat: "rain-shower", name: "Cascada Maxima Panel",        finishes: ["chrome","gunGrey","brushedGold","champagne","gold","polishedGold","roseGold","brushedRoseGold","matteBlack"], variant: "waterfall blades + LED + centre jet", functions: 4 },
 
   // ---- Concealed Diverter (single-lever) ----
-  { code: "ST-D5017", cat: "diverter",    name: "Regale Concealed Diverter",   finishes: ["chrome","gunGrey","champagne","gold","roseGold","brushedRoseGold","matteBlack"],                                          badge: "Signature", outlets: 2 },
+  /* "Regale Concealed Diverter" was ours. The catalogue calls it TWO WAY
+     DIVERTER (July 2026 edition, p35), which is also what its two outlets say,
+     so the catalogue's word wins. */
+  { code: "ST-D5017", cat: "diverter",    name: "Two-Way Diverter",            finishes: ["chrome","gunGrey","champagne","gold","roseGold","brushedRoseGold","matteBlack"],                                          badge: "Signature", variant: "square plate · single lever", outlets: 2 },
 
-  // ---- Thermostatic Diverter panels (D-series) ----
-  { code: "ST-D5018", cat: "thermostatic", name: "Regale Grande Thermostatic Panel", finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], badge: "Bestseller", outlets: 6 },
-  { code: "ST-D5019", cat: "thermostatic", name: "Regale Thermostatic Panel",        finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], outlets: 4 },
-  { code: "ST-D5020", cat: "thermostatic", name: "Regale Compact Thermostatic Panel",finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], outlets: 3 },
+  /* ---- Thermostatic diverter panels, the whole D-series ----
+     Codes, names, function counts and finishes are the client's STOUT July 2026
+     catalogue (W.E.O 1st July 2026), read off the page each product sits on.
+     That edition is the 2026 one re-priced: same 115 codes, nothing added or
+     withdrawn, so nothing here is a guess about what the range now contains.
+
+     The SERIES is the catalogue's own, printed top-left of the spread — AXORA
+     (p1-8), VELTRO (p9-16), MANFRA (p25-30). Pages 17-24 carry D5012 and D5011
+     under no series at all, so those two get none: an invented family word is
+     how the old names ("Regale Grande Thermostatic Panel") stopped matching
+     anything the client could look up.
+
+     `outlets` is the page's own "PUSH BUTTON for N outlets" / "Control Unit For
+     N Outlets" line — the number the valve budget spends, not the number of
+     buttons on the plate. */
+  { code: "ST-D5018", cat: "thermostatic", name: "Axora 6-Function Thermostatic Diverter",  finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], badge: "Bestseller", variant: "push button · flow control · Vernet cartridge", outlets: 6 },
+  { code: "ST-D5019", cat: "thermostatic", name: "Axora 4-Function Thermostatic Diverter",  finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "push button · flow control · Vernet cartridge", outlets: 4 },
+  { code: "ST-D5020", cat: "thermostatic", name: "Axora 3-Function Thermostatic Diverter",  finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "push button · flow control · Vernet cartridge", outlets: 3 },
+  /* New 2026-09-16, from the July catalogue. Artwork is the factory's own
+     studio photography lifted from the page with its own soft mask (see
+     tools_july.py) — not keyed, not recoloured, not derived from a donor
+     finish. Each of the six is then colour-checked against the same finish
+     elsewhere in the range: rose gold lands 22-33 deg of hue against the
+     range's 22.5, brushed rose gold 17-25 against 23, brushed bronze 34-40
+     against 37, and chrome / gun grey / matt black read neutral, which is what
+     catches a column read in the wrong order. */
+  { code: "ST-D5021", cat: "thermostatic", name: "Veltro 6-Function Thermostatic Diverter", finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], badge: "New", variant: "push button · flow control · Vernet cartridge", outlets: 6 },
+  { code: "ST-D5022", cat: "thermostatic", name: "Veltro 4-Function Thermostatic Diverter", finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], badge: "New", variant: "push button · flow control · Vernet cartridge", outlets: 4 },
+  { code: "ST-D5012", cat: "thermostatic", name: "6-Function Thermostatic Diverter",        finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], badge: "New", variant: "twin dial · 6 buttons · flow control", outlets: 6 },
+  { code: "ST-D5011", cat: "thermostatic", name: "4-Function Thermostatic Diverter",        finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], badge: "New", variant: "twin dial · 4 buttons · flow control", outlets: 4 },
+  /* MANFRA is a tall plate, not a wide one: a lever under a digital readout of
+     temperature and shower time. Filed with the panels because that is what it
+     is on the wall — the wall control — and it is sized off its own artwork. */
+  { code: "ST-D5015", cat: "thermostatic", name: "Manfra 3-Function Lever Diverter",        finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], badge: "New", variant: "single lever · push button · digital display", outlets: 3 },
+  { code: "ST-D5016", cat: "thermostatic", name: "Manfra 4-Function Lever Diverter",        finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], badge: "New", variant: "single lever · push button · digital display", outlets: 4 },
 
   // ---- Wall-mounted BASIN MIXERS ----
   // Both of these are called "Wall Spout" in the range and neither is one: look
@@ -189,14 +223,33 @@ const RAW_PRODUCTS = [
   // NOT IN THE CLIENT'S DRIVE FOLDER — no file in it names this SKU, so it
   // is not part of the range and must not be offered. Checked against all
   // 533 filenames. Restore the line if a render for it ever arrives.
-  /* The 3-Function Body Jet, off the client's own screenshot. Catalogue page
-     119 gives it as 50 x 50 mm brass, "3 Function Body Jet", but prints no
-     CODE line on that page — ST-BJ3F is a PLACEHOLDER until the real one is
-     confirmed. Only rose gold is offered: that is the one render there is,
-     and the range it is "similar to" is not a reason to show a colour we
-     cannot picture. */
-  { code: "ST-BJ3F",  cat: "body-jet",    name: "Aqua 3-Function Body Jet",   finishes: ["roseGold"], badge: "New", variant: "square escutcheon · 3 jets" },
-  { code: "ST-BJ-02", cat: "body-jet",    name: "Aqua Single-Flow Body Jet",   finishes: ["gunGrey","brushedGold","roseGold","matteBlack"] },
+  /* THE NAMES BELOW ARE THE CATALOGUE'S, not ours (STOUT July 2026, p111-119).
+     None of these jets carries a CODE line anywhere in the catalogue — the
+     pages give a name, a size, a flow, a material, the finishes and the price
+     and nothing else — so every code here stays a PLACEHOLDER until the
+     factory confirms it. What the catalogue DOES settle is which jet is which,
+     and two were filed wrong:
+
+       p119 heads DANCING FUNCTION BODY JET and carries a second product in
+       front of it, captioned "3 Function Body Jet", chrome only. The jet with
+       the black oval face is the DANCING one — that is what ST-BJ3F's render
+       shows — and the round-headed chrome jet beside it is the 3-function,
+       which is ST-J06. They were the other way round.
+
+     Matched to the pages by photograph: the rosette face is HYDRIX (p111), the
+     dimple grid seen from the left is DUAL FUNCTION, rain and mist (p115), the
+     nub grid seen from the right is SINGLE FUNCTION, rain (p117). */
+  { code: "ST-BJ3F",  cat: "body-jet",    name: "Dancing Function Body Jet",  finishes: ["roseGold"], badge: "New", variant: "50 x 50 mm · brass · dancing flow" },
+  { code: "ST-BJ-02", cat: "body-jet",    name: "Single Function Body Jet",   finishes: ["gunGrey","brushedGold","roseGold","matteBlack"], variant: "50 x 50 mm · brass · rain" },
+  /* New 2026-09-16. The catalogue's CONCEALED BODY JET (p113/114), 130 x 120 x
+     70.5 mm — a recessed brass box behind a flat square flange, which is a
+     different fitting from the 16-jet panel this app files under ST-BJ-01.
+     Seven finishes, all of them the factory's own photograph off the page
+     (tools_july.py). ST-CBJ is a PLACEHOLDER code: the page prints none.
+     It hangs as artwork rather than geometry because there is no OBJ for it in
+     the client's RAR — which costs nothing here, since a flush plate lies in
+     the wall plane and its render is already square-on. */
+  { code: "ST-CBJ",   cat: "body-jet",    name: "Concealed Body Jet",         finishes: ["chrome","gunGrey","champagne","gold","roseGold","brushedRoseGold","matteBlack"], badge: "New", variant: "130 x 120 mm · brass · flush recessed" },
   { code: "ST-1030",  cat: "rain-shower", name: "Aqua Square Rain Shower",     finishes: ["chrome","gunGrey","brushedGold","champagne","gold","polishedGold","roseGold","brushedRoseGold","matteBlack"], defaultFinish: "matteBlack", variant: "square plate · waterfall blades + jets", functions: 3 },   // filed as a body jet; its render is a full overhead plate
 
   // ---- Wall Taps (single-lever wall bib tap) ----
@@ -232,7 +285,7 @@ const RAW_PRODUCTS = [
   // wall spouts
   // REMOVED (not a washroom fitting): basin pop-up waste — same
   // { code: "ST-TSQ",   cat: "waste",        name: "Axis Pop-up Waste",      finishes: ["chrome","brushedGold","gold","roseGold","matteBlack","antiqueGold","brushedBronze"] },
-  { code: "ST-J06",   cat: "body-jet",     name: "Axis Round Body Jet",          finishes: ["chrome"] },
+  { code: "ST-J06",   cat: "body-jet",     name: "3-Function Body Jet",          finishes: ["chrome"], variant: "50 x 50 mm · brass · round head" },
   // the one genuine spout in the range: a spout and a flange, no handle on it
   /* THE RANGE'S ONE SPOUT, IN EVERY COLOUR (2026-09-09, asked for directly).
      The Drive folder ships this spout in three finishes — gun grey, champagne
@@ -315,16 +368,21 @@ const RAW_PRODUCTS = [
   { code: "ST-D5002", cat: "diverter", name: "Regale Square Lever Diverter", finishes: ["chrome"], variant: "square plate · single lever", outlets: 3 },
   { code: "ST-D5003", cat: "diverter", name: "Regale 3-Way Concealed Diverter", finishes: ["chrome"], variant: "square plate · 3 buttons", outlets: 3 },
   { code: "ST-D5004", cat: "diverter", name: "Regale 6-Function Diverter Plate", finishes: ["chrome","roseGold","matteBlack"], variant: "tall plate · dial + 6 buttons", outlets: 6 },
-  { code: "ST-D5009", cat: "diverter", name: "Regale 2-Way Concealed Thermostat", finishes: ["chrome","roseGold","matteBlack"], variant: "tall plate · 2 outlets", outlets: 3 },
-  { code: "ST-D5010", cat: "diverter", name: "Regale 3-Way Concealed Thermostat", finishes: ["chrome","roseGold","matteBlack"], variant: "tall plate · 3 outlets", outlets: 4 },
-  { code: "ST-BJ21F", cat: "body-jet", name: "Aqua Square Concealed Body Jet", finishes: ["brushedRoseGold","champagne","chrome","gunGrey","matteBlack","roseGold"], variant: "square escutcheon · single jet" },
+  /* These two read "2-Way" and "3-Way" here and neither is. The July 2026
+     catalogue heads p40 THREE FUNCTION THERMOSTATIC DIVERTER, "With Control
+     Unit For 3 Outlets", and p39 FOUR FUNCTION, "With Control Unit For 4
+     Outlets" — which is what `outlets` already said, so only the names were
+     wrong. Taken from the page. */
+  { code: "ST-D5009", cat: "diverter", name: "3-Function Concealed Thermostat", finishes: ["chrome","roseGold","matteBlack"], variant: "tall plate · 3 outlets", outlets: 3 },
+  { code: "ST-D5010", cat: "diverter", name: "4-Function Concealed Thermostat", finishes: ["chrome","roseGold","matteBlack"], variant: "tall plate · 4 outlets · 2 together", outlets: 4 },
+  { code: "ST-BJ21F", cat: "body-jet", name: "Hydrix Body Jet", finishes: ["brushedRoseGold","champagne","chrome","gunGrey","matteBlack","roseGold"], variant: "50 x 50 mm · brass · rain rosette" },
   /* The folder shot this one in three. The other five are generated from its own
      chrome render by tools_finish.py (`--sku ST-2FBJ --write`), each through the
      curve measured off a REAL client render of that finish — so the jet wears
      the same gold/champagne/gun-grey as every other product in the room rather
      than an approximation of it: median hue lands within 0.8 deg of the same
      finish on ST-1017 / ST-1027 / ST-1030 / ST-1033. */
-  { code: "ST-2FBJ", cat: "body-jet", name: "Aqua Micro-Jet Body Spray", finishes: ["chrome","gunGrey","brushedGold","champagne","gold","roseGold","brushedRoseGold","matteBlack"], variant: "square plate · multi micro-jet" },
+  { code: "ST-2FBJ", cat: "body-jet", name: "Dual Function Body Jet", finishes: ["chrome","gunGrey","brushedGold","champagne","gold","roseGold","brushedRoseGold","matteBlack"], variant: "50 x 50 mm · brass · rain and mist" },
   /* ===== STOUT 2026 catalogue, second pass (2026-09-12) =====================
      Added from the client's own PDF, and only in the four steps the rail
      offers: ceiling showers, diverters, spouts and hand showers. Every other

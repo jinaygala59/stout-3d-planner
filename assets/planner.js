@@ -275,6 +275,31 @@ const SKU3D = {
   "ST-D5018": { width: 0.55, faceOn: true },
   "ST-D5019": { width: 0.52, faceOn: true },
   "ST-D5020": { width: 0.44, faceOn: true },
+  /* THE SIX PANELS ADDED FROM THE JULY 2026 CATALOGUE. No `faceOn`, and that is
+     measured rather than assumed: the three bars above are photographed off
+     square — top edge -4.7 deg, bottom -6.5, right side 15% short — and these
+     six are not. Their own alpha quads come back 0.00 / 0.00 with a taper of
+     1.000 (MANFRA -0.7 at the top, and its bottom "corners" are the lever, not
+     the plate). There is nothing for a homography to undo, so they hang as
+     photographed like everything else.
+
+     WIDTHS ARE MEASURED, because the catalogue prints no dimension for any
+     diverter. The client's own room renders do the job: each puts the panel on
+     a wall beside the CONCEALED body jets, which the catalogue does dimension
+     at 130 x 120 mm, and ST-D5018-XGG has the 550 mm bar in frame with the same
+     jets to prove the jet reads 130 there (99 px of bar = 550 mm, jets 22 px =
+     122). Panel width is then its pixels over a jet's, times 130:
+       VELTRO   ST-D5022-XG   72 px / 20 px -> 468 mm, frame aspect 2.06 v 2.07
+       (no room render for D5021; same plate, one button row taller)
+       ST-D5012-XG   54 px / 23.5 px -> 299 mm, aspect 1.35 v 1.25
+       (D5011 is D5012's 4-function twin: 322x257 artwork against 320x256)
+       MANFRA   ST-D5015-XG   26 px / 24 px -> 141 mm, aspect 0.32 v 0.33
+     The frame aspect agreeing with the measured box to a few percent is the
+     check that the right blob was measured. Tallest of the six is MANFRA at
+     0.42 m, inside the 0.50 lane cap. */
+  "ST-D5021": { width: 0.47 }, "ST-D5022": { width: 0.47 },
+  "ST-D5012": { width: 0.30 }, "ST-D5011": { width: 0.30 },
+  "ST-D5015": { width: 0.14 }, "ST-D5016": { width: 0.14 },
   "ST-TX-01": { width: 0.22 },
   // 211x637 plates: a three-outlet column trim is ~0.16 wide, not 0.26. At 0.26
   // it wanted to be 0.79 m tall, which is what the old cap was there to stop —
@@ -417,6 +442,13 @@ const SKU3D = {
                 so the cutout that puts a 52 mm escutcheon on the wall is 0.15. */
   "ST-BJ21F": { width: 0.15, flip: true, bossX: -0.17, bossY: 0.09 },
   "ST-2FBJ":  { width: 0.15, flip: true, bossX: -0.23, bossY: 0.14 },
+  /* The concealed jet is the one jet in the range that does NOT protrude: a
+     recessed box behind a flat square flange, catalogued at 130 x 120 mm. So it
+     wants none of the three corrections above — its frame IS the flange, shot
+     square-on, and the wall union sits at the middle of the picture. Width is
+     the flange's own 130 mm; it is not scaled up the way the protruding jets
+     are, because there is no neck and head in the frame to make room for. */
+  "ST-CBJ":   { width: 0.13 },
   // --- wastes + the re-filed square rain plate ---
   "ST-TXSQ-01": { width: 0.09 }, "ST-TSQ": { width: 0.09 }, "ST-SS304": { width: 0.50 },
   // --- concealed diverter: a tall trim plate (232x735 artwork), so it takes the
