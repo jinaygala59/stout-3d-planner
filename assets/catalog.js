@@ -257,7 +257,16 @@ const RAW_PRODUCTS = [
      dimple grid seen from the left is DUAL FUNCTION, rain and mist (p115), the
      nub grid seen from the right is SINGLE FUNCTION, rain (p117). */
   { code: "ST-BJ3F",  cat: "body-jet",    name: "Dancing Function Body Jet",  finishes: ["roseGold"], badge: "New", variant: "50 x 50 mm · brass · dancing flow" },
-  { code: "ST-BJ-02", cat: "body-jet",    name: "Single Function Body Jet",   finishes: ["gunGrey","brushedGold","roseGold","matteBlack"], variant: "50 x 50 mm · brass · rain" },
+  /* brushedGold dropped 2026-09-17. The file under that name was a ROSE GOLD
+     render: its band reads #b6927e against the jet's own rose gold at #b6937f —
+     one unit apart — where a real brushed gold in this range reads #b58a48
+     (ST-PLAIN, ST-C1012, ST-2FBJ all within a unit of each other). Put the two
+     side by side and they are the same copper jet. The catalogue does not list
+     brushed gold for this fitting either (p117/118: chrome, french gold,
+     brushed bronze, brushed rose gold, rose gold, matt black, gun grey), so the
+     swatch was offering a colour the factory does not ship AND showing the
+     wrong one. Artwork moved to _quarantine. */
+  { code: "ST-BJ-02", cat: "body-jet",    name: "Single Function Body Jet",   finishes: ["gunGrey","roseGold","matteBlack"], variant: "50 x 50 mm · brass · rain" },
   /* New 2026-09-16. The catalogue's CONCEALED BODY JET (p113/114), 130 x 120 x
      70.5 mm — a recessed brass box behind a flat square flange, which is a
      different fitting from the 16-jet panel this app files under ST-BJ-01.

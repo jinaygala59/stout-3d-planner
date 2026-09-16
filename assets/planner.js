@@ -2361,6 +2361,18 @@ function finishTexture(path, fid) {
    #c89a82 — hue 21-22, saturation 0.30-0.35 — where before the print it stood
    at #facbac, a cream plate between two pink fittings.
    Re-read these off the spout whenever METAL_BASE is re-solved. */
+/* BRUSHED GOLD WAS RE-MEASURED AGAINST THE NEW MANFRA RENDERS (2026-09-17) AND
+   LEFT WHERE IT IS. Two products print it badly — the Manfra basin mixers band
+   at #dcc9aa and #dec698, so far above the target that the tint clamps and
+   cannot desaturate far enough — and the obvious reading is that the target is
+   wrong. It is not. Measured across all 28 renders that offer the finish, the
+   range agrees with itself to within a unit or two: ST-PLAIN #b58a49, ST-C1012
+   #b68a48, ST-2FBJ #b58a48, and 25 of the 28 in that cluster, against this
+   0xb08847. The Manfra pair are the outliers because they are photographed as a
+   MIRROR-POLISHED gold rather than a brushed one — put them beside ST-PLAIN and
+   it is the lighting that differs, not the metal. Moving the target onto them
+   would break 25 products to flatter 2. It stays until the factory sends a
+   brushed-gold render of the Manfra that is lit like the rest of the range. */
 const ART_TONE = {   // sRGB band means of the built ST-PLAIN, White room
   chrome: 0xd9dad9, gunGrey: 0x8b8b8a, brushedGold: 0xb08847, champagne: 0xb09f87, gold: 0xd0bc85,
   polishedGold: 0xd9bd74, roseGold: 0xc69c84, brushedRoseGold: 0xc5977c,

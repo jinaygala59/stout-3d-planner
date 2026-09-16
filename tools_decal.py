@@ -23,9 +23,10 @@ S = 512    # decal size (square)
 JETS = {
     # square head, 4x4 nub grid. Its four finishes are FOUR DIFFERENT RENDERS
     # (different camera, different crop), so the face is measured per finish.
+    # brushedGold is gone (2026-09-17): that render was the jet's ROSE GOLD one
+    # filed under the wrong name — see catalog.js. Its quad went with it.
     "ST-BJ-02": { "mask": "square", "quads": {
         "roseGold":    [(148, 57), (294, 33), (292, 262), (148, 305)],     # 299x317, plate left
-        "brushedGold": [(139, 54), (275, 31), (273, 246), (139, 287)],     # 280x298, same render, smaller
         "gunGrey":     [(8, 108), (505, 205), (500, 858), (32, 676)],      # 900x861, seen from above-left, plate right
         "matteBlack":  [(240, 112), (465, 72), (465, 433), (240, 478)],    # 478x481, plate left, shot from the other side
     } },
