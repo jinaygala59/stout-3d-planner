@@ -3884,6 +3884,18 @@ function placeProduct(product, finishId, wall, frame, opts) {
         mesh.geometry.translate(0, 0, d);
         mesh.remove(rim);
         extrudeCutout(mesh, mesh.material.map, width, width * ar, d, finishHex(finishId, product), d);
+        /* AND THE SAME LIGHT THE TRIM PLATE ALREADY GETS.
+           A billboarded fitting kept a flat, unlit face while the trim beside it
+           and every modelled jet were lit, so one finish reached the wall as
+           three: measured in the Rose Gold room, the spout banded #c49a82
+           against #c89e86 on the diverter and #c9a088 on the jets, and it was
+           the spout that read pale. reliefFace does not relight the print — the
+           emission IS the photograph, untone-mapped, so no pixel and no colour
+           decision moves — it adds the bump and the sheen the others have. The
+           same band after: #c69d85, which is ART_TONE.roseGold to within a unit,
+           and saturation 0.329 against the jets' 0.326. Applies to every
+           billboarded category: spouts, wall taps, health faucets, basin mixers. */
+        reliefFace(mesh);
         if (sinkFor(wall)) mesh.add(wallBoss(finishHex(finishId, product), width, cfg, width * ar));
         const rec0 = placed.get(uid); if (rec0) rec0.halfW = width / 2;
       }
