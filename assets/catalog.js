@@ -11,8 +11,17 @@
    ========================================================================== */
 
 /* ---- FINISHES (metal tones) ---------------------------------------------- */
+/* THE CHIPS ARE THE CATALOGUE'S OWN COLOURS (2026-09-19). Every `tone` below
+   is the MEDIAN of the plain spout's pixels in that finish, read off "STOUT
+   July 2026" pages 121-122 — the same two pages METAL_TONE is measured on, and
+   the same mask. Median and not the 40-90 band the renderer targets, because a
+   chip is a flat fill and the band is the mean of a LIT photograph: matt black
+   bands at #5f5f5f, which is the right number for a rendered spout and a mid
+   grey square in the picker. The two stops either side are the median at 1.22
+   and 0.74, so a chip keeps its shape and states the range's colour.
+   Brushed gold is untouched — it is not on those pages; see METAL_TONE. */
 const FINISHES = {
-  chrome:        { id: "chrome",        name: "Chrome",          swatch: "linear-gradient(135deg,#f4f6f8,#c2c8ce 45%,#8f979e 55%,#e8ebee)", tone: "#c9ced3" },
+  chrome:        { id: "chrome",        name: "Chrome",          swatch: "linear-gradient(135deg,#ffffff,#d1d1d2 52%,#9b9b9b)", tone: "#d1d1d2" },
   brushedGold:   { id: "brushedGold",   name: "Brushed Gold",    swatch: "linear-gradient(135deg,#e7cd92,#c39b4e 55%,#a67c30)",             tone: "#c6a15b" },
   /* STOUT'S OWN FINISH NAMES (2026-09-11, asked for directly).
      These are not ours to invent. The factory states them in its own document
@@ -33,9 +42,9 @@ const FINISHES = {
      Only the display NAME changes. The ids stay as they are: they key the
      artwork filenames, the share link and every saved design, and renaming one
      would strand rooms people have already sent. */
-  gold:          { id: "gold",          name: "French Gold",            swatch: "linear-gradient(135deg,#f6de9b,#d4af37 52%,#a9832b)",             tone: "#d4af37" },
-  matteBlack:    { id: "matteBlack",    name: "Matt Black",     swatch: "linear-gradient(135deg,#2b2b2e,#141416)",                        tone: "#1d1d20" },
-  roseGold:      { id: "roseGold",      name: "Rose Gold",       swatch: "linear-gradient(135deg,#e6c1b6,#cf9184 55%,#b4756a)",             tone: "#cf9a8c" },
+  gold:          { id: "gold",          name: "French Gold",            swatch: "linear-gradient(135deg,#ffffcf,#ead1aa 52%,#ad9b7e)",             tone: "#ead1aa" },
+  matteBlack:    { id: "matteBlack",    name: "Matt Black",     swatch: "linear-gradient(135deg,#313232,#282929 52%,#1e1e1e)",                        tone: "#282929" },
+  roseGold:      { id: "roseGold",      name: "Rose Gold",       swatch: "linear-gradient(135deg,#ffdcc8,#e5b4a4 52%,#a98579)",             tone: "#e5b4a4" },
   /* THIS TABLE IS THE CLIENT'S RANGE, AND ONLY IT (2026-09-05).
      The Drive folder names every file by finish code — BG, BRG, BV, CP, FG, GG,
      MB, RG (some carry a trailing G: BVG, CPG, MBG, QHG, RGG) — which is eight
@@ -53,9 +62,9 @@ const FINISHES = {
      Before adding a finish here, find its code in the Drive filenames. */
   // added with the 2026-09 Drive range — these are real finishes in the
   // photography (filename codes BRG / BV / GG) that had no entry here
-  brushedRoseGold:{id: "brushedRoseGold",name: "Brushed Rose Gold",swatch: "linear-gradient(135deg,#f0cfc2,#d7a291 55%,#b87d6c)",            tone: "#d9a794" },
-  champagne:     { id: "champagne",     name: "Brushed Bronze",       swatch: "linear-gradient(135deg,#eee0c2,#d8c69c 55%,#b8a377)",             tone: "#d8c69c" },
-  gunGrey:       { id: "gunGrey",       name: "Gun Grey",        swatch: "linear-gradient(135deg,#d5d6d2,#a9aaa5 52%,#7d7e7a)",             tone: "#a9aaa5" },
+  brushedRoseGold:{id: "brushedRoseGold",name: "Brushed Rose Gold",swatch: "linear-gradient(135deg,#fbb99b,#ce987f 52%,#98705e)",            tone: "#ce987f" },
+  champagne:     { id: "champagne",     name: "Brushed Bronze",       swatch: "linear-gradient(135deg,#d8c2a5,#b19f87 52%,#837664)",             tone: "#b19f87" },
+  gunGrey:       { id: "gunGrey",       name: "Gun Grey",        swatch: "linear-gradient(135deg,#9d9d9d,#818181 52%,#5f5f5f)",             tone: "#818181" },
   /* POLISHED GOLD (2026-09-08, asked for directly: "this is the colour in all
      the showers instead of that typical yellow").
      `gold` is the folder's FG render, and on the overhead showers it is the

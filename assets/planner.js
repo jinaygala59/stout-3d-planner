@@ -1248,16 +1248,31 @@ const finishRough = fid => FINISH_ROUGH[fid] == null ? 0.20 : FINISH_ROUGH[fid];
    the folder ships in all eight and is a plain shape with no black face or
    printed dial to drag an average around. Every modelled piece in a finish now
    starts from the same colour, and that colour is the range's own. */
+/* RE-MEASURED OFF THE PRINTED CATALOGUE (2026-09-19, asked for directly):
+   "STOUT July 2026", W.E.O 1st July 2026, pages 121-122, PLAIN SPOUT. That is
+   the same SKU this table was always measured on, and the catalogue shows it in
+   seven finishes on two facing pages under ONE lighting setup — which is why it
+   is the reference and a page of assorted products is not. Method unchanged
+   from the note above: mask the product off the page ground, erode the mask 4px
+   so the print halo cannot lift a dark finish, take the linear mean of the
+   40-90% luminance band.
+   BRUSHED GOLD IS NOT ON THOSE PAGES and is therefore NOT re-measured — it
+   keeps its old value. The catalogue carries it on three other products and
+   they do not agree with each other: transferred onto this page's lighting by
+   the finishes they share, ST-WM-001 (p86) gives #ae9d6b and ST-MN-011 (p78)
+   gives #d0c5ad, and on that second page brushed gold is within 8 of French
+   gold, which it plainly is not. Ask for a brushed gold plain spout rather than
+   splitting the difference. */
 const METAL_TONE = {
-  chrome: 0xcdcece, gunGrey: 0x818181, brushedGold: 0xa57c3f, champagne: 0xaa9c86,
-  gold: 0xd6c28d, roseGold: 0xd09f86, brushedRoseGold: 0xbf967c,
+  chrome: 0xd5d6d6, gunGrey: 0x8e8e8e, brushedGold: 0xa57c3f, champagne: 0xbeac93,
+  gold: 0xe8d8b7, roseGold: 0xe0c0b1, brushedRoseGold: 0xdda78a,
   /* This table is the MEASUREMENT and nothing else — it is what the PDF swatch
      prints and what a colour is checked against. It is no longer what the
      shader is handed: that is METAL_BASE below, solved per finish so the wall
      shows these numbers. Matt black was once scaled down here (0x343434) to
      compensate for its diffuse lighting; that compensation now lives in its
      base like every other finish's, and the measured value stands. */
-  matteBlack: 0x434343,
+  matteBlack: 0x5f5f5f,
   polishedGold: 0xd8bd7c,          // measured with the rest — see catalog.js
 };
 /* WHAT THE SHADER IS HANDED SO THAT THE WALL SHOWS METAL_TONE.
@@ -1278,7 +1293,16 @@ const METAL_TONE = {
    These are the solved values (linear bytes, for setHex). Re-solve them if the
    fitting env, the roughness table, the tone mapping or the exposure changes:
    they are a measurement of THIS pipeline, not a description of the metal. */
-const METAL_BASE = { chrome: 0xf5ffff, gunGrey: 0x3b3c3d, brushedGold: 0x6a3707, champagne: 0x725a3e, gold: 0xb98938, polishedGold: 0xd88b26, roseGold: 0x9a523a, brushedRoseGold: 0x9a4e33, matteBlack: 0x151617 };
+/* RE-SOLVED against the catalogue tones above (2026-09-19) by exactly the
+   method this note describes: ST-PLAIN in the White room, its own pixels masked
+   by raycast, the base stepped in linear light until the rendered 40-90 band
+   equals METAL_TONE. Converged within 6 of 255 on every finish and within 2 on
+   five of them: chrome #d6d7d7 for #d5d6d6, gunGrey #8e8d8d for #8e8e8e,
+   champagne #bead94 for #beac93, gold #e6d7b8 for #e8d8b7, roseGold #debfb0 for
+   #e0c0b1, brushedRoseGold #ddaa8f for #dda78a, matteBlack #61615f for #5f5f5f
+   — which is why matt black's base did not move: it was already there.
+   brushedGold is unsolved for the same reason its tone is unmeasured. */
+const METAL_BASE = { chrome: 0xd9e4ef, gunGrey: 0x26272b, brushedGold: 0x6a3707, champagne: 0x6d4d2c, gold: 0xf4b357, polishedGold: 0xd88b26, roseGold: 0xc76b51, brushedRoseGold: 0xbc4422, matteBlack: 0x151617 };
 /* How far fittingEnv's studio is pushed away from its own mean. See the note
    where it is applied: this is what stops every modelled fitting rendering flat. */
 const STUDIO_CONTRAST = 2.2;
@@ -2439,12 +2463,16 @@ function finishTexture(path, fid) {
    would break 25 products to flatter 2. It stays until the factory sends a
    brushed-gold render of the Manfra that is lit like the rest of the range. */
 const ART_TONE = {   // sRGB band means of the built ST-PLAIN, White room
-  chrome: 0xd9dad9, gunGrey: 0x8b8b8a, brushedGold: 0xb08847, champagne: 0xb09f87, gold: 0xd0bc85,
-  polishedGold: 0xd9bd74, roseGold: 0xc69c84, brushedRoseGold: 0xc5977c,
+  /* Seven of these are now the catalogue's own numbers (see METAL_TONE): with
+     METAL_BASE re-solved, the built spout bands AT its measured tone, so the
+     print target and the metal target are one number per finish instead of two
+     that had drifted apart. brushedGold keeps its separately measured value. */
+  chrome: 0xd5d6d6, gunGrey: 0x8e8e8e, brushedGold: 0xb08847, champagne: 0xbeac93, gold: 0xe8d8b7,
+  polishedGold: 0xd9bd74, roseGold: 0xe0c0b1, brushedRoseGold: 0xdda78a,
   /* matt black is a coat, not a mirror, and how bright it bands on the wall
      depends on the shape it is on (spout 0x62, jets 0x3e); the print aims at the
      measured coat colour and sits between them */
-  matteBlack: 0x454545,
+  matteBlack: 0x5f5f5f,
 };
 const srgbToLin = v => v <= 0.04045 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
 const artTone = fid => {
