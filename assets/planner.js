@@ -15,6 +15,21 @@ if (!window.THREE) { $("#loading").textContent = "3D engine failed to load."; re
 const RW = 3.0, RH = 2.65, RD = 3.0;                 // width, height, depth
 const HX = RW / 2, HZ = RD / 2;                       // half extents
 const OFF = 0.025;                                    // how far a panel sits off its wall
+/* THE VALVE LANE. Everything in a shower set lines up on one depth: the valve
+   itself, the four jets that straddle it, the spout under it, the arm above it
+   — and, since 2026-09-19 at the client's ask, the overhead plate too. It was a
+   -0.25 typed into six separate rows, and the overhead was the one that had
+   drifted: it sat at z -0.55 and, because the ceiling anchor ignored `x`
+   entirely, at x 0 — the middle of the ROOM rather than over the shower. From
+   the floor that put the rain head a long stride in front of the valve and well
+   to its left, which is what the client drew a line between. One constant, so
+   the lane cannot come apart a row at a time again. */
+const VALVE_Z = -0.25;
+/* and how far the overhead plate hangs OUT from the shower wall. You stand
+   under the head facing the valve, so this is roughly shoulder-to-wall: 0.70 m
+   off the tiles at x 1.492, which also keeps the 0.62 m plate (x 0.49 to 1.11)
+   clear of both the wall and the two ceiling spots at x 0.82. */
+const CEIL_OUT = 0.80;
 /* How deep a fitting's BODY has to run to actually meet the wall. A piece is
    anchored OFF (2.5 cm) clear of its wall — the standoff that stops artwork
    z-fighting with the tiles — but the body we build for it only ran forward
@@ -67,7 +82,7 @@ const CAT3D = {
   // these overlap in both z and y, whatever their artwork's aspect.
   // Only the showers stay put: overhead on the ceiling, wall heads on the back
   // wall centre-line, both over the drain at x=0.
-  "rain-shower":  { mount: "ceiling", width: 0.62, z: -0.55 },
+  "rain-shower":  { mount: "ceiling", width: 0.62, z: VALVE_Z, x: CEIL_OUT },
   // --- the right wall, back → front ---
   /* A body jet is a SHAPE that stands proud of the tiles, and every jet render in
      the range bar the 16-jet panel is shot from three quarters — plate at one
@@ -122,7 +137,7 @@ const CAT3D = {
      under the plate and the piece reads mounted with the swing OFF, which is
      the version to keep: same fix, and the four jets stop disagreeing with each
      other about where the camera is. */
-  "body-jet":     { mount: "right", width: 0.15, z: -0.25, y: 1.34, billboard: false },
+  "body-jet":     { mount: "right", width: 0.15, z: VALVE_Z, y: 1.34, billboard: false },
   /* THE SPOUT SITS UNDER THE VALVE (asked for directly). It was on its own lane
      at z -0.72, a third of a metre behind the jets — read as a separate fitting
      on a separate part of the wall rather than the bottom of one column. On the
@@ -137,7 +152,7 @@ const CAT3D = {
        jet grid   y 1.126..1.551   the trim sits inside it, which is the point
      — 10 cm of daylight under the trim. At the trim's old y 1.00 the spout's top
      edge and the trim's bottom edge met at 0.82, which is what the lift buys. */
-  "bath-spout":   { mount: "right", width: 0.44, z: -0.25, y: 0.78, billboard: true },
+  "bath-spout":   { mount: "right", width: 0.44, z: VALVE_Z, y: 0.78, billboard: true },
   /* THE VALVE IS ON THE RIGHT WALL, IN THE MIDDLE OF THE JET GRID. This is the
      client's own layout and it does not move: the diverter at the centre of the
      wall with the body jets straddling it, which is how their showers are
@@ -147,32 +162,39 @@ const CAT3D = {
      opening camera, which foreshortens any flat plate on it. The fitting is
      flush: its rotation measures exactly -90 against a wall at -90. Use the
      Right view tab to see the wall square-on. Do not "fix" it by moving it. */
-  "thermostatic": { mount: "right", width: 0.50, z: -0.25, y: 1.34, panel: true },
+  "thermostatic": { mount: "right", width: 0.50, z: VALVE_Z, y: 1.34, panel: true },
   /* The valve lane is a single POINT, not a column: z -0.25, y 1.34, the centre
      of the jet grid. Both trim types answer to it, because on the wall they ARE
      one fitting — picking a second one out of the Diverters list replaces the
      first rather than joining it (placeProduct, `solo`). It is clear of the
      spout, which owns z -0.94..-0.50 at 0.63..0.93, and of the jets, which own
      z ±0.32 from this centre. */
-  "diverter":     { mount: "right", width: 0.18, z: -0.25, y: 1.34, panel: true },
+  "diverter":     { mount: "right", width: 0.18, z: VALVE_Z, y: 1.34, panel: true },
   "health-faucet":{ mount: "right", width: 0.20, y: 0.72, z: 0.52, billboard: true },  // shattaf beside the WC (wcZ 0.95)
   // --- the odds and ends the rail doesn't offer stay on the back wall, right
   //     end, clear of the niche (0.44–0.84) and of the vanity, which owns the left
   "wall-tap":     { mount: "back", width: 0.34, y: 0.42, x: 1.16, billboard: true },  // bucket tap, near the floor
-  /* THE HANDSET GOES IN THE BACK WALL'S RIGHT CORNER — the client's call, and it
-     overrides the plumbing argument that put it on the right wall: a hand shower
-     is fed off the diverter, so the tidy answer was the wall the valve set is
-     on. On the back wall it reads square-on from the opening view instead of
-     foreshortened along the side wall, which is what matters here.
-     x 1.25 IS the corner: positionOnWall keeps a 0.25 m margin off every wall
-     edge, so 1.25 is as far right as anything can be placed and anything larger
-     is clamped back to it. Clear of everything already on that wall — the niche
-     ends at 0.84, the waste sits at 0.86, and the bucket tap below at x 1.16
-     tops out at 0.56, well under this.
+  /* THE HANDSET GOES BESIDE THE VALVE, ON ITS LEFT (2026-09-19, asked for
+     directly, with the corner one circled). It was in the back wall's right
+     corner, which read as a fitting parked on a different wall from the set it
+     belongs to. This also puts it back where the plumbing wanted it all along:
+     a hand shower is fed off the diverter — off the button spout's own button
+     when that is the pick, see feedsHandset — so it belongs on the wall the
+     valve set is on.
+     LEFT is -z on this wall. Standing in the room facing the right wall, +z is
+     to your right: the WC sits at z 0.95 and appears at the right of the
+     opening view, the corner with the back wall at -1.5 appears at the left.
+     z -0.86 is the first clear lane past the valve stack. That stack owns
+     -0.645..0.145 at its widest — the left jet of a four-set is z -0.57 and the
+     trim is 0.50 wide — and the handset at 0.17 spans -0.945..-0.775, so 0.13 m
+     of tile is left between it and the jet. It is also INSIDE the wet tray
+     (z -1.48..-0.43), which is where a handset is reachable from; the old
+     corner was outside it. Well within the 0.25 m edge margin positionOnWall
+     keeps (usable z -1.25..1.25), so nothing clamps.
      y 1.10 puts the bracket at 1.06, which is where a handset holder is actually
      set. No swing: it hangs in a bracket, and a bracket does not follow the
      camera. */
-  "hand-shower":  { mount: "back", width: 0.17, y: 1.10, x: 1.25, billboard: false },
+  "hand-shower":  { mount: "right", width: 0.17, y: 1.10, z: -0.86, billboard: false },
   // over the basin, which is the wall-hung vanity on the LEFT (COUNTER.x -1.06)
   // — the only place a basin mixer can go, whatever the rest of the layout does.
   // The deck-mounted ones override this with mount:"counter".
@@ -360,7 +382,7 @@ const SKU3D = {
      is the artwork path's known limit and the reason the jets and the plain
      spout moved to real geometry; this SKU has no OBJ in the client's RAR yet,
      so it stays a photograph until one arrives. */
-  "ST-SARM":   { width: 0.40, mount: "right", y: 2.05, z: -0.25 },
+  "ST-SARM":   { width: 0.40, mount: "right", y: 2.05, z: VALVE_Z },
   /* The lever mixer and the diverter spout are both bath fillers and both take
      the category's own spot — right wall, filler height — so they need only a
      width. 0.26 is by analogy with ST-WM-002, whose render is framed the same
@@ -1723,7 +1745,15 @@ function buildBathroomDetails(t) {
   // It runs from the shower column on the back wall to the RIGHT wall, because
   // that is now where the body jets and spouts are — a corner enclosure. It has
   // an open edge on two sides only, so those are the only two that get a trim.
-  const zoneX0 = -0.65, zoneD = 1.05, zoneZ = -HZ + zoneD / 2 + 0.02;
+  /* DEPTH FOLLOWS THE VALVE LANE, it is not a number of its own. The tray was
+     built 1.05 m deep around jets that sat at z -0.96; the jets have since moved
+     forward to the lane at VALVE_Z and the tray did not follow, so it ended at
+     z -0.43 with the whole jet set standing in front of it. Putting the overhead
+     plate on the lane too (2026-09-19) made that plainly wrong: the rain fell on
+     dry floor. The front edge is now a stride clear of the lane, so the valve,
+     the jets, the spout and the plate above them are all inside the wet zone. */
+  const zoneX0 = -0.65, zoneFront = VALVE_Z + 0.32;
+  const zoneD = zoneFront + HZ - 0.02, zoneZ = -HZ + zoneD / 2 + 0.02;
   const zoneW = HX - zoneX0, zoneCx = zoneX0 + zoneW / 2;
   const wetTile = new THREE.MeshStandardMaterial({
     color: F.wet || F.mat, roughness: 0.22, metalness: 0.1, envMapIntensity: 1.25,
@@ -1740,7 +1770,7 @@ function buildBathroomDetails(t) {
   /* linear floor drain in the shower zone */
   const drain = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.008, 0.07),
     new THREE.MeshStandardMaterial({ color: F.drain, metalness: 0.85, roughness: 0.3, envMapIntensity: 1.2 }));
-  drain.position.set(zoneCx, 0.021, -1.05); grp.add(drain);   // centred in the tray
+  drain.position.set(zoneCx, 0.021, zoneZ); grp.add(drain);   // centred in the tray, and now actually so
   for (let i = -3; i <= 3; i++) {
     const slot = new THREE.Mesh(new THREE.BoxGeometry(0.008, 0.004, 0.05),
       new THREE.MeshStandardMaterial({ color: 0x1d1c1a, roughness: 0.7 }));
@@ -3424,6 +3454,31 @@ function modelInstance(model, spec, hex, rule, rough, fid) {
   return inst;
 }
 
+/* The part's box over a SLICE of its length only.
+   partBox measures a whole named part, and for this spout that part is the
+   flange AND the tube: the flange is a fifth wider and a centimetre taller than
+   the tube behind it. Anything sized or seated off the whole box therefore comes
+   out too wide and floating in the air above the tube it is supposed to sit on,
+   which is what the button did. This measures the section that is actually
+   under the thing being added. Vertices, not bounding boxes, because a box is
+   exactly the thing that cannot see a step in the profile. */
+function partSlabBox(root, name, z0, z1) {
+  root.updateMatrixWorld(true);
+  const inv = new THREE.Matrix4().copy(root.matrixWorld).invert();
+  const box = new THREE.Box3(), m = new THREE.Matrix4(), v = new THREE.Vector3();
+  root.traverse(o => {
+    if (!o.isMesh || !o.geometry || o.name === "faceDecal" || o.name === "contactShadow") return;
+    if (name && o.name !== name) return;
+    const pos = o.geometry.getAttribute("position"); if (!pos) return;
+    m.multiplyMatrices(inv, o.matrixWorld);
+    for (let i = 0; i < pos.count; i++) {
+      v.fromBufferAttribute(pos, i).applyMatrix4(m);
+      if (v.z >= z0 && v.z <= z1) box.expandByPoint(v);
+    }
+  });
+  return box;
+}
+
 /* GEOMETRY THE EXPORT DOES NOT CARRY, built in REAL METRES and added only once
    the body is already fitted and seated — so it cannot disturb either, and the
    piece it is added to installs exactly as the bare body would. The frame here
@@ -3437,14 +3492,30 @@ function addModelPart(inst, kind, mat) {
      rather than absolute millimetres, so the button follows if the spout is ever
      re-fitted to another length. */
   const b = partBox(inst, "body");
-  const bw = b.max.x - b.min.x, bl = b.max.z - b.min.z;
-  const CUBE = bw * 0.78, COLLAR = bw * 0.86, COLLAR_H = 0.004, ALONG = 0.42;
+  const bl = b.max.z - b.min.z;
+  const ALONG = 0.42;
   const z = b.min.z + bl * ALONG;
+  /* THE BUTTON STANDS ON THE TUBE, NOT ON THE WHOLE BODY. Measured off the
+     export: the wall flange is 1.29 units across and the tube behind it 0.86,
+     and the flange's top sits 0.18 proud of the tube's — a fifth of the tube's
+     own width. Sizing and seating the button off partBox("body") therefore made
+     it wider than the spout and stood it a centimetre clear in the air, joined
+     to nothing (2026-09-19, asked for directly: "the button should be joined
+     with the spout"). Both numbers now come from the tube's own section at the
+     station the button occupies. */
+  const tube = partSlabBox(inst, "body", b.min.z + bl * 0.30, b.max.z);
+  const tw = tube.isEmpty() ? (b.max.x - b.min.x) : (tube.max.x - tube.min.x);
+  const CUBE = tw * 0.84, COLLAR = tw * 0.92, COLLAR_H = 0.005;
+  const seatBox = partSlabBox(inst, "body", z - CUBE / 2, z + CUBE / 2);
+  const top = seatBox.isEmpty() ? (tube.isEmpty() ? b.max.y : tube.max.y) : seatBox.max.y;
   const g = new THREE.Group(); g.name = "button";
-  const collar = new THREE.Mesh(new THREE.BoxGeometry(COLLAR, COLLAR_H, COLLAR), mat);
-  collar.position.set(0, b.max.y + COLLAR_H / 2, z);
+  /* Both pieces run INTO the tube rather than resting on it: a collar half
+     buried in the top face, and a cube whose base starts below the collar's.
+     A joint you can see a line of daylight through is the fault being fixed. */
+  const collar = new THREE.Mesh(new THREE.BoxGeometry(COLLAR, COLLAR_H * 2, COLLAR), mat);
+  collar.position.set(0, top, z);
   const cube = new THREE.Mesh(new THREE.BoxGeometry(CUBE, CUBE * 0.92, CUBE), mat);
-  cube.position.set(0, b.max.y + COLLAR_H + CUBE * 0.46, z);
+  cube.position.set(0, top + COLLAR_H + CUBE * 0.46 - 0.002, z);
   [collar, cube].forEach(m => { m.castShadow = false; m.userData.metal = true; g.add(m); });
   inst.add(g);
   return g;
@@ -3892,7 +3963,9 @@ function placeProduct(product, finishId, wall, frame, opts) {
 
 function defaultSpot(wall, cfg) {
   if (wall === "counter") return new THREE.Vector3(COUNTER.x, COUNTER.y, COUNTER.z);
-  if (wall === "ceiling") return new THREE.Vector3(0, WALLS.ceiling.val, cfg.z != null ? cfg.z : -0.5);
+  // x was pinned at 0 here, so a ceiling plate always hung in the middle of
+  // the room however its row was written. Read it like every other wall does.
+  if (wall === "ceiling") return new THREE.Vector3(cfg.x != null ? cfg.x : 0, WALLS.ceiling.val, cfg.z != null ? cfg.z : -0.5);
   if (wall === "left")  return new THREE.Vector3(WALLS.left.val, cfg.y != null ? cfg.y : 1.3, cfg.z != null ? cfg.z : 0);
   if (wall === "right") return new THREE.Vector3(WALLS.right.val, cfg.y != null ? cfg.y : 1.3, cfg.z != null ? cfg.z : 0);
   return new THREE.Vector3(cfg.x != null ? cfg.x : 0, cfg.y != null ? cfg.y : 1.3, WALLS.back.val);   // back
@@ -4818,16 +4891,21 @@ function faceWall(wall) {
     left:  { pos: [0.75, 1.52, 0.70], tgt: [-HX, 1.34, 0.15] },
     right: { pos: [-0.55, 1.52, 0.30], tgt: [HX, 1.34, -0.55] },
     /* THE SHOWER, which is the one thing the three wall views never show: the
-       overhead sits on the CEILING at x 0, z -0.55, and all three look level or
-       slightly down. This one stands back at the room's open front and tilts up,
-       so the overhead, the valve on the right wall and the jets are in one
-       frame — the shower as a set rather than three separate fittings.
+       overhead is on the CEILING and all three of those look level or slightly
+       down. This one stands back at the room's open front and tilts up, so the
+       overhead, the valve on the right wall and the jets are in one frame — the
+       shower as a set rather than three separate fittings.
        It cannot simply point at the ceiling: OrbitControls clamps the polar
        angle (maxPolarAngle 0.62pi), so a camera more than ~21 degrees below its
        target is snapped back the moment update() runs. Target y 1.95 keeps the
        tilt at ~13 degrees and still carries the overhead near the top of frame,
-       26 degrees of half-FOV above the look direction. */
-    shower: { pos: [0.15, 1.42, 1.45], tgt: [0.32, 1.98, -0.70] },
+       26 degrees of half-FOV above the look direction.
+       IT FOLLOWS THE PLATE. The overhead used to hang at x 0, z -0.55 and this
+       view was aimed there by hand; moving it onto the valve lane (CEIL_OUT,
+       VALVE_Z) left the view pointing at bare ceiling with the shower off in
+       the corner of frame. Written off the same two constants, so the camera
+       cannot be left behind the next time the plate moves. */
+    shower: { pos: [CEIL_OUT - 0.55, 1.42, 1.45], tgt: [CEIL_OUT - 0.18, 1.98, VALVE_Z - 0.35] },
   }[wall] || null;
   if (!targets) return;
   const tgt = new THREE.Vector3(...targets.tgt);
