@@ -191,8 +191,11 @@ const CAT3D = {
      four-jet set reaches -0.662. The handset at 0.17 spans -0.945..-0.775, which
      leaves 113 mm of tile to the nearest jet and 137 mm to the trim — an
      installed gap, and it holds for the widest trim the range has. It is also
-     INSIDE the wet tray (z -1.48..-0.43), which is where a handset is reachable
-     from; the old corner was outside it. Well within the 0.25 m edge margin
+     INSIDE the wet tray, which is where a handset is reachable from; the old
+     corner was outside it. (The tray ran z -1.48..-0.43 when that was written
+     and now runs -1.48..0.07 — its depth follows VALVE_Z since the overhead
+     joined the lane. The handset is inside either way; the figure is refreshed
+     so the next reader does not measure against a tray that has moved.) Well within the 0.25 m edge margin
      positionOnWall keeps (usable z -1.25..1.25), so nothing clamps.
      y 1.10 puts the bracket at 1.06, which is where a handset holder is actually
      set. No swing: it hangs in a bracket, and a bracket does not follow the
