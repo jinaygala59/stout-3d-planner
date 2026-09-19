@@ -30,8 +30,19 @@ JETS = {
         "gunGrey":     [(8, 108), (505, 205), (500, 858), (32, 676)],      # 900x861, seen from above-left, plate right
         "matteBlack":  [(240, 112), (465, 72), (465, 433), (240, 478)],    # 478x481, plate left, shot from the other side
     } },
-    # rounded-square head, three nozzles on a black face
-    "ST-BJ3F":  { "quad": [(648, 90), (893, 47), (882, 625), (650, 668)], "mask": "rounded", "radius": 0.13 },
+    # rounded-square head, three nozzles. All eight renders are 900x701 off the
+    # same camera, so ONE quad cuts them all.
+    # ROSE GOLD IS SKIPPED, and it is the only skip in this file. Seven of the
+    # eight renders show the face in the SKU's own metal with the nozzle bosses
+    # raised in it; the rose gold one alone shows a BLACK face with black
+    # nozzles — a different state of the product, not a different finish of the
+    # same one. Cut as a decal it put a black square on a rose gold jet, which
+    # measured 39 of 255 darker than the trim plate beside it, against +12 for
+    # the bare modelled head. That is the single widest colour gap in the range
+    # and it is in the artwork, not the renderer. Ask the factory for a rose
+    # gold render lit like the other seven and delete this skip.
+    "ST-BJ3F":  { "quad": [(648, 90), (893, 47), (882, 625), (650, 668)], "mask": "rounded", "radius": 0.13,
+                  "skip": {"roseGold"} },
     # round head: top / right / bottom / left extremes of the disc's ellipse
     "ST-J06":   { "quad": [(95, 52), (250, 228), (152, 409), (2, 235)], "mask": "round" },
 }
@@ -86,6 +97,9 @@ def main():
     for code, spec in JETS.items():
         if only and code not in only: continue
         for src in sorted(glob.glob(os.path.join("assets", "products", code + "-*.png"))):
+            if os.path.basename(src)[:-4].split("-")[-1] in spec.get("skip", ()):
+                print("   skip", os.path.basename(src)[:-4], "(see the note beside its quad)")
+                continue
             out = cut(src, spec)
             base = os.path.basename(src)[:-4]
             out.save(os.path.join(OUT, base + ".png"))

@@ -3555,18 +3555,26 @@ function applyDecals(holder, product, fid, spec) {
   const oldTex = old.length ? old[0].material.map : null;
   old.forEach(o => { o.parent.remove(o); o.geometry.dispose(); o.material.dispose(); });
   if (oldTex) oldTex.dispose();
-  /* NO PRINT NORMALISATION ON A DECAL — pass no finish id, so finishTexture
-     skips normaliseArtwork. That correction exists for a product PHOTOGRAPH
-     standing in for the whole product: it reads the picture's 40-90% luminance
-     band, assumes that band is the metal, and scales it to the finish's one
-     colour so a pale render and a dark one of the same finish agree on the wall.
-     A face decal is not that. It is the spray face only, laid on metal this app
-     has already coloured correctly — and on the dancing jet that face is a BLACK
-     rounded square, so the band it measures contains no metal at all. Asked to
-     make black read as rose gold, the correction returned a tint of
-     [1.50, 1.09, 0.87] and the decal came out #f4b28d: a flat peach square
-     sitting on a correct #9a523a jet, which is what the client saw. */
-  const tex = finishTexture(path);
+  /* THE DECAL TAKES THE PRINT TOO — reversed 2026-09-19, on measurement.
+     This used to pass no finish id, so finishTexture skipped normaliseArtwork.
+     The reason given was the dancing jet: its rose gold face is a BLACK rounded
+     square, the band the print measures contained no metal, and asked to make
+     black read as rose gold the old single 0.5-1.8 clamp returned
+     [1.50, 1.09, 0.87] — a flat peach square on a correct jet. That reasoning
+     was sound and the clamp it was written against is gone: BRIGHT and CHROMA
+     are separate now (0.40-3.2 and 0.80-1.25), and a chroma limited to +-25%
+     cannot invent a hue out of black.
+     What the print buys, measured as the jet's mean luminance minus the trim
+     plate's in the same room, over the six finishes ST-D5018 actually offers:
+       chrome +30 -> +14, gunGrey +23 -> +2, champagne +36 -> +5,
+       brushedRoseGold +42 -> +5, roseGold -39 -> -34, matteBlack -34 -> -26.
+     Every finish improves, none degrades, and the mean gap halves from 30 to
+     14 of 255. A decal is the spray face of a fitting whose body this app has
+     already coloured to the finish; printing it is what stops the face and the
+     body being two statements of one metal.
+     The black rose gold face is now handled where it belongs — the render is
+     an outlier and tools_decal.py skips it; see the note beside its quad. */
+  const tex = finishTexture(path, fid);
   holder.children.forEach(inst => {
     if (inst.name !== "ProductRoot" || !inst.getObjectByName(spec.decal.on)) return;
     const b = partBox(inst, spec.decal.on);
