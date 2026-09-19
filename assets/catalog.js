@@ -143,9 +143,18 @@ const RAW_PRODUCTS = [
   /* "Regale Concealed Diverter" was ours. The catalogue calls it TWO WAY
      DIVERTER (July 2026 edition, p35), which is also what its two outlets say,
      so the catalogue's word wins. */
-  { code: "ST-D5017", cat: "diverter",    name: "Two-Way Diverter",            finishes: ["chrome","gunGrey","brushedGold","champagne","gold","roseGold","brushedRoseGold","matteBlack"],                                          badge: "Signature", variant: "square plate · single lever", outlets: 2 },
+  { code: "ST-D5017", cat: "diverter",    name: "Two-Way Diverter",            finishes: ["chrome","gunGrey","champagne","gold","roseGold","brushedRoseGold","matteBlack"],                                          badge: "Signature", variant: "square plate · single lever", outlets: 2 },
 
-  /* ---- Thermostatic diverter panels, the whole D-series ----
+  /* NO BRUSHED GOLD AND NO FRENCH GOLD ON A DIVERTER (2026-09-19, asked for
+     directly off the picker). The one-palette pass gave every product in the
+     range the same eight finishes; on step 1 that is two more than the factory
+     sells. The catalogue prints six codes for every panel in this block — RG,
+     CP, MB, BRG, BV, GG — and no BG or FG line on any of them, and the same for
+     the concealed diverters below. The single exception is ST-D5017, which does
+     print CODE: ST-D5017-FG, so it keeps French Gold and loses only brushed
+     gold. If the palette is ever levelled again, level it around this: a swatch
+     the client can pick and the factory cannot ship is worse than a short row.
+     ---- Thermostatic diverter panels, the whole D-series ----
      Codes, names, function counts and finishes are the client's STOUT July 2026
      catalogue (W.E.O 1st July 2026), read off the page each product sits on.
      That edition is the 2026 one re-priced: same 115 codes, nothing added or
@@ -160,9 +169,9 @@ const RAW_PRODUCTS = [
      `outlets` is the page's own "PUSH BUTTON for N outlets" / "Control Unit For
      N Outlets" line — the number the valve budget spends, not the number of
      buttons on the plate. */
-  { code: "ST-D5018", cat: "thermostatic", name: "Axora 6-Function Thermostatic Diverter",  finishes: ["chrome","gunGrey","brushedGold","champagne","gold","roseGold","brushedRoseGold","matteBlack"], badge: "Bestseller", variant: "push button · flow control · Vernet cartridge", outlets: 6 },
-  { code: "ST-D5019", cat: "thermostatic", name: "Axora 4-Function Thermostatic Diverter",  finishes: ["chrome","gunGrey","brushedGold","champagne","gold","roseGold","brushedRoseGold","matteBlack"], variant: "push button · flow control · Vernet cartridge", outlets: 4 },
-  { code: "ST-D5020", cat: "thermostatic", name: "Axora 3-Function Thermostatic Diverter",  finishes: ["chrome","gunGrey","brushedGold","champagne","gold","roseGold","brushedRoseGold","matteBlack"], variant: "push button · flow control · Vernet cartridge", outlets: 3 },
+  { code: "ST-D5018", cat: "thermostatic", name: "Axora 6-Function Thermostatic Diverter",  finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], badge: "Bestseller", variant: "push button · flow control · Vernet cartridge", outlets: 6 },
+  { code: "ST-D5019", cat: "thermostatic", name: "Axora 4-Function Thermostatic Diverter",  finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "push button · flow control · Vernet cartridge", outlets: 4 },
+  { code: "ST-D5020", cat: "thermostatic", name: "Axora 3-Function Thermostatic Diverter",  finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "push button · flow control · Vernet cartridge", outlets: 3 },
   /* New 2026-09-16, from the July catalogue. Artwork is the factory's own
      studio photography lifted from the page with its own soft mask (see
      tools_july.py) — not keyed, not recoloured, not derived from a donor
@@ -171,15 +180,15 @@ const RAW_PRODUCTS = [
      range's 22.5, brushed rose gold 17-25 against 23, brushed bronze 34-40
      against 37, and chrome / gun grey / matt black read neutral, which is what
      catches a column read in the wrong order. */
-  { code: "ST-D5021", cat: "thermostatic", name: "Veltro 6-Function Thermostatic Diverter", finishes: ["chrome","gunGrey","brushedGold","champagne","gold","roseGold","brushedRoseGold","matteBlack"], badge: "New", variant: "push button · flow control · Vernet cartridge", outlets: 6 },
-  { code: "ST-D5022", cat: "thermostatic", name: "Veltro 4-Function Thermostatic Diverter", finishes: ["chrome","gunGrey","brushedGold","champagne","gold","roseGold","brushedRoseGold","matteBlack"], badge: "New", variant: "push button · flow control · Vernet cartridge", outlets: 4 },
-  { code: "ST-D5012", cat: "thermostatic", name: "6-Function Thermostatic Diverter",        finishes: ["chrome","gunGrey","brushedGold","champagne","gold","roseGold","brushedRoseGold","matteBlack"], badge: "New", variant: "twin dial · 6 buttons · flow control", outlets: 6 },
-  { code: "ST-D5011", cat: "thermostatic", name: "4-Function Thermostatic Diverter",        finishes: ["chrome","gunGrey","brushedGold","champagne","gold","roseGold","brushedRoseGold","matteBlack"], badge: "New", variant: "twin dial · 4 buttons · flow control", outlets: 4 },
+  { code: "ST-D5021", cat: "thermostatic", name: "Veltro 6-Function Thermostatic Diverter", finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], badge: "New", variant: "push button · flow control · Vernet cartridge", outlets: 6 },
+  { code: "ST-D5022", cat: "thermostatic", name: "Veltro 4-Function Thermostatic Diverter", finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], badge: "New", variant: "push button · flow control · Vernet cartridge", outlets: 4 },
+  { code: "ST-D5012", cat: "thermostatic", name: "6-Function Thermostatic Diverter",        finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], badge: "New", variant: "twin dial · 6 buttons · flow control", outlets: 6 },
+  { code: "ST-D5011", cat: "thermostatic", name: "4-Function Thermostatic Diverter",        finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], badge: "New", variant: "twin dial · 4 buttons · flow control", outlets: 4 },
   /* MANFRA is a tall plate, not a wide one: a lever under a digital readout of
      temperature and shower time. Filed with the panels because that is what it
      is on the wall — the wall control — and it is sized off its own artwork. */
-  { code: "ST-D5015", cat: "thermostatic", name: "Manfra 3-Function Lever Diverter",        finishes: ["chrome","gunGrey","brushedGold","champagne","gold","roseGold","brushedRoseGold","matteBlack"], badge: "New", variant: "single lever · push button · digital display", outlets: 3 },
-  { code: "ST-D5016", cat: "thermostatic", name: "Manfra 4-Function Lever Diverter",        finishes: ["chrome","gunGrey","brushedGold","champagne","gold","roseGold","brushedRoseGold","matteBlack"], badge: "New", variant: "single lever · push button · digital display", outlets: 4 },
+  { code: "ST-D5015", cat: "thermostatic", name: "Manfra 3-Function Lever Diverter",        finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], badge: "New", variant: "single lever · push button · digital display", outlets: 3 },
+  { code: "ST-D5016", cat: "thermostatic", name: "Manfra 4-Function Lever Diverter",        finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], badge: "New", variant: "single lever · push button · digital display", outlets: 4 },
 
   // ---- Wall-mounted BASIN MIXERS ----
   // Both of these were called "Wall Spout" here and neither is one: look at the
@@ -442,9 +451,9 @@ const RAW_PRODUCTS = [
   /* ---- 2026-09 Drive range: showers, diverters, spouts and body jets, each
      with the full set of finishes from the factory photography ---- */
   { code: "ST-FDP", cat: "rain-shower", name: "Cascada Flow Rain Panel", finishes: ["chrome","gunGrey","brushedGold","champagne","gold","roseGold","brushedRoseGold","matteBlack"], variant: "wide plate · centre waterfall slot", functions: 1 },
-  { code: "ST-CP25", cat: "thermostatic", name: "Regale Digital Thermostatic Panel", finishes: ["chrome","gunGrey","brushedGold","champagne","gold","roseGold","brushedRoseGold","matteBlack"], variant: "digital · dial + 4 function keys", outlets: 4 },
-  { code: "ST-MB2", cat: "thermostatic", name: "Regale Smart Control Panel", finishes: ["chrome","gunGrey","brushedGold","champagne","gold","roseGold","brushedRoseGold","matteBlack"], variant: "digital · dial + 4 function keys", outlets: 4 },
-  { code: "ST-CJ1", cat: "thermostatic", name: "Regale Touch Control Panel", finishes: ["chrome","gunGrey","brushedGold","champagne","gold","roseGold","brushedRoseGold","matteBlack"], variant: "digital · dial + 6 function keys", outlets: 6 },
+  { code: "ST-CP25", cat: "thermostatic", name: "Regale Digital Thermostatic Panel", finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "digital · dial + 4 function keys", outlets: 4 },
+  { code: "ST-MB2", cat: "thermostatic", name: "Regale Smart Control Panel", finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "digital · dial + 4 function keys", outlets: 4 },
+  { code: "ST-CJ1", cat: "thermostatic", name: "Regale Touch Control Panel", finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "digital · dial + 6 function keys", outlets: 6 },
   /* The round concealed mixer the client sent on 2026-09-08. Its renders are the
      only ones in the Drive with no SKU in the filename — 55__1_ / 55__2_ for the
      rose gold and gold, AZBS1 / AZBS2 for the chrome and matte black — so the
@@ -452,21 +461,21 @@ const RAW_PRODUCTS = [
      The client says it ships in the whole range; the folder holds four of the
      eight, and a finish is only listed here when there is a photograph of the
      product in it. The other four go in the day their renders arrive. */
-  { code: "ST-AZBS", cat: "diverter", name: "Regale Round Concealed Mixer", finishes: ["chrome","gunGrey","brushedGold","champagne","gold","roseGold","brushedRoseGold","matteBlack"], variant: "round plate · single lever", badge: "New", outlets: 1 },
+  { code: "ST-AZBS", cat: "diverter", name: "Regale Round Concealed Mixer", finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "round plate · single lever", badge: "New", outlets: 1 },
   // REMOVED at the client's request (16 Sep) — the round single-lever trim is
   // out of the range as offered here. Commented rather than deleted: its
   // renders are still in assets/products, so restoring it is this one line.
   // { code: "ST-D5001", cat: "diverter", name: "Regale Round Concealed Diverter", finishes: ["chrome"], variant: "round plate · single lever", outlets: 3 },
-  { code: "ST-D5002", cat: "diverter", name: "Regale Square Lever Diverter", finishes: ["chrome","gunGrey","brushedGold","champagne","gold","roseGold","brushedRoseGold","matteBlack"], variant: "square plate · single lever", outlets: 3 },
-  { code: "ST-D5003", cat: "diverter", name: "Regale 3-Way Concealed Diverter", finishes: ["chrome","gunGrey","brushedGold","champagne","gold","roseGold","brushedRoseGold","matteBlack"], variant: "square plate · 3 buttons", outlets: 3 },
-  { code: "ST-D5004", cat: "diverter", name: "Regale 6-Function Diverter Plate", finishes: ["chrome","gunGrey","brushedGold","champagne","gold","roseGold","brushedRoseGold","matteBlack"], variant: "tall plate · dial + 6 buttons", outlets: 6 },
+  { code: "ST-D5002", cat: "diverter", name: "Regale Square Lever Diverter", finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "square plate · single lever", outlets: 3 },
+  { code: "ST-D5003", cat: "diverter", name: "Regale 3-Way Concealed Diverter", finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "square plate · 3 buttons", outlets: 3 },
+  { code: "ST-D5004", cat: "diverter", name: "Regale 6-Function Diverter Plate", finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "tall plate · dial + 6 buttons", outlets: 6 },
   /* These two read "2-Way" and "3-Way" here and neither is. The July 2026
      catalogue heads p40 THREE FUNCTION THERMOSTATIC DIVERTER, "With Control
      Unit For 3 Outlets", and p39 FOUR FUNCTION, "With Control Unit For 4
      Outlets" — which is what `outlets` already said, so only the names were
      wrong. Taken from the page. */
-  { code: "ST-D5009", cat: "diverter", name: "3-Function Concealed Thermostat", finishes: ["chrome","gunGrey","brushedGold","champagne","gold","roseGold","brushedRoseGold","matteBlack"], variant: "tall plate · 3 outlets", outlets: 3 },
-  { code: "ST-D5010", cat: "diverter", name: "4-Function Concealed Thermostat", finishes: ["chrome","gunGrey","brushedGold","champagne","gold","roseGold","brushedRoseGold","matteBlack"], variant: "tall plate · 4 outlets · 2 together", outlets: 4 },
+  { code: "ST-D5009", cat: "diverter", name: "3-Function Concealed Thermostat", finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "tall plate · 3 outlets", outlets: 3 },
+  { code: "ST-D5010", cat: "diverter", name: "4-Function Concealed Thermostat", finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "tall plate · 4 outlets · 2 together", outlets: 4 },
   { code: "ST-BJ21F", cat: "body-jet", name: "Hydrix Body Jet", finishes: ["chrome","gunGrey","brushedGold","champagne","gold","roseGold","brushedRoseGold","matteBlack"], variant: "50 x 50 mm · brass · rain rosette" },
   /* The folder shot this one in three. The other five are generated from its own
      chrome render by tools_finish.py (`--sku ST-2FBJ --write`), each through the
@@ -493,8 +502,8 @@ const RAW_PRODUCTS = [
   { code: "ST-C1009", cat: "rain-shower", name: "Lumina Grand Ceiling Shower",   finishes: ["chrome","gunGrey","brushedGold","champagne","gold","roseGold","brushedRoseGold","matteBlack"], variant: "700x450mm · LED · needs an electric point", functions: 4 },
   { code: "ST-C1020", cat: "rain-shower", name: "Cascada Powder Rain Ceiling Shower", finishes: ["chrome","gunGrey","brushedGold","champagne","gold","roseGold","brushedRoseGold","matteBlack"], variant: "650x380mm · rain, rain-column, mist & powder-rain", functions: 4, badge: "New" },
 
-  { code: "ST-D5008", cat: "diverter", name: "Regale Flow Control Diverter", finishes: ["chrome","gunGrey","brushedGold","champagne","gold","roseGold","brushedRoseGold","matteBlack"], variant: "thermostatic & volume · 3 outlets together", outlets: 3 },
-  { code: "ST-D5014", cat: "diverter", name: "Regale Progressive Diverter",  finishes: ["chrome","gunGrey","brushedGold","champagne","gold","roseGold","brushedRoseGold","matteBlack"], variant: "single lever · progressive cartridge", outlets: 4 },
+  { code: "ST-D5008", cat: "diverter", name: "Regale Flow Control Diverter", finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "thermostatic & volume · 3 outlets together", outlets: 3 },
+  { code: "ST-D5014", cat: "diverter", name: "Regale Progressive Diverter",  finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "single lever · progressive cartridge", outlets: 4 },
 
   /* The PDF prints no code for either spout — the page carries the finishes and
      nothing else — so this one is filed as ST-BUTTON beside ST-PLAIN, which is
