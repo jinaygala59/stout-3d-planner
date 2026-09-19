@@ -184,13 +184,16 @@ const CAT3D = {
      LEFT is -z on this wall. Standing in the room facing the right wall, +z is
      to your right: the WC sits at z 0.95 and appears at the right of the
      opening view, the corner with the back wall at -1.5 appears at the left.
-     z -0.86 is the first clear lane past the valve stack. That stack owns
-     -0.645..0.145 at its widest — the left jet of a four-set is z -0.57 and the
-     trim is 0.50 wide — and the handset at 0.17 spans -0.945..-0.775, so 0.13 m
-     of tile is left between it and the jet. It is also INSIDE the wet tray
-     (z -1.48..-0.43), which is where a handset is reachable from; the old
-     corner was outside it. Well within the 0.25 m edge margin positionOnWall
-     keeps (usable z -1.25..1.25), so nothing clamps.
+     z -0.86 is the first clear lane past the valve stack. Measured on the wall
+     in the Right view, not taken from the `width` fields — a faceOn trim renders
+     wider than its nominal, so those numbers understate it: ST-D5018, the widest
+     trim in the range, is 0.55 nominal and reaches z -0.638 on the tile, and a
+     four-jet set reaches -0.662. The handset at 0.17 spans -0.945..-0.775, which
+     leaves 113 mm of tile to the nearest jet and 137 mm to the trim — an
+     installed gap, and it holds for the widest trim the range has. It is also
+     INSIDE the wet tray (z -1.48..-0.43), which is where a handset is reachable
+     from; the old corner was outside it. Well within the 0.25 m edge margin
+     positionOnWall keeps (usable z -1.25..1.25), so nothing clamps.
      y 1.10 puts the bracket at 1.06, which is where a handset holder is actually
      set. No swing: it hangs in a bracket, and a bracket does not follow the
      camera. */
