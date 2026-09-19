@@ -174,33 +174,30 @@ const CAT3D = {
   // --- the odds and ends the rail doesn't offer stay on the back wall, right
   //     end, clear of the niche (0.44–0.84) and of the vanity, which owns the left
   "wall-tap":     { mount: "back", width: 0.34, y: 0.42, x: 1.16, billboard: true },  // bucket tap, near the floor
-  /* THE HANDSET GOES BESIDE THE VALVE, ON ITS LEFT (2026-09-19, asked for
-     directly, with the corner one circled). It was in the back wall's right
-     corner, which read as a fitting parked on a different wall from the set it
-     belongs to. This also puts it back where the plumbing wanted it all along:
-     a hand shower is fed off the diverter — off the button spout's own button
-     when that is the pick, see feedsHandset — so it belongs on the wall the
-     valve set is on.
-     LEFT is -z on this wall. Standing in the room facing the right wall, +z is
-     to your right: the WC sits at z 0.95 and appears at the right of the
-     opening view, the corner with the back wall at -1.5 appears at the left.
-     z -0.86 is the first clear lane past the valve stack. Measured on the wall
-     in the Right view, not taken from the `width` fields — a faceOn trim renders
-     wider than its nominal, so those numbers understate it: ST-D5018, the widest
-     trim in the range, is 0.55 nominal and reaches z -0.638 on the tile, and a
-     four-jet set reaches -0.662. The handset at 0.17 spans -0.945..-0.775, which
-     leaves 113 mm of tile to the nearest jet and 137 mm to the trim — an
-     installed gap, and it holds for the widest trim the range has. It is also
-     INSIDE the wet tray, which is where a handset is reachable from; the old
-     corner was outside it. (The tray ran z -1.48..-0.43 when that was written
-     and now runs -1.48..0.07 — its depth follows VALVE_Z since the overhead
-     joined the lane. The handset is inside either way; the figure is refreshed
-     so the next reader does not measure against a tray that has moved.) Well within the 0.25 m edge margin
-     positionOnWall keeps (usable z -1.25..1.25), so nothing clamps.
+  /* THE HANDSET GOES BESIDE THE VALVE, ON ITS RIGHT (2026-09-19, asked for
+     directly). It was in the back wall's right corner, which read as a fitting
+     parked on a different wall from the set it belongs to. This also puts it
+     where the plumbing wanted it: a hand shower is fed off the diverter — off
+     the button spout's own button when that is the pick, see feedsHandset — so
+     it belongs on the wall the valve set is on.
+     RIGHT is +z here. Standing in the room facing this wall, +z is to your
+     right: the WC at z 0.95 appears at the right of the opening view, the
+     corner with the back wall at -1.5 at the left. It was put on the LEFT
+     first, at z -0.86, and that was wrong — the ask was the right-hand side.
+     z 0.36 is that -0.86 mirrored about the valve centre (-0.25), so the
+     handset stands off the trim by the same 0.61 m either way and the wall
+     reads balanced whichever side it is on. Measured off the render square-on,
+     not taken from the `width` fields — hide each piece, diff the frames for
+     its true silhouette, and scale by projecting two known points on the wall.
+     The four-jet set reaches z 0.143 on this side and the trim 0.082; the
+     handset spans 0.226..0.450, so 83 mm of tile to the nearest jet and 144 mm
+     to the trim. Nothing else is out there — the shattaf lane at z 0.52 belongs
+     to health-faucet, which the rail does not offer, and the WC is floor-level
+     furniture 0.7 m below this.
      y 1.10 puts the bracket at 1.06, which is where a handset holder is actually
      set. No swing: it hangs in a bracket, and a bracket does not follow the
      camera. */
-  "hand-shower":  { mount: "right", width: 0.17, y: 1.10, z: -0.86, billboard: false },
+  "hand-shower":  { mount: "right", width: 0.20, y: 1.10, z: 0.36, billboard: false },
   // over the basin, which is the wall-hung vanity on the LEFT (COUNTER.x -1.06)
   // — the only place a basin mixer can go, whatever the rest of the layout does.
   // The deck-mounted ones override this with mount:"counter".
@@ -232,10 +229,13 @@ const MAX_H = {
      measures. The cap still bites on anything past that. */
   "thermostatic": 0.50, "diverter": 0.52, "body-jet": 0.34,
   // A handset's artwork is taller than it is wide, so THIS is what sets its
-  // size on the wall — its `width` never binds. 0.34 reads a touch larger in
-  // the room without leaving what a real handset measures (25-30 cm of body,
-  // and these renders include the hose tail).
-  "bath-spout": 0.30, "hand-shower": 0.34, "health-faucet": 0.30,
+  // size on the wall — its `width` never binds, and raising `width` alone does
+  // nothing. 0.40 (was 0.34) is the client asking for "a bit big", 2026-09-19.
+  // Measured on the wall, ST-HS3211 with its bracket and hose goes from
+  // 209 x 541 mm to 245 x 637 — 18% up, which is the "bit". Still what a real
+  // handset measures once the hose tail these renders include is counted
+  // (25-30 cm of body).
+  "bath-spout": 0.30, "hand-shower": 0.40, "health-faucet": 0.30,
   "basin-mixer": 0.34, "wall-tap": 0.28, "waste": 0.30,
 };
 const maxHeight = (product, cfg) =>
