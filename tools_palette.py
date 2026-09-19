@@ -24,8 +24,9 @@ import io, os, re, sys
 ROOT = os.path.dirname(os.path.abspath(__file__))
 CAT = os.path.join(ROOT, "assets", "catalog.js")
 PROD = os.path.join(ROOT, "assets", "products")
-PALETTE = ["chrome", "gunGrey", "brushedGold", "champagne",
-           "gold", "roseGold", "brushedRoseGold", "matteBlack"]
+# brushedGold and gold were taken off the range 2026-09-19; see catalog.js
+PALETTE = ["chrome", "gunGrey", "champagne",
+           "roseGold", "brushedRoseGold", "matteBlack"]
 DROP = "polishedGold"
 NEW = "[" + ",".join('"%s"' % f for f in PALETTE) + "]"
 

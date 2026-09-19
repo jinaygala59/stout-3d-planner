@@ -5510,7 +5510,9 @@ function autoArrange() {
   // chrome jet, because some SKUs only exist in one finish. So: choose the
   // FINISH FAMILY first, then take the best product in each category that can
   // actually wear it. A smaller matched set beats a complete mismatched one.
-  const PREF = ["brushedGold", "gold", "chrome", "matteBlack", "roseGold"];
+  // brushedGold and gold came off the range (see catalog.js); a demo cannot
+  // arrange a finish the picker no longer offers
+  const PREF = ["champagne", "chrome", "matteBlack", "roseGold"];
   const canWear = (cid, fin) => offered(cid).some(p => (p.finishes || []).includes(fin));
   let best = null;
   PREF.forEach(fin => {
