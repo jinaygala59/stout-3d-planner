@@ -4780,7 +4780,17 @@ const FINISH_CARDS = new Map();          // card id -> real product
 function finishCard(p, fid) {
   const id = p.id + "~" + fid;
   FINISH_CARDS.set(id, p);
-  return { ...p, id, baseId: p.id, finishOnly: fid,
+  /* The card IS one colour, so it shows that colour's part number. On the
+     spouts that is the whole point — ST-PS-CP and ST-PS-GG are two things to
+     order, and a card that printed the SKU's id for both would be telling the
+     client they are one. `id` is untouched: it keys the artwork and every
+     shared link, and only the CODE ON THE CARD moves. */
+  /* and where a per-finish row has no code for THIS colour, the card says so in
+     the same words the spec sheet uses. It must not fall back to `code`: on
+     these two that is ST-PLAIN / ST-BUTTON, an internal id, and printing it in
+     the part-number slot is exactly the invented number this avoids. */
+  const code = catalogCode(p, fid) || (p.codes ? "Code on request" : p.code);
+  return { ...p, id, baseId: p.id, finishOnly: fid, code,
            finishes: [fid], defaultFinish: fid,
            variant: [p.variant, finName(fid)].filter(Boolean).join(" · ") };
 }
@@ -5355,8 +5365,20 @@ function coverDataURL(paths, wpx, hpx) {
    arm and most body jets are printed in the catalogue with no code at all).
    Printing "ST-PLAIN" on a sheet a client hands to a fitter invents a part
    number; this prints the truth instead, and the consultant fills it in. */
+/* A SECOND SHAPE, for the codes that end in a FINISH rather than a number.
+   The spouts are coded per colour — ST-PS-CP, ST-BS-BRG — so the part number
+   depends on which finish is on the wall, not on the SKU alone. `codes` on the
+   row holds them and is consulted first; everything else still has to look like
+   a catalogue number to print at all. */
 const CODE_RE = /^ST-[A-Z]{0,2}\d{3,5}$/i;
-function catalogCode(p) {
+const FIN_CODE_RE = /^ST-[A-Z]{2,6}-[A-Z]{2,3}$/i;
+function catalogCode(p, fid) {
+  const byFinish = p && p.codes && fid && p.codes[fid];
+  if (byFinish && FIN_CODE_RE.test(String(byFinish).trim())) return String(byFinish).trim();
+  /* A row that codes per finish and has none for THIS one says so, rather than
+     falling back to the SKU's own id — ST-PLAIN is not a part number, and
+     brushed gold genuinely has no code on the client's list. */
+  if (p && p.codes) return null;
   const c = String((p && p.code) || "").trim();
   return CODE_RE.test(c) ? c : null;
 }
@@ -5539,7 +5561,9 @@ async function downloadSpecSheet() {
       doc.text(String(i + 1).padStart(2, "0"), tx, y - 1.5);
       doc.setTextColor(...INK); doc.setFont("helvetica", "bold"); doc.setFontSize(10.5);
       doc.text(rec.product.name || "Product", tx + 6, y - 1.5);
-      const code = catalogCode(rec.product);
+      /* The finish matters to the number: the spouts are coded per colour, so
+         the sheet has to print the code for the one actually on the wall. */
+      const code = catalogCode(rec.product, rec.finishId);
       doc.setTextColor(...MUTE); doc.setFont("helvetica", "normal"); doc.setFontSize(8.5);
       doc.text(`${categoryName(rec.product.catId)}   ·   ${code ? "Code " + code : "Code on request"}`, tx + 6, y + 3);
       /* A set of two and a set of four are different fittings to buy and to

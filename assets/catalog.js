@@ -440,7 +440,22 @@ const RAW_PRODUCTS = [
      render reproduces the folder's own photographs to within 2.2 deg of hue and
      0.01 of saturation (`tools_finish.py --spout-check`). Replace any of the
      five the day the factory sends a real render of it. */
-  { code: "ST-PLAIN", cat: "bath-spout",   name: "Axis Plain Wall Spout",       finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"] },
+  /* THE SPOUTS CARRY A CODE PER FINISH, and the client sent the table
+     (2026-09-21, "SPOUT & BODY JET CODE"). The catalogue pages print no code at
+     all, which is why these two carried none until now.
+     The suffix IS the finish, in the factory's own shorthand — the same one
+     tools_july.py reads off the CODE: lines elsewhere in the range:
+       CP chrome   FG french gold   RG rose gold   MB matt black
+       BRG brushed rose gold        BV brushed bronze        GG gun grey
+     Seven each on the client's list. French gold is mapped but never reached:
+     it came off the range on 2026-09-16, so `finishes` does not offer it. Every
+     colour these two DO offer has a real code, none is derived.
+     `codes` is read per placed piece, so the sheet prints the number for the
+     finish the client actually chose — a rose gold button spout is ST-BS-RG —
+     and the rail, which lists these two one card per colour, prints it there. */
+  { code: "ST-PLAIN", cat: "bath-spout",   name: "Plain Spout",       finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "150 mm · brass · plain outlet",
+    codes: { chrome: "ST-PS-CP", gold: "ST-PS-FG", roseGold: "ST-PS-RG", matteBlack: "ST-PS-MB",
+             brushedRoseGold: "ST-PS-BRG", champagne: "ST-PS-BV", gunGrey: "ST-PS-GG" } },
   /* 2026-09-08, off the client's own upload. The Drive folder has it as
      SHOWER_ARM in six finishes — BRG / BV / FG / GG / MB / RG — and NO chrome,
      so chrome is not listed: a swatch the factory has not shot is worse than
@@ -542,11 +557,12 @@ const RAW_PRODUCTS = [
   { code: "ST-D5008", cat: "diverter", name: "Regale Flow Control Diverter", finishes: ["chrome","roseGold","matteBlack"], variant: "thermostatic & volume · 3 outlets together", outlets: 3 },
   { code: "ST-D5014", cat: "diverter", name: "Regale Progressive Diverter",  finishes: ["chrome"], variant: "single lever · progressive cartridge", outlets: 4 },
 
-  /* The PDF prints no code for either spout — the page carries the finishes and
-     nothing else — so this one is filed as ST-BUTTON beside ST-PLAIN, which is
-     the name the range already uses for the plain one. Confirm the real code
-     with the client before it reaches an order. */
-  { code: "ST-BUTTON", cat: "bath-spout", name: "Axis Button Wall Spout", finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "150mm · brass · cube button", feedsHandset: true },
+  /* ST-BUTTON stays the internal id — it keys the artwork filenames and every
+     share link ever sent — while the number a client sees comes from `codes`
+     above. See the note on the plain spout. */
+  { code: "ST-BUTTON", cat: "bath-spout", name: "Button Spout", finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "150 mm · brass · cube button", feedsHandset: true,
+    codes: { chrome: "ST-BS-CP", gold: "ST-BS-FG", roseGold: "ST-BS-RG", matteBlack: "ST-BS-MB",
+             brushedRoseGold: "ST-BS-BRG", champagne: "ST-BS-BV", gunGrey: "ST-BS-GG" } },
 
   /* ST-1019 / ST-1020 / ST-1021 are ONE handset. The client's catalogue gives a
      separate code per finish rather than per model — the three renders are the
@@ -605,6 +621,11 @@ function buildProducts() {
          spends ONE of the valve's outlets between them, not two — see
          outletCost in planner.js. */
       feedsHandset: rp.feedsHandset || false,
+      /* The catalogue part number PER FINISH, where the factory codes a fitting
+         that way — the spouts are ST-PS-CP / ST-PS-GG and so on. Null on a row
+         that has one code for every colour; catalogCode() falls back to `code`
+         there. See the note above the spouts in RAW_PRODUCTS. */
+      codes: rp.codes || null,
       /* HOW MANY OUTLETS A SHOWER SPENDS. Counted off each render (2026-09-12):
          the rain field is one, each waterfall slot or blade family is one, a
          ring of jet or mist nozzles is one — every spray zone on a Stout panel
