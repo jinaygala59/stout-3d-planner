@@ -413,9 +413,9 @@ const RAW_PRODUCTS = [
      in the name, so the code IS the finish. Look at the three renders and they
      are brushed rose gold, gun grey and champagne — three finishes the client
      really does sell. Relabelled, and their artwork renamed to match. */
-  { code: "ST-1037",  cat: "hand-shower",  name: "Senza Rail Hand Shower",      finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"] },
-  { code: "ST-1038",  cat: "hand-shower",  name: "Senza Hand Shower",           finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"] },
-  { code: "ST-1039",  cat: "hand-shower",  name: "Senza Slim Hand Shower",      finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"] },
+  { code: "ST-1037",  cat: "hand-shower",  name: "Senza Rail Hand Shower",      finishes: ["brushedRoseGold"] },
+  { code: "ST-1038",  cat: "hand-shower",  name: "Senza Hand Shower",           finishes: ["gunGrey"] },
+  { code: "ST-1039",  cat: "hand-shower",  name: "Senza Slim Hand Shower",      finishes: ["champagne"] },
   // basin mixers / taps
   // REMOVED (not a washroom fitting): angle valve — a concealed plumbing stopcock, not a visible fitting (it reads as a door handle in the rail)
   // { code: "ST-MN-AC", cat: "wall-tap",     name: "Monaco Angle Valve",          finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], badge: "New" },
