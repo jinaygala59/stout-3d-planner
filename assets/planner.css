@@ -93,10 +93,17 @@ input{font-family:inherit}
 .btn.icon{padding:8px 12px;letter-spacing:.12em;line-height:1}
 /* The room's finish, worn on the button that changes it. The dot is the answer
    to "what colour is this room?" — the same 15px dot the room tabs use, so the
-   two read as the same kind of control. */
+   two read as the same kind of control.
+   IT SAYS "FINISH" AND THEN THE COLOUR, AND THE WORD IS NOT OPTIONAL. Wearing
+   the colour name alone ("Brushed Bronze", sat between Cursor turn and Reset
+   all) read as a label saying what the room IS, not as a control that changes
+   it — reported on the day it shipped: "I can't see any option to change the
+   colour". The noun is what makes it findable; the colour is the value. */
 .btn.fin-btn{display:inline-flex;align-items:center;gap:7px;padding-left:9px}
 .fin-btn i{width:15px;height:15px;border-radius:50%;background:var(--c,#888);
   box-shadow:inset 0 0 0 1px rgba(255,255,255,.18)}
+.fin-btn .rf-nm{color:var(--ink)}
+.fin-btn .rf-nm:not(:empty)::before{content:"·";margin:0 6px 0 0;color:var(--line);font-weight:400}
 
 .menu{position:absolute;right:0;top:calc(100% + 8px);min-width:212px;padding:6px;
   background:rgba(18,19,22,.97);border:1px solid var(--line);border-radius:12px;
@@ -336,8 +343,10 @@ input{font-family:inherit}
   .themes button{padding:4px 9px 4px 5px;font-size:var(--t-small);gap:5px}
   .themes button i{width:12px;height:12px}
   .themes button span{display:none}
-  /* the dot carries it on a phone, as the room tabs' dots do */
-  .btn.fin-btn{padding-left:7px;gap:0}
+  /* The colour name goes on a phone; the WORD stays. A lone dot in a crowded
+     bar is not a control anyone finds — the dot says what the room is, and
+     "Finish" is the only part that says it can be changed. */
+  .btn.fin-btn{padding-left:7px;gap:5px}
   .fin-btn i{width:13px;height:13px}
   .fin-btn .rf-nm{display:none}
 

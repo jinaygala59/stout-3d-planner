@@ -5767,6 +5767,7 @@ function syncRoomFin() {
   if (!items.length) return;
   const cur = lockedFinish() || items[0].finishId;
   b.querySelector("i").style.setProperty("--c", (FINISHES[cur] || {}).swatch || "#888");
+  // the word "Finish" is in the markup and stays put; this is only its value
   b.querySelector(".rf-nm").textContent = finName(cur);
   b.title = `The room is ${finName(cur)} — change the finish of every fitting`;
   b.setAttribute("aria-label", b.title);
