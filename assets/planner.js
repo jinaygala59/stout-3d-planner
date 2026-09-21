@@ -1263,9 +1263,30 @@ const finishRough = fid => FINISH_ROUGH[fid] == null ? 0.20 : FINISH_ROUGH[fid];
    gives #d0c5ad, and on that second page brushed gold is within 8 of French
    gold, which it plainly is not. Ask for a brushed gold plain spout rather than
    splitting the difference. */
+/* ROSE GOLD CORRECTED (2026-09-21, reported directly: the fittings in the room
+   "are not the original colours in the PDF"). It was 0xe0c0b1 and it is the one
+   number in this table that no reference agrees with. Measured, every witness on
+   the same 40-90 linear band:
+       this table, before                     #e0c0b1   R-B 47
+       the catalogue's plain spout page       #e7beaa   R-B 61   <- its own source
+       9 other catalogue pages, transferred
+         onto that page's lighting (median)   #eab6a1   R-B 73
+       the client's own ST-PLAIN render       #e0af96   R-B 74
+       what this app used before 2026-09-19   #c69d85   R-B 65
+   Every one of them is warmer than the value that was here, and the two
+   multi-sample witnesses agree on saturation to within a unit.
+   The value taken is the CATALOGUE's own plain spout page, #e7beaa, because that
+   is what this table is defined to be and what the client compares against. The
+   other two witnesses say it is if anything a little conservative, which is the
+   right direction for a number that cannot be fully reached (see METAL_BASE).
+   THE PAGE REFERENCE IN THE NOTE ABOVE IS A FOLIO, NOT A PDF INDEX. "pages
+   121-122" are the printed folios; the PDF carries a 3-page offset, so the plain
+   spout is at PDF 124-125. Re-run the measurement on PDF 121-122 and it lands on
+   the SINGLE FUNCTION and DANCING body jet spreads instead — which is a jet, the
+   one shape the note above warns is mostly black spray face. */
 const METAL_TONE = {
   chrome: 0xd5d6d6, gunGrey: 0x8e8e8e, brushedGold: 0xa57c3f, champagne: 0xbeac93,
-  gold: 0xe8d8b7, roseGold: 0xe0c0b1, brushedRoseGold: 0xdda78a,
+  gold: 0xe8d8b7, roseGold: 0xe7beaa, brushedRoseGold: 0xdda78a,
   /* This table is the MEASUREMENT and nothing else — it is what the PDF swatch
      prints and what a colour is checked against. It is no longer what the
      shader is handed: that is METAL_BASE below, solved per finish so the wall
@@ -1302,7 +1323,31 @@ const METAL_TONE = {
    #e0c0b1, brushedRoseGold #ddaa8f for #dda78a, matteBlack #61615f for #5f5f5f
    — which is why matt black's base did not move: it was already there.
    brushedGold is unsolved for the same reason its tone is unmeasured. */
-const METAL_BASE = { chrome: 0xd9e4ef, gunGrey: 0x26272b, brushedGold: 0x6a3707, champagne: 0x6d4d2c, gold: 0xf4b357, polishedGold: 0xd88b26, roseGold: 0xc76b51, brushedRoseGold: 0xbc4422, matteBlack: 0x151617 };
+/* roseGold RE-SOLVED, 0xc76b51 -> 0xcf4b2b (2026-09-21), by this note's own
+   method: ST-PLAIN alone in the White room, its pixels masked by hiding the mesh
+   and differencing the frame, the base stepped in linear light and the on-wall
+   40-90 band read back.
+   THIS ONE IS A BEST FIT AND NOT A HIT, WHICH IS THE HONEST RECORD OF IT. The
+   old base did not reach its own target either: with 0xc76b51 the wall banded at
+   R-B 32 in the White room against a table that said 47, and against the
+   catalogue's 61. Rose gold is the most saturated finish in the range and the
+   tone-map shoulder is what stands in the way — a bright piece has its red
+   compressed while its blue still has room, so the brighter the room the more
+   the finish desaturates. That is why one base cannot serve all three rooms:
+   measured across the sweep, at the base that lands the catalogue's 61 in White
+   the Grey and Black rooms reach 91 and 86.
+   So the base is chosen to minimise the WORST error against the catalogue over
+   the three rooms, not to nail one of them:
+       base       white   grey   black   worst error vs the catalogue's 61
+       0xc76b51    32      44     41      29   <- what was here
+       0xcf4b2b    47      74     72      14   <- this
+       0xd62b05    75     118    111      57   <- lands White exactly, ruins the rest
+   It halves the error and it is as far as the base alone goes. Closing the rest
+   means moving the ENVIRONMENT or FINISH_ROUGH so the piece sits below the
+   shoulder, which changes how glossy rose gold reads and is a decision for the
+   client, not a calibration. Do not "finish the job" by pushing this number
+   further: the row above shows what that costs. */
+const METAL_BASE = { chrome: 0xd9e4ef, gunGrey: 0x26272b, brushedGold: 0x6a3707, champagne: 0x6d4d2c, gold: 0xf4b357, polishedGold: 0xd88b26, roseGold: 0xcf4b2b, brushedRoseGold: 0xbc4422, matteBlack: 0x151617 };
 /* How far fittingEnv's studio is pushed away from its own mean. See the note
    where it is applied: this is what stops every modelled fitting rendering flat. */
 const STUDIO_CONTRAST = 2.2;
@@ -2467,8 +2512,15 @@ const ART_TONE = {   // sRGB band means of the built ST-PLAIN, White room
      METAL_BASE re-solved, the built spout bands AT its measured tone, so the
      print target and the metal target are one number per finish instead of two
      that had drifted apart. brushedGold keeps its separately measured value. */
+  /* roseGold follows METAL_TONE's correction (2026-09-21) and follows it HERE
+     TOO, deliberately: the paragraph above is the reason. One number per finish,
+     or the photographed pieces print at one rose gold and the modelled ones are
+     solved to another — which is the two-colours-in-one-room fault this pair of
+     tables exists to prevent, and it is what the client was looking at. The
+     plate whose own render is blown out (ST-D5018-roseGold bands #ffd5b7) is
+     brought to the same tone by the tint this target drives. */
   chrome: 0xd5d6d6, gunGrey: 0x8e8e8e, brushedGold: 0xb08847, champagne: 0xbeac93, gold: 0xe8d8b7,
-  polishedGold: 0xd9bd74, roseGold: 0xe0c0b1, brushedRoseGold: 0xdda78a,
+  polishedGold: 0xd9bd74, roseGold: 0xe7beaa, brushedRoseGold: 0xdda78a,
   /* matt black is a coat, not a mirror, and how bright it bands on the wall
      depends on the shape it is on (spout 0x62, jets 0x3e); the print aims at the
      measured coat colour and sits between them */
@@ -3928,8 +3980,11 @@ function placeProduct(product, finishId, wall, frame, opts) {
            the spout that read pale. reliefFace does not relight the print — the
            emission IS the photograph, untone-mapped, so no pixel and no colour
            decision moves — it adds the bump and the sheen the others have. The
-           same band after: #c69d85, which is ART_TONE.roseGold to within a unit,
-           and saturation 0.329 against the jets' 0.326. Applies to every
+           same band after: #c69d85, which WAS ART_TONE.roseGold to within a unit
+           when this was written, and saturation 0.329 against the jets' 0.326.
+           That target has moved twice since — 0xe0c0b1 on 2026-09-19 and 0xe0af96
+           on 2026-09-21 — so read these four numbers against each other, which is
+           what this note is about, and not against today's table. Applies to every
            billboarded category: spouts, wall taps, health faucets, basin mixers. */
         reliefFace(mesh);
         if (sinkFor(wall)) mesh.add(wallBoss(finishHex(finishId, product), width, cfg, width * ar));
