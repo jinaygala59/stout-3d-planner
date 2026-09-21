@@ -25,9 +25,17 @@ JETS = {
     # (different camera, different crop), so the face is measured per finish.
     # brushedGold is gone (2026-09-17): that render was the jet's ROSE GOLD one
     # filed under the wrong name — see catalog.js. Its quad went with it.
-    "ST-BJ-02": { "mask": "square", "quads": {
+    "ST-SF": { "mask": "square", "quads": {
         "roseGold":    [(148, 57), (294, 33), (292, 262), (148, 305)],     # 299x317, plate left
         "gunGrey":     [(8, 108), (505, 205), (500, 858), (32, 676)],      # 900x861, seen from above-left, plate right
+        # The one-palette pass gave this jet chrome, brushed bronze and brushed
+        #    rose gold, generated from the GUN GREY render by tools_finish.py — so
+        #    they are that same 900x861 frame off that same camera and take its
+        #    quad unchanged. Without them the jet had no spray face in chrome,
+        #    which is its default finish: the decal 404'd and the head came up blank.
+        "chrome":          [(8, 108), (505, 205), (500, 858), (32, 676)],
+        "champagne":       [(8, 108), (505, 205), (500, 858), (32, 676)],
+        "brushedRoseGold": [(8, 108), (505, 205), (500, 858), (32, 676)],
         "matteBlack":  [(240, 112), (465, 72), (465, 433), (240, 478)],    # 478x481, plate left, shot from the other side
     } },
     # rounded-square head, three nozzles. All eight renders are 900x701 off the
@@ -41,10 +49,10 @@ JETS = {
     # the bare modelled head. That is the single widest colour gap in the range
     # and it is in the artwork, not the renderer. Ask the factory for a rose
     # gold render lit like the other seven and delete this skip.
-    "ST-BJ3F":  { "quad": [(648, 90), (893, 47), (882, 625), (650, 668)], "mask": "rounded", "radius": 0.13,
+    "ST-DC":  { "quad": [(648, 90), (893, 47), (882, 625), (650, 668)], "mask": "rounded", "radius": 0.13,
                   "skip": {"roseGold"} },
     # round head: top / right / bottom / left extremes of the disc's ellipse
-    "ST-J06":   { "quad": [(95, 52), (250, 228), (152, 409), (2, 235)], "mask": "round" },
+    "ST-3F":   { "quad": [(95, 52), (250, 228), (152, 409), (2, 235)], "mask": "round" },
 }
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -66,11 +74,15 @@ def mask_for(kind, radius):
 
 
 def quad_for(spec, src):
+    """The face corners for this render, or None if none were measured.
+
+    None used to abort the whole run. That was right when every PNG on disk was
+    a finish the range offered; it is not now, because a retired finish leaves
+    its renders behind — ST-SF-brushedGold.png sorts first and killed the run
+    before any of the finishes that DO need cutting were reached. Skipped and
+    reported instead."""
     if "quads" in spec:
-        fin = os.path.basename(src)[:-4].split("-")[-1]
-        if fin not in spec["quads"]:
-            raise SystemExit("no face quad measured for %s" % src)
-        return spec["quads"][fin]
+        return spec["quads"].get(os.path.basename(src)[:-4].split("-")[-1])
     return spec["quad"]
 
 
@@ -99,6 +111,9 @@ def main():
         for src in sorted(glob.glob(os.path.join("assets", "products", code + "-*.png"))):
             if os.path.basename(src)[:-4].split("-")[-1] in spec.get("skip", ()):
                 print("   skip", os.path.basename(src)[:-4], "(see the note beside its quad)")
+                continue
+            if quad_for(spec, src) is None:
+                print("   skip", os.path.basename(src)[:-4], "(no quad measured)")
                 continue
             out = cut(src, spec)
             base = os.path.basename(src)[:-4]

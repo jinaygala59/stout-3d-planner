@@ -394,8 +394,8 @@ def spout_main(write):
 # the photographs, so "close enough" is a number off this product, not a promise
 # borrowed from the showers.
 #
-#   python3 tools_finish.py --sku ST-2FBJ            # report only
-#   python3 tools_finish.py --sku ST-2FBJ --write    # fill in the missing finishes
+#   python3 tools_finish.py --sku ST-2F            # report only
+#   python3 tools_finish.py --sku ST-2F --write    # fill in the missing finishes
 # =============================================================================
 def sku_finishes(sku):
     """The finishes this SKU has a REAL render for, in donor-preference order."""

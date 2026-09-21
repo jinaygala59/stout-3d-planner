@@ -72,7 +72,7 @@ ALIAS = {
 UNCODED = {
     # the flush recessed jet, 130x120x70.5mm - not the 16-jet panel already here
     # under ST-BJ-01, which has a different face and is not in this catalogue
-    "ST-CBJ":   {"pages": [116, 117], "want": None},
+    "ST-CB":   {"pages": [116, 117], "want": None},
     # p103/104 print no code and p105 prints ST-1029-CP - and it is the SAME
     # square plate in all six: same proportions, same 9x9 jet grid. So the
     # catalogue DOES name this one, and its other five finishes are filed under

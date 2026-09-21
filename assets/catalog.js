@@ -126,7 +126,7 @@ const CATEGORIES = [
    the category/name they carried, so the planner mounted (and labelled) them as
    something they are not. Each was re-filed to match WHAT THE PRODUCT PHOTO SHOWS:
      ST-TSQ    was "Axis Square Wall Spout"  → photo is a pop-up waste
-     ST-J06    was "Axis Angular Spout"      → photo is a round wall body jet
+     ST-3F    was "Axis Angular Spout"      → photo is a round wall body jet
      ST-SZ1    was "Push-Click Pop-up Waste" → photo is a wall bib tap
      ST-SS304  was "Aqua Health Faucet"      → photo is a square overhead rain plate
      ST-MN-AC  was "Monaco Basin Mixer"      → photo is an angle valve / stop cock
@@ -294,29 +294,47 @@ const RAW_PRODUCTS = [
 
        p119 heads DANCING FUNCTION BODY JET and carries a second product in
        front of it, captioned "3 Function Body Jet", chrome only. The jet with
-       the black oval face is the DANCING one — that is what ST-BJ3F's render
+       the black oval face is the DANCING one — that is what ST-DC's render
        shows — and the round-headed chrome jet beside it is the 3-function,
-       which is ST-J06. They were the other way round.
+       which is ST-3F. They were the other way round.
 
      Matched to the pages by photograph: the rosette face is HYDRIX (p111), the
      dimple grid seen from the left is DUAL FUNCTION, rain and mist (p115), the
      nub grid seen from the right is SINGLE FUNCTION, rain (p117). */
-  { code: "ST-BJ3F",  cat: "body-jet",    name: "Dancing Function Body Jet",  finishes: ["chrome","roseGold","matteBlack"], badge: "New", variant: "50 x 50 mm · brass · dancing flow" },
+  /* THE BODY JETS NOW CARRY THE FACTORY'S OWN CODES (2026-09-21).
+     Every one of these was a placeholder — ST-BJ21F, ST-CBJ, ST-2FBJ, ST-BJ-02,
+     ST-BJ3F, ST-J06 — because the catalogue prints no CODE line on the body-jet
+     pages. The client has now sent the list ("SPOUT & BODY JET CODE.pdf") with a
+     reference photograph beside each, and the six match what the photographs
+     already told us:
+       Hydrix, round mesh rosette          ST-HY   was ST-BJ21F
+       Concealed, flush recessed grid      ST-CB   was ST-CBJ
+       2 Flow, dimple grid                 ST-2F   was ST-2FBJ
+       Single Flow, nub grid               ST-SF   was ST-BJ-02
+       Dancing Flow, black oval face       ST-DC   was ST-BJ3F
+       3 Flow, round head                  ST-3F   was ST-J06
+     The NAMES are the factory's too, so "Dual Function" is now "2 Flow" and so
+     on. A code is this app's product id and is what a shared room encodes, so
+     every artwork file was renamed with it and planner.js's OLD_CODE maps the
+     six old ids forward — a link sent before today still opens.
+     The spout codes on page 1 of that PDF (ST-PS, ST-BS) are NOT applied here:
+     the client asked for the body jets only. */
+  { code: "ST-DC",  cat: "body-jet",    name: "Dancing Flow Body Jet",  finishes: ["chrome","roseGold","matteBlack"], badge: "New", variant: "50 x 50 mm · brass · dancing flow" },
   /* brushedGold dropped 2026-09-17. The file under that name was a ROSE GOLD
      render: its band reads #b6927e against the jet's own rose gold at #b6937f —
      one unit apart — where a real brushed gold in this range reads #b58a48
-     (ST-PLAIN, ST-C1012, ST-2FBJ all within a unit of each other). Put the two
+     (ST-PLAIN, ST-C1012, ST-2F all within a unit of each other). Put the two
      side by side and they are the same copper jet. The catalogue does not list
      brushed gold for this fitting either (p117/118: chrome, french gold,
      brushed bronze, brushed rose gold, rose gold, matt black, gun grey), so the
      swatch was offering a colour the factory does not ship AND showing the
      wrong one. Artwork moved to _quarantine. */
-  { code: "ST-BJ-02", cat: "body-jet",    name: "Single Function Body Jet",   finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "50 x 50 mm · brass · rain" },
+  { code: "ST-SF", cat: "body-jet",    name: "Single Flow Body Jet",   finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "50 x 50 mm · brass · rain" },
   /* New 2026-09-16. The catalogue's CONCEALED BODY JET (p113/114), 130 x 120 x
      70.5 mm — a recessed brass box behind a flat square flange, which is a
      different fitting from the 16-jet panel this app files under ST-BJ-01.
      Seven finishes, all of them the factory's own photograph off the page
-     (tools_july.py). ST-CBJ is a PLACEHOLDER code: the page prints none.
+     (tools_july.py). ST-CB is a PLACEHOLDER code: the page prints none.
      It hangs as artwork rather than geometry because there is no OBJ for it in
      the client's RAR — which costs nothing here, since a flush plate lies in
      the wall plane and its render is already square-on. */
@@ -326,11 +344,11 @@ const RAW_PRODUCTS = [
      champagne came back a dark olive. Both are regenerated through the
      measured curves in tools_finish.py off this SKU's own chrome render,
      and brushed gold is filled in the same way; the two bad files are in
-     _quarantine/. Checked against ST-2FBJ, whose finishes are known good:
+     _quarantine/. Checked against ST-2F, whose finishes are known good:
      champagne and brushed gold now match it to the byte, rose gold to
      within a shade. Polished gold is deliberately NOT offered — no jet in
      the range carries it and there is no measured curve for it. */
-  { code: "ST-CBJ",   cat: "body-jet",    name: "Concealed Body Jet",         finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], badge: "New", variant: "130 x 120 mm · brass · flush recessed" },
+  { code: "ST-CB",   cat: "body-jet",    name: "Concealed Body Jet",         finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], badge: "New", variant: "130 x 120 mm · brass · flush recessed" },
   { code: "ST-1030",  cat: "rain-shower", name: "3-Function Ceiling Shower",     finishes: ["chrome","matteBlack"], defaultFinish: "matteBlack", variant: "square plate · waterfall blades + jets", functions: 3 },   // filed as a body jet; its render is a full overhead plate
 
   // ---- Wall Taps (single-lever wall bib tap) ----
@@ -405,7 +423,7 @@ const RAW_PRODUCTS = [
   // wall spouts
   // REMOVED (not a washroom fitting): basin pop-up waste — same
   // { code: "ST-TSQ",   cat: "waste",        name: "Axis Pop-up Waste",      finishes: ["chrome","roseGold","matteBlack","antiqueGold","brushedBronze"] },
-  { code: "ST-J06",   cat: "body-jet",     name: "3-Function Body Jet",          finishes: ["chrome"], variant: "50 x 50 mm · brass · round head" },
+  { code: "ST-3F",   cat: "body-jet",     name: "3 Flow Body Jet",          finishes: ["chrome"], variant: "50 x 50 mm · brass · round head" },
   // the one genuine spout in the range: a spout and a flange, no handle on it
   /* THE RANGE'S ONE SPOUT, IN EVERY COLOUR (2026-09-09, asked for directly).
      The Drive folder ships this spout in three finishes — gun grey, champagne
@@ -495,14 +513,14 @@ const RAW_PRODUCTS = [
      wrong. Taken from the page. */
   { code: "ST-D5009", cat: "diverter", name: "3-Function Concealed Thermostat", finishes: ["chrome","roseGold","matteBlack"], variant: "tall plate · 3 outlets", outlets: 3 },
   { code: "ST-D5010", cat: "diverter", name: "4-Function Concealed Thermostat", finishes: ["chrome","roseGold","matteBlack"], variant: "tall plate · 4 outlets · 2 together", outlets: 4 },
-  { code: "ST-BJ21F", cat: "body-jet", name: "Hydrix Body Jet", finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "50 x 50 mm · brass · rain rosette" },
+  { code: "ST-HY", cat: "body-jet", name: "Hydrix Body Jet", finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "50 x 50 mm · brass · rain rosette" },
   /* The folder shot this one in three. The other five are generated from its own
-     chrome render by tools_finish.py (`--sku ST-2FBJ --write`), each through the
+     chrome render by tools_finish.py (`--sku ST-2F --write`), each through the
      curve measured off a REAL client render of that finish — so the jet wears
      the same gold/champagne/gun-grey as every other product in the room rather
      than an approximation of it: median hue lands within 0.8 deg of the same
      finish on ST-1017 / ST-1027 / ST-1030 / ST-1033. */
-  { code: "ST-2FBJ", cat: "body-jet", name: "Dual Function Body Jet", finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "50 x 50 mm · brass · rain and mist" },
+  { code: "ST-2F", cat: "body-jet", name: "2 Flow Body Jet", finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "50 x 50 mm · brass · rain and mist" },
   /* ===== STOUT 2026 catalogue, second pass (2026-09-12) =====================
      Added from the client's own PDF, and only in the four steps the rail
      offers: ceiling showers, diverters, spouts and hand showers. Every other

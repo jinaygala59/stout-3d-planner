@@ -119,7 +119,7 @@ const CAT3D = {
        `faceOn` swapped in a homography-rectified copy of the photograph. On a
        flat plate that is correct. On a PROTRUDING jet it is destruction: the
        escutcheon, the neck barrel and the proud spray head are warped into a
-       flat square of nubs. The note on ST-BJ3F below already said no homography
+       flat square of nubs. The note on ST-DC below already said no homography
        can do this — it was applied to its two twins anyway.
 
      A jet's designed pose lives in its photograph. Pinning the cutout flat and
@@ -468,11 +468,11 @@ const SKU3D = {
   // reason in the body-jet note — but it KEEPS its roll. "A roll tips the
   // escutcheon over with it" is true of every other fitting in the range and not
   // of this one: a circle has no square edge to tip. See above.
-  "ST-J06":   { width: 0.16, roll: -0.19, bossX: -0.15, bossY: 0.12 },
+  "ST-3F":   { width: 0.16, roll: -0.19, bossX: -0.15, bossY: 0.12 },
                                           // Plumbed as a flanking set of four, like every jet that is not a panel.
   // BJ-02 is photographed from the OTHER side: its plate already sits on the wall
   // side of the frame, so mirroring it would turn the nozzle back into the corner
-  "ST-BJ-02": { width: 0.15, flip: false, bossX: -0.22, bossY: 0.07 },
+  "ST-SF": { width: 0.15, flip: false, bossX: -0.22, bossY: 0.07 },
   /* BJ3F ARRIVED WITH NO ENTRY AT ALL, which is why it hung worst of the lot: it
      took the category width and, more to the point, the DEFAULT BOSS. With no
      bossX/bossY the standoff goes to the frame centre — and on this render the
@@ -492,7 +492,7 @@ const SKU3D = {
      plate's vertical edges over too. Nor `faceOn`: on a protruding jet a
      square-on plate means the head sits concentric ON it, and no homography can
      walk the head back over its own plate. That is why this one swings. */
-  "ST-BJ3F":  { width: 0.15, flip: false, bossX: -0.23, bossY: 0.05 },
+  "ST-DC":  { width: 0.15, flip: false, bossX: -0.23, bossY: 0.05 },
   "ST-1030":  { width: 0.50 },                      // re-filed: it is an overhead plate, not a jet
   // --- 2026-09 Drive range ---
   "ST-FDP":   { width: 0.60 },                                   // wide overhead plate
@@ -526,15 +526,15 @@ const SKU3D = {
                 PLATE, not under the middle of the picture
        width  — 0.11 was the bare plate. The frame carries plate, neck and head,
                 so the cutout that puts a 52 mm escutcheon on the wall is 0.15. */
-  "ST-BJ21F": { width: 0.15, flip: true, bossX: -0.17, bossY: 0.09 },
-  "ST-2FBJ":  { width: 0.15, flip: true, bossX: -0.23, bossY: 0.14 },
+  "ST-HY": { width: 0.15, flip: true, bossX: -0.17, bossY: 0.09 },
+  "ST-2F":  { width: 0.15, flip: true, bossX: -0.23, bossY: 0.14 },
   /* The concealed jet is the one jet in the range that does NOT protrude: a
      recessed box behind a flat square flange, catalogued at 130 x 120 mm. So it
      wants none of the three corrections above — its frame IS the flange, shot
      square-on, and the wall union sits at the middle of the picture. Width is
      the flange's own 130 mm; it is not scaled up the way the protruding jets
      are, because there is no neck and head in the frame to make room for. */
-  "ST-CBJ":   { width: 0.13 },
+  "ST-CB":   { width: 0.13 },
   // --- wastes + the re-filed square rain plate ---
   "ST-TXSQ-01": { width: 0.09 }, "ST-TSQ": { width: 0.09 }, "ST-SS304": { width: 0.50 },
   // --- concealed diverter: a tall trim plate (232x735 artwork), so it takes the
@@ -2440,7 +2440,7 @@ window.installSweep = async (wall, from, to, settleMs) => {
 
    So the artwork hangs as shot, on its plate, and `roll` is now only a hand
    escape hatch — for a fitting whose datum is NOT a square plate. Exactly one
-   in the range qualifies: ST-J06, the round body jet, whose flange is a circle.
+   in the range qualifies: ST-3F, the round body jet, whose flange is a circle.
    A circle has no square edge to knock off level, so there is nothing for a
    roll to spoil and the barrel's axis becomes the only thing left to read — see
    its note in SKU3D. That is the test for any new one. A square plate in the
@@ -2470,8 +2470,8 @@ function finishTexture(path, fid) {
    of each render (linear mean of the 40th–90th luminance band, which skips the
    spray holes and the clipped speculars), Rose Gold is:
      ST-PLAIN spout       #ddac93   value 0.87
-     ST-BJ21F body jet    #dbaf92   value 0.86
-     ST-2FBJ  body jet    #a5836a   value 0.65   a third darker
+     ST-HY body jet    #dbaf92   value 0.86
+     ST-2F  body jet    #a5836a   value 0.65   a third darker
      ST-CP25  thermostat  #ffcfb1   value 1.00   blown to white
    Same hue (20–25 deg), same saturation (0.31–0.36), a value range of 0.65 to
    1.00 — so a Rose Gold room held a salmon jet, a cream panel and a pink spout,
@@ -2501,7 +2501,7 @@ function finishTexture(path, fid) {
    cannot desaturate far enough — and the obvious reading is that the target is
    wrong. It is not. Measured across all 28 renders that offer the finish, the
    range agrees with itself to within a unit or two: ST-PLAIN #b58a49, ST-C1012
-   #b68a48, ST-2FBJ #b58a48, and 25 of the 28 in that cluster, against this
+   #b68a48, ST-2F #b58a48, and 25 of the 28 in that cluster, against this
    0xb08847. The Manfra pair are the outliers because they are photographed as a
    MIRROR-POLISHED gold rather than a brushed one — put them beside ST-PLAIN and
    it is the lighting that differs, not the metal. Moving the target onto them
@@ -2571,7 +2571,7 @@ const overClamp = r => Math.max(0, Math.log(Math.max(r, 1e-6) / 1.8)) +
    photographed inside a recess, so the render is genuinely dark, and the only
    way to lift it was a limit that ALSO had to be tight enough to stop the print
    inventing a hue. One number cannot do both jobs, so it did neither well —
-   ST-CBJ's matt black reached the wall at #17181a where every other matt black
+   ST-CB's matt black reached the wall at #17181a where every other matt black
    fitting sits around #45.
    Split in two. BRIGHTNESS is the geometric mean of the three channels and may
    move a long way, because how a render is lit says nothing about the metal:
@@ -3360,7 +3360,7 @@ const MODELS_BASE = "assets/models/";
    exports them as named, web-weight meshes.
 
    Which model is which SKU was decided by LOOKING, against the photography:
-     jet-sq       square plate, neck, square head, 20-nub spray face    ST-2FBJ (exact)
+     jet-sq       square plate, neck, square head, 20-nub spray face    ST-2F (exact)
                   The same body carries the other square jets wearing THEIR
                   own face (`decal`): escutcheon / neck / head is one form
                   across the range, only the spray face differs.
@@ -3416,13 +3416,13 @@ const SQUARE_JET = { url: "jet-sq", axes: { front: [0, 0, 1], up: [0, 1, 0] },
                      fit: { axis: "x", size: 0.10, object: "plate" }, mount: { object: "plate" }, set: "jets" };
 const MODEL_FOR_SKU = {
   "ST-BM-001": { url: "mixer-deck", axes: { front: [0, 0, 1], up: [0, 1, 0] }, fit: { axis: "y", size: 0.34 } },
-  "ST-2FBJ":   Object.assign({}, SQUARE_JET),
-  "ST-BJ21F":  Object.assign({}, SQUARE_JET, { hide: ["nubs"], decal: { on: "head" } }),
-  "ST-BJ-02":  Object.assign({}, SQUARE_JET, { hide: ["nubs"], decal: { on: "head" } }),
-  "ST-BJ3F":   Object.assign({}, SQUARE_JET, { hide: ["nubs"], decal: { on: "head" } }),
+  "ST-2F":   Object.assign({}, SQUARE_JET),
+  "ST-HY":  Object.assign({}, SQUARE_JET, { hide: ["nubs"], decal: { on: "head" } }),
+  "ST-SF":  Object.assign({}, SQUARE_JET, { hide: ["nubs"], decal: { on: "head" } }),
+  "ST-DC":   Object.assign({}, SQUARE_JET, { hide: ["nubs"], decal: { on: "head" } }),
   // the round jet: no export in the RAR, so its body is built — flange, neck,
   // ball, head — at the proportions of its own render, and wears its own face
-  "ST-J06":    { proc: "roundJet", mount: { object: "plate" }, decal: { on: "head" }, set: "jets" },
+  "ST-3F":    { proc: "roundJet", mount: { object: "plate" }, decal: { on: "head" }, set: "jets" },
   "ST-BJ-01":  { url: "jet-panel", axes: { front: [0, 1, 0], up: [0, 0, -1] },
                  fit: { axis: "x", size: 0.22, object: "plate" }, mount: { object: "plate" } },
   "ST-PLAIN":  { url: "spout-plain", axes: { front: [0, 0, 1], up: [0, 1, 0] }, fit: { axis: "z", size: 0.22 } },
@@ -3610,7 +3610,7 @@ function addModelPart(inst, kind, mat) {
 /* the procedural bodies — only where the RAR has no export for the form */
 function buildProcBody(kind, hex, fid) {
   if (kind === "roundJet") {
-    /* ST-J06, from its render: a 78 mm head on a 40 mm neck-and-ball off a
+    /* ST-3F, from its render: a 78 mm head on a 40 mm neck-and-ball off a
        62 mm round flange. The spray face is not drawn — the SKU's own is laid on. */
     return buildBodyJet(hex, 0.16, { round: true, face: false, plateW: 0.062, headW: 0.078,
                                      headD: 0.040, neckR: 0.013, neckD: 0.040, fid });
@@ -4998,7 +4998,8 @@ function snapshot() {
 function restore(items) {
   [...placed.keys()].forEach(removeProduct);
   items.forEach(it => {
-    const p = (PRODUCTS[it.cat] || []).find(x => x.id === it.pid); if (!p) return;
+    const p = productById(it.pid) || (PRODUCTS[it.cat] || []).find(x => x.id === it.pid);
+    if (!p) return;
     const uid = placeProduct(p, it.fin, it.wall, false, { jets: it.jets });
     const rec = placed.get(uid); if (rec && it.scale) setBaseScale(rec.mesh, it.scale);
   });
@@ -5059,8 +5060,21 @@ function faceWall(wall) {
    exact room by pasting the link.
    Format: #d=<theme>.<ceiling>.<vanity>~<code>:<finish>:<scale>~...
    ========================================================================= */
+/* THE BODY JETS' OLD PLACEHOLDER CODES, so a room already sent still opens.
+   Until 2026-09-21 the six jets carried codes this app had invented, because
+   the catalogue prints none on those pages; the factory has now sent the real
+   ones. A product id IS its code here, and it is what a shared link and a saved
+   design both encode, so without this every room sent before today would name
+   six SKUs that no longer exist and drop each of them on open — silently, since
+   an unknown id is simply skipped. This is the one lookup both paths go
+   through, which is why the map lives here and not at either of them. */
+const OLD_CODE = {
+  "ST-BJ21F": "ST-HY", "ST-CBJ": "ST-CB", "ST-2FBJ": "ST-2F",
+  "ST-BJ-02": "ST-SF", "ST-BJ3F": "ST-DC", "ST-J06": "ST-3F",
+};
 const productById = id => {
-  for (const cat in PRODUCTS) { const p = PRODUCTS[cat].find(x => x.id === id); if (p) return p; }
+  const want = OLD_CODE[id] || id;
+  for (const cat in PRODUCTS) { const p = PRODUCTS[cat].find(x => x.id === want); if (p) return p; }
   return null;
 };
 function designToHash() {
