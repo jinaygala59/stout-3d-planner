@@ -477,7 +477,12 @@ const RAW_PRODUCTS = [
      The client says it ships in the whole range; the folder holds four of the
      eight, and a finish is only listed here when there is a photograph of the
      product in it. The other four go in the day their renders arrive. */
-  { code: "ST-AZBS", cat: "diverter", name: "Regale Round Concealed Mixer", finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "round plate · single lever", badge: "New", outlets: 1 },
+  // REMOVED at the client's request (21 Sep) — the round concealed mixer is out
+  // of the range as offered here, as the round single-lever diverter below it
+  // already was. Commented rather than deleted: its renders are still in
+  // assets/products and its width is still in planner's trim table, so
+  // restoring it is this one line.
+  // { code: "ST-AZBS", cat: "diverter", name: "Regale Round Concealed Mixer", finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "round plate · single lever", badge: "New", outlets: 1 },
   // REMOVED at the client's request (16 Sep) — the round single-lever trim is
   // out of the range as offered here. Commented rather than deleted: its
   // renders are still in assets/products, so restoring it is this one line.
