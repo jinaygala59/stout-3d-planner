@@ -3425,7 +3425,14 @@ const MODEL_FOR_SKU = {
   "ST-3F":    { proc: "roundJet", mount: { object: "plate" }, decal: { on: "head" }, set: "jets" },
   "ST-BJ-01":  { url: "jet-panel", axes: { front: [0, 1, 0], up: [0, 0, -1] },
                  fit: { axis: "x", size: 0.22, object: "plate" }, mount: { object: "plate" } },
-  "ST-PLAIN":  { url: "spout-plain", axes: { front: [0, 0, 1], up: [0, 1, 0] }, fit: { axis: "z", size: 0.22 } },
+  /* 150 mm, WHICH IS WHAT THE CATALOGUE SAYS — both spout pages print
+     "Size:150mm" and this was fitted to 0.22, drawing a 220 mm spout. A third
+     too long is not a subtlety on a fitting this size: it read as a different,
+     chunkier product from the one on its own card, which is what the client
+     saw. The export's z span is the flange plus the tube, and the flange is
+     about 5% of it, so fitting the whole to 0.15 puts the projection at ~142 mm
+     — the number the page gives, to the millimetre the page gives it in. */
+  "ST-PLAIN":  { url: "spout-plain", axes: { front: [0, 0, 1], up: [0, 1, 0] }, fit: { axis: "z", size: 0.15 } },
   /* THE BUTTON SPOUT IS THE PLAIN SPOUT WITH A BUTTON ON IT. Same 150 mm
      square-section body, same flange, same handset nub underneath — the client's
      two photographs differ only in the cube sitting on top — so it installs off
@@ -3440,7 +3447,7 @@ const MODEL_FOR_SKU = {
      read the body and ignore the button, which is what keeps this identical to
      ST-PLAIN; add nothing here that can move the body or the two stop matching. */
   "ST-BUTTON": { url: "spout-plain", axes: { front: [0, 0, 1], up: [0, 1, 0] },
-                 fit: { axis: "z", size: 0.22, object: "body" },
+                 fit: { axis: "z", size: 0.15, object: "body" },
                  mount: { object: "body" }, addOn: "spoutButton" },
   "ST-WM-002": { url: "mixer-wall", axes: { front: [0, 0, 1], up: [0, 1, 0] },
                  fit: { axis: "x", size: 0.20, object: "plate" }, mount: { object: "plate" } },
@@ -3579,7 +3586,13 @@ function addModelPart(inst, kind, mat) {
      re-fitted to another length. */
   const b = partBox(inst, "body");
   const bl = b.max.z - b.min.z;
-  const ALONG = 0.42;
+  /* HALFWAY, near enough, which is where the catalogue photograph puts it.
+     Measured on p123's rose gold render: the flange's inner edge is at x 215
+     and the tip at x 20, and the button's centre sits at x 120 — 0.49 of the
+     way out. This carried 0.42, which pulled the button back toward the wall
+     and left a long bare run in front of it that the photograph does not have.
+     The client spotted the pair not matching before anything else. */
+  const ALONG = 0.48;
   const z = b.min.z + bl * ALONG;
   /* THE BUTTON STANDS ON THE TUBE, NOT ON THE WHOLE BODY. Measured off the
      export: the wall flange is 1.29 units across and the tube behind it 0.86,
@@ -3591,7 +3604,11 @@ function addModelPart(inst, kind, mat) {
      station the button occupies. */
   const tube = partSlabBox(inst, "body", b.min.z + bl * 0.30, b.max.z);
   const tw = tube.isEmpty() ? (b.max.x - b.min.x) : (tube.max.x - tube.min.x);
-  const CUBE = tw * 0.84, COLLAR = tw * 0.92, COLLAR_H = 0.005;
+  /* A FULL CUBE, as wide as the tube it stands on. The photograph shows a
+     button whose sides run flush with the spout's and which stands about its
+     own width proud; at 0.84 wide and 0.92 of that tall it was a slab set in
+     from both edges, and on the wall that reads as a different fitting. */
+  const CUBE = tw * 0.98, COLLAR = tw * 0.99, COLLAR_H = 0.005;
   const seatBox = partSlabBox(inst, "body", z - CUBE / 2, z + CUBE / 2);
   const top = seatBox.isEmpty() ? (tube.isEmpty() ? b.max.y : tube.max.y) : seatBox.max.y;
   const g = new THREE.Group(); g.name = "button";
@@ -3600,8 +3617,8 @@ function addModelPart(inst, kind, mat) {
      A joint you can see a line of daylight through is the fault being fixed. */
   const collar = new THREE.Mesh(new THREE.BoxGeometry(COLLAR, COLLAR_H * 2, COLLAR), mat);
   collar.position.set(0, top, z);
-  const cube = new THREE.Mesh(new THREE.BoxGeometry(CUBE, CUBE * 0.92, CUBE), mat);
-  cube.position.set(0, top + COLLAR_H + CUBE * 0.46 - 0.002, z);
+  const cube = new THREE.Mesh(new THREE.BoxGeometry(CUBE, CUBE, CUBE), mat);
+  cube.position.set(0, top + COLLAR_H + CUBE * 0.50 - 0.002, z);
   [collar, cube].forEach(m => { m.castShadow = false; m.userData.metal = true; g.add(m); });
   inst.add(g);
   return g;
@@ -4333,7 +4350,13 @@ function renderTool() {
     return;
   }
   tool.hidden = false;
-  $("#toolName").innerHTML = `${rec.product.name}<em>${rec.product.code}` +
+  /* The code for the finish this piece is actually wearing — the same number
+     the card offered it under and the same one the spec sheet will print. On a
+     per-finish row `code` is the internal id (ST-BUTTON), which is not a part
+     number and must not appear here. */
+  const shownCode = catalogCode(rec.product, rec.finishId)
+    || (rec.product.codes ? "Code on request" : rec.product.code);
+  $("#toolName").innerHTML = `${rec.product.name}<em>${shownCode}` +
     `${rec.product.variant ? " · " + rec.product.variant : ""}</em>`;
 
   /* Preview the piece in the finish you are pointing at BEFORE you commit to it.
