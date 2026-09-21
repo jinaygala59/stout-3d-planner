@@ -5307,16 +5307,28 @@ async function downloadSpecSheet() {
     function brandBand(top, h, right, sub) {
       doc.setFillColor(15, 15, 17); doc.rect(0, top, PW, h, "F");
       const LH = Math.min(12, h - 8), LW = LH * (707 / 268);   // the lockup is 707x268
-      if (logo) doc.addImage(logo, "JPEG", M, top + (h - LH) / 2, LW, LH, undefined, "FAST");
-      else { doc.setTextColor(255, 255, 255); doc.setFont("helvetica", "bold"); doc.setFontSize(20); doc.text("STOUT", M, top + h / 2 + 3); }
+      /* The mark is the sheet's signature, so it sits on the page's centre line
+         rather than the left margin. Mark and wordmark are one lockup: measure
+         the pair and centre them together, or the mark alone ends up centred
+         with the word hanging off it. */
+      const WORD = "SANITARYWARE", GAP = 4;
+      doc.setFont("helvetica", "normal"); doc.setFontSize(9);
+      const wordW = doc.getTextWidth(WORD);
+      let markW = LW;
+      if (!logo) { doc.setFont("helvetica", "bold"); doc.setFontSize(20); markW = doc.getTextWidth("STOUT"); }
+      const lockX = (PW - (markW + GAP + wordW)) / 2;
+      if (logo) doc.addImage(logo, "JPEG", lockX, top + (h - LH) / 2, LW, LH, undefined, "FAST");
+      else { doc.setTextColor(255, 255, 255); doc.text("STOUT", lockX, top + h / 2 + 3); }
       doc.setTextColor(...GOLD); doc.setFontSize(9); doc.setFont("helvetica", "normal");
-      doc.text("SANITARYWARE", M + (logo ? LW + 4 : 27), top + h / 2 + 1);
+      doc.text(WORD, lockX + markW + GAP, top + h / 2 + 1);
+      /* 10pt, not 11: the centred lockup reaches 135mm, and the title at 11pt
+         reached back to 138 — the two nearly touched. */
       if (right) {
-        doc.setTextColor(210, 210, 214); doc.setFontSize(11); doc.setFont("helvetica", "bold");
+        doc.setTextColor(210, 210, 214); doc.setFontSize(10); doc.setFont("helvetica", "bold");
         doc.text(right, PW - M, top + h / 2 - 2, { align: "right" });
       }
       if (sub) {
-        doc.setFont("helvetica", "normal"); doc.setFontSize(8.5); doc.setTextColor(150, 150, 154);
+        doc.setFont("helvetica", "normal"); doc.setFontSize(8); doc.setTextColor(150, 150, 154);
         doc.text(sub, PW - M, top + h / 2 + 4, { align: "right" });
       }
       doc.setDrawColor(...GOLD); doc.setLineWidth(0.8); doc.line(0, top + h, PW, top + h);
