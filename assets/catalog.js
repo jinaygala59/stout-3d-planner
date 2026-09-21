@@ -135,22 +135,35 @@ const CATEGORIES = [
    The names above are DESCRIPTIVE placeholders: either the name or the image file
    is wrong for these codes — confirm against the Stout price list and correct
    whichever is off. */
+/* THE FINISH LIST ON EACH ROW IS THE CATALOGUE'S, NOT OURS (2026-09-21, asked
+   for directly). tools_palette.py had put the same eight finishes on every row;
+   the client's own document does not, and offering a finish the factory does
+   not make for that piece is worse than a short list. Every row below is now
+   either read off "STOUT July 2026" — from the CODE suffix the page prints
+   (CP/GG/BV/RG/BRG/MB), or from the finish labels on the product's own page
+   where it prints no code — or left exactly as it was, because that product is
+   not in the document at all. Nothing is inferred across products: the Regale
+   3-Way Concealed Diverter is chrome alone because its page shows chrome alone,
+   and the dancing body jet is chrome, rose gold and matt black because its page
+   shows three podiums and no more.
+   48 rows changed. The rows with no source in the document are named in the
+   commit message; do not read their lists as confirmed. */
 const RAW_PRODUCTS = [
   // ---- Overhead / Rain Showers (C-series) ----
   { code: "ST-C1012", cat: "rain-shower", name: "Cascada Square Rain Shower",  finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"],                                   badge: "Signature", variant: "waterfall blades + LED strips", functions: 3 },
   { code: "ST-C1013", cat: "rain-shower", name: "Cascada Slim Rain Shower",    finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "hex plate · 6 jets", functions: 2 },
   { code: "ST-C1014", cat: "rain-shower", name: "Cascada Grande Rain Shower",  finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "hex plate · LED strips", functions: 2 },
   { code: "ST-C1015", cat: "rain-shower", name: "Cascada Maxima Rain Shower",  finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "hex plate · LED strips + 5 jets", functions: 3 },
-  { code: "ST-C1016", cat: "rain-shower", name: "Lumina Rain Shower",          finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "square plate · plain", functions: 1 },
-  { code: "ST-C1017", cat: "rain-shower", name: "Lumina Edge Rain Shower",     finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "square plate · centre slot", functions: 2 },
-  { code: "ST-C1018", cat: "rain-shower", name: "Lumina Matrix Rain Shower",   finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "square plate · 4 jets", functions: 2 },
-  { code: "ST-C1019", cat: "rain-shower", name: "Aeon Rain Shower",            finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], badge: "Bestseller", variant: "wide plate · plain, slim edge", functions: 1 },
+  { code: "ST-C1016", cat: "rain-shower", name: "Lumina Rain Shower",          finishes: ["chrome"], variant: "square plate · plain", functions: 1 },
+  { code: "ST-C1017", cat: "rain-shower", name: "Lumina Edge Rain Shower",     finishes: ["chrome"], variant: "square plate · centre slot", functions: 2 },
+  { code: "ST-C1018", cat: "rain-shower", name: "Lumina Matrix Rain Shower",   finishes: ["chrome"], variant: "square plate · 4 jets", functions: 2 },
+  { code: "ST-C1019", cat: "rain-shower", name: "Aeon Rain Shower",            finishes: ["chrome","gunGrey","roseGold","brushedRoseGold","matteBlack"], badge: "Bestseller", variant: "wide plate · plain, slim edge", functions: 1 },
   // Added from the Stout asset library (2026-07-10) — descriptive names, rename to real SKU names anytime
   { code: "ST-C1001", cat: "rain-shower", name: "Cascada Rainfall Panel",      finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "wide plate · LED strip", functions: 2 },
   { code: "ST-C1002", cat: "rain-shower", name: "Cascada Slimline Panel",      finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "wide plate · 4 jets", functions: 2 },
-  { code: "ST-C1003", cat: "rain-shower", name: "Cascada Waterfall Panel",     finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "slim plate · LED strip", functions: 2 },
-  { code: "ST-C1004", cat: "rain-shower", name: "Cascada Duo Rainfall Panel",  finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "slim plate · 2 jets", functions: 2 },
-  { code: "ST-C1007", cat: "rain-shower", name: "Lumina Slim Panel",           finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "slim plate · LED strip + 4 jets", functions: 3 },
+  { code: "ST-C1003", cat: "rain-shower", name: "Cascada Waterfall Panel",     finishes: ["chrome","gunGrey","roseGold","brushedRoseGold","matteBlack"], variant: "slim plate · LED strip", functions: 2 },
+  { code: "ST-C1004", cat: "rain-shower", name: "Cascada Duo Rainfall Panel",  finishes: ["chrome","gunGrey","roseGold","brushedRoseGold","matteBlack"], variant: "slim plate · 2 jets", functions: 2 },
+  { code: "ST-C1007", cat: "rain-shower", name: "Lumina Slim Panel",           finishes: ["chrome"], variant: "slim plate · LED strip + 4 jets", functions: 3 },
   { code: "ST-C1008", cat: "rain-shower", name: "Cascada Compact Panel",       finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "wide plate · LED strip + 4 jets", functions: 3 },
   { code: "ST-C1010", cat: "rain-shower", name: "Cascada Grande Panel",        finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "wide plate · plain", functions: 1 },
   { code: "ST-C1011", cat: "rain-shower", name: "Cascada Maxima Panel",        finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "waterfall blades + LED + centre jet", functions: 4 },
@@ -229,9 +242,9 @@ const RAW_PRODUCTS = [
      gold as ST-MN-011 / 001 / 003. Six codes, one fitting. Filed the way
      ST-1019 already is — one row under the first code, the rest recorded in
      `variant` where the spec sheet still prints them. */
-  { code: "ST-MN-005", cat: "basin-mixer", name: "Manfra Basin Mixer",        finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], badge: "New", variant: "178 mm · brass · ST-MN-005/007/009/011/001/003" },
-  { code: "ST-MN-006", cat: "basin-mixer", name: "Manfra Tall Basin Mixer",   finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], badge: "New", variant: "290 mm · brass · ST-MN-006/008/010/012/002/004" },
-  { code: "ST-MN-015", cat: "basin-mixer", name: "Manfra High Pillar Tap",    finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], badge: "New", variant: "290 mm · brass · pillar cock · ST-MN-013..019" },
+  { code: "ST-MN-005", cat: "basin-mixer", name: "Manfra Basin Mixer",        finishes: ["roseGold"], badge: "New", variant: "178 mm · brass · ST-MN-005/007/009/011/001/003" },
+  { code: "ST-MN-006", cat: "basin-mixer", name: "Manfra Tall Basin Mixer",   finishes: ["roseGold"], badge: "New", variant: "290 mm · brass · ST-MN-006/008/010/012/002/004" },
+  { code: "ST-MN-015", cat: "basin-mixer", name: "Manfra High Pillar Tap",    finishes: ["roseGold"], badge: "New", variant: "290 mm · brass · pillar cock · ST-MN-013..019" },
 
   // ---- Thermostatic Control Trim (square dial) ----
   // Withdrawn from the list at the client's request (2026-09-05). It is left here
@@ -251,11 +264,11 @@ const RAW_PRODUCTS = [
   { code: "ST-HS5380", cat: "hand-shower", name: "Aria Slim Hand Shower",       finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "round face · slim handle" },
   { code: "ST-1040",   cat: "hand-shower", name: "Aeon Multi-Function Hand Shower", finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], badge: "Bestseller" },
   { code: "ST-1018",   cat: "hand-shower", name: "Axis Hand Shower",            finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"] },
-  { code: "ST-1025",   cat: "hand-shower", name: "Cascada Slim Hand Shower",    finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"] },
-  { code: "ST-1026",   cat: "hand-shower", name: "Cascada Square Hand Shower",  finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"] },
-  { code: "ST-1028",   cat: "hand-shower", name: "Cascada Round Hand Shower",   finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"] },
-  { code: "ST-1035",   cat: "hand-shower", name: "Lumina Hand Shower",          finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"] },
-  { code: "ST-1036",   cat: "hand-shower", name: "Lumina Edge Hand Shower",     finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"] },
+  { code: "ST-1025",   cat: "hand-shower", name: "Cascada Slim Hand Shower",    finishes: ["chrome"] },
+  { code: "ST-1026",   cat: "hand-shower", name: "Cascada Square Hand Shower",  finishes: ["chrome"] },
+  { code: "ST-1028",   cat: "hand-shower", name: "Cascada Round Hand Shower",   finishes: ["chrome"] },
+  { code: "ST-1035",   cat: "hand-shower", name: "Lumina Hand Shower",          finishes: ["chrome"] },
+  { code: "ST-1036",   cat: "hand-shower", name: "Lumina Edge Hand Shower",     finishes: ["chrome"] },
 
   // ---- Body Jets ----
   // NOT IN THE CLIENT'S DRIVE FOLDER — no file in it names this SKU, so it
@@ -281,7 +294,7 @@ const RAW_PRODUCTS = [
      Matched to the pages by photograph: the rosette face is HYDRIX (p111), the
      dimple grid seen from the left is DUAL FUNCTION, rain and mist (p115), the
      nub grid seen from the right is SINGLE FUNCTION, rain (p117). */
-  { code: "ST-BJ3F",  cat: "body-jet",    name: "Dancing Function Body Jet",  finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], badge: "New", variant: "50 x 50 mm · brass · dancing flow" },
+  { code: "ST-BJ3F",  cat: "body-jet",    name: "Dancing Function Body Jet",  finishes: ["chrome","roseGold","matteBlack"], badge: "New", variant: "50 x 50 mm · brass · dancing flow" },
   /* brushedGold dropped 2026-09-17. The file under that name was a ROSE GOLD
      render: its band reads #b6927e against the jet's own rose gold at #b6937f —
      one unit apart — where a real brushed gold in this range reads #b58a48
@@ -311,7 +324,7 @@ const RAW_PRODUCTS = [
      within a shade. Polished gold is deliberately NOT offered — no jet in
      the range carries it and there is no measured curve for it. */
   { code: "ST-CBJ",   cat: "body-jet",    name: "Concealed Body Jet",         finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], badge: "New", variant: "130 x 120 mm · brass · flush recessed" },
-  { code: "ST-1030",  cat: "rain-shower", name: "Aqua Square Rain Shower",     finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], defaultFinish: "matteBlack", variant: "square plate · waterfall blades + jets", functions: 3 },   // filed as a body jet; its render is a full overhead plate
+  { code: "ST-1030",  cat: "rain-shower", name: "Aqua Square Rain Shower",     finishes: ["chrome","matteBlack"], defaultFinish: "matteBlack", variant: "square plate · waterfall blades + jets", functions: 3 },   // filed as a body jet; its render is a full overhead plate
 
   // ---- Wall Taps (single-lever wall bib tap) ----
   { code: "ST-SZ-01", cat: "wall-tap",    name: "Senza Wall Bib Tap",          finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"],                                  badge: "New" },
@@ -324,10 +337,10 @@ const RAW_PRODUCTS = [
      have. QB-AC's code comes off the page as "-QB-AC-RG" on p133 and "QB-AC-MB"
      on p134; the leading hyphen is the text extractor, not the code. */
   { code: "MN-2W",   cat: "wall-tap", name: "Manfra 2-Way Tap",          finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], badge: "New", variant: "brass · wall two-way" },
-  { code: "ST-QB",   cat: "wall-tap", name: "Axis 2-Way Tap",            finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], badge: "New", variant: "brass · square plate · wall two-way" },
+  { code: "ST-QB",   cat: "wall-tap", name: "Axis 2-Way Tap",            finishes: ["chrome","champagne","roseGold","matteBlack"], badge: "New", variant: "brass · square plate · wall two-way" },
   { code: "MN-AC",   cat: "wall-tap", name: "Manfra Angle Valve",        finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], badge: "New", variant: "brass · round body" },
-  { code: "QB-AC",   cat: "wall-tap", name: "Axis Angle Valve",          finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], badge: "New", variant: "brass · square body" },
-  { code: "ST-CSC",  cat: "wall-tap", name: "Concealed Stop Cock",       finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], badge: "New", variant: "200 mm · brass · round plate · code not in the catalogue" },
+  { code: "QB-AC",   cat: "wall-tap", name: "Axis Angle Valve",          finishes: ["champagne","matteBlack"], badge: "New", variant: "brass · square body" },
+  { code: "ST-CSC",  cat: "wall-tap", name: "Concealed Stop Cock",       finishes: ["chrome","champagne","roseGold","matteBlack"], badge: "New", variant: "200 mm · brass · round plate · code not in the catalogue" },
   { code: "ST-CWO",  cat: "wall-tap", name: "Concealed Wall Out-let",    finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], badge: "New", variant: "brass · outlet elbow + handset hook · code not in the catalogue" },
 
   /* ---- WASTES AND TRAPS, new 2026-09-16 (p137-140) ----
@@ -346,9 +359,9 @@ const RAW_PRODUCTS = [
      four and three more, all chrome, distinguishable only by their photographs
      and with no code, name or size to tell them apart; those are left out until
      the factory names them. */
-  { code: "ST-HFSEL", cat: "health-faucet", name: "Selora Health Faucet", finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], badge: "New", variant: "ABS · 1 m SS tube & hook · code not in the catalogue" },
-  { code: "ST-HFSQ",  cat: "health-faucet", name: "Square Health Faucet", finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], badge: "New", variant: "brass · 1 m SS tube & brass hook · code not in the catalogue" },
-  { code: "ST-HFEST", cat: "health-faucet", name: "Estonia Health Faucet", finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], badge: "New", variant: "ABS · 1 m tube & ABS hook · code not in the catalogue" },
+  { code: "ST-HFSEL", cat: "health-faucet", name: "Selora Health Faucet", finishes: ["chrome","gunGrey","roseGold","brushedRoseGold","matteBlack"], badge: "New", variant: "ABS · 1 m SS tube & hook · code not in the catalogue" },
+  { code: "ST-HFSQ",  cat: "health-faucet", name: "Square Health Faucet", finishes: ["gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], badge: "New", variant: "brass · 1 m SS tube & brass hook · code not in the catalogue" },
+  { code: "ST-HFEST", cat: "health-faucet", name: "Estonia Health Faucet", finishes: ["chrome","matteBlack"], badge: "New", variant: "ABS · 1 m tube & ABS hook · code not in the catalogue" },
 
   // ---- Basin Wastes (square pop-up) ----
   // REMOVED (not a washroom fitting): basin pop-up waste — a part that sits inside the basin, not a wall fitting
@@ -367,20 +380,20 @@ const RAW_PRODUCTS = [
      a brass square plate in five finishes with no code, p105 prints ST-1029-CP
      under the same plate in chrome — same proportions, same 9x9 jet grid — so
      all six are filed under the code the catalogue does give. */
-  { code: "ST-1012",  cat: "rain-shower",  name: "Aeon Multi-Jet Shower Head",  finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], badge: "New", variant: "ABS · round · stepped hub", functions: 1 },
-  { code: "ST-3014",  cat: "rain-shower",  name: "Aeon Swivel Shower Head",     finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], badge: "New", variant: "ABS · round · swivel joint", functions: 1 },
-  { code: "ST-3016",  cat: "rain-shower",  name: "Aeon Domed Shower Head",      finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], badge: "New", variant: "ABS · round · domed hub", functions: 1 },
-  { code: "ST-1023",  cat: "rain-shower",  name: "Aria Fine-Spray Shower Head", finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], badge: "New", variant: "ABS · round · plain face", functions: 1 },
-  { code: "ST-1031",  cat: "rain-shower",  name: "Aria Spiral-Jet Shower Head", finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], badge: "New", variant: "ABS · round · spiral jet pattern", functions: 1 },
-  { code: "ST-1022",  cat: "rain-shower",  name: "Aqua Oval Shower Head",       finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], badge: "New", variant: "ABS · oval · slim arm", functions: 1 },
-  { code: "ST-1029",  cat: "rain-shower",  name: "Aqua Square Shower Head",     finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], badge: "New", variant: "brass · square plate · 9 x 9 jets", functions: 1 },
+  { code: "ST-1012",  cat: "rain-shower",  name: "Aeon Multi-Jet Shower Head",  finishes: ["chrome"], badge: "New", variant: "ABS · round · stepped hub", functions: 1 },
+  { code: "ST-3014",  cat: "rain-shower",  name: "Aeon Swivel Shower Head",     finishes: ["chrome"], badge: "New", variant: "ABS · round · swivel joint", functions: 1 },
+  { code: "ST-3016",  cat: "rain-shower",  name: "Aeon Domed Shower Head",      finishes: ["chrome"], badge: "New", variant: "ABS · round · domed hub", functions: 1 },
+  { code: "ST-1023",  cat: "rain-shower",  name: "Aria Fine-Spray Shower Head", finishes: ["chrome"], badge: "New", variant: "ABS · round · plain face", functions: 1 },
+  { code: "ST-1031",  cat: "rain-shower",  name: "Aria Spiral-Jet Shower Head", finishes: ["chrome"], badge: "New", variant: "ABS · round · spiral jet pattern", functions: 1 },
+  { code: "ST-1022",  cat: "rain-shower",  name: "Aqua Oval Shower Head",       finishes: ["chrome","matteBlack"], badge: "New", variant: "ABS · oval · slim arm", functions: 1 },
+  { code: "ST-1029",  cat: "rain-shower",  name: "Aqua Square Shower Head",     finishes: ["chrome"], badge: "New", variant: "brass · square plate · 9 x 9 jets", functions: 1 },
   { code: "ST-SOH",   cat: "rain-shower",  name: "SS304 Square Shower Head",    finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], badge: "New", variant: "SS304 · 150-400 mm · code not in the catalogue", functions: 1 },
-  { code: "ST-1017",  cat: "rain-shower",  name: "Regale Wall Shower Head",     finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], functions: 1 },
-  { code: "ST-1027",  cat: "rain-shower",  name: "Aeon Round Shower Head",      finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], functions: 1 },
-  { code: "ST-1033",  cat: "rain-shower",  name: "Aeon Slim Round Head",        finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], functions: 1 },
+  { code: "ST-1017",  cat: "rain-shower",  name: "Regale Wall Shower Head",     finishes: ["chrome","roseGold","matteBlack"], functions: 1 },
+  { code: "ST-1027",  cat: "rain-shower",  name: "Aeon Round Shower Head",      finishes: ["chrome"], functions: 1 },
+  { code: "ST-1033",  cat: "rain-shower",  name: "Aeon Slim Round Head",        finishes: ["chrome"], functions: 1 },
   { code: "ST-OP1",   cat: "health-faucet",name: "Cascada Jet Spray Health Faucet", finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"] },   // artwork is chrome — the -brushedGold file was mislabelled
   // more hand showers
-  { code: "ST-1034",  cat: "hand-shower",  name: "Aeon Round Hand Shower",      finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"] },
+  { code: "ST-1034",  cat: "hand-shower",  name: "Aeon Round Hand Shower",      finishes: ["chrome"] },
   /* All three were filed as "brushed steel", which is not a colour the factory
      makes: the Drive ships them as ST-1037/1038/1039-N0000, with no finish code
      in the name, so the code IS the finish. Look at the three renders and they
@@ -391,7 +404,7 @@ const RAW_PRODUCTS = [
   { code: "ST-1039",  cat: "hand-shower",  name: "Senza Slim Hand Shower",      finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"] },
   // basin mixers / taps
   // REMOVED (not a washroom fitting): angle valve — a concealed plumbing stopcock, not a visible fitting (it reads as a door handle in the rail)
-  // { code: "ST-MN-AC", cat: "wall-tap",     name: "Monaco Angle Valve",          finishes: ["chrome","roseGold","matteBlack","antiqueGold"], badge: "New" },
+  // { code: "ST-MN-AC", cat: "wall-tap",     name: "Monaco Angle Valve",          finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], badge: "New" },
   // REMOVED (not a washroom fitting): pull-out KITCHEN sink mixer, not a bathroom product
   // { code: "ST-OB-D94",cat: "basin-mixer",  name: "Orbit Pull-out Sink Mixer",      finishes: ["chrome","matteBlack","brushedSteel"] },
   // REMOVED (not a washroom fitting): angle valve — same: plumbing hardware, nothing to place on a bathroom wall
@@ -399,7 +412,7 @@ const RAW_PRODUCTS = [
   // wall spouts
   // REMOVED (not a washroom fitting): basin pop-up waste — same
   // { code: "ST-TSQ",   cat: "waste",        name: "Axis Pop-up Waste",      finishes: ["chrome","roseGold","matteBlack","antiqueGold","brushedBronze"] },
-  { code: "ST-J06",   cat: "body-jet",     name: "3-Function Body Jet",          finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "50 x 50 mm · brass · round head" },
+  { code: "ST-J06",   cat: "body-jet",     name: "3-Function Body Jet",          finishes: ["chrome"], variant: "50 x 50 mm · brass · round head" },
   // the one genuine spout in the range: a spout and a flange, no handle on it
   /* THE RANGE'S ONE SPOUT, IN EVERY COLOUR (2026-09-09, asked for directly).
      The Drive folder ships this spout in three finishes — gun grey, champagne
@@ -425,7 +438,7 @@ const RAW_PRODUCTS = [
      it is a shower arm, so it takes a per-SKU mount high on the back wall
      rather than the category's filler height (see SKU3D in planner.js).
      ST-SARM is a PLACEHOLDER code until the real catalogue number arrives. */
-  { code: "ST-SARM",  cat: "bath-spout",   name: "Axis Square Shower Arm",      finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], badge: "New", variant: "wall arm \u00b7 square section" },
+  { code: "ST-SARM",  cat: "bath-spout",   name: "Axis Square Shower Arm",      finishes: ["gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], badge: "New", variant: "wall arm \u00b7 square section" },
   /* 2026-09-08, the client's second upload. Identified as the Drive group
      "2513" — and the identification is NOT certain: groups "54" and "53" are
      the same family and one of them is arguably a closer body shape. "2513" is
@@ -487,16 +500,16 @@ const RAW_PRODUCTS = [
   // out of the range as offered here. Commented rather than deleted: its
   // renders are still in assets/products, so restoring it is this one line.
   // { code: "ST-D5001", cat: "diverter", name: "Regale Round Concealed Diverter", finishes: ["chrome"], variant: "round plate · single lever", outlets: 3 },
-  { code: "ST-D5002", cat: "diverter", name: "Regale Square Lever Diverter", finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "square plate · single lever", outlets: 3 },
-  { code: "ST-D5003", cat: "diverter", name: "Regale 3-Way Concealed Diverter", finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "square plate · 3 buttons", outlets: 3 },
-  { code: "ST-D5004", cat: "diverter", name: "Regale 6-Function Diverter Plate", finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "tall plate · dial + 6 buttons", outlets: 6 },
+  { code: "ST-D5002", cat: "diverter", name: "Regale Square Lever Diverter", finishes: ["chrome"], variant: "square plate · single lever", outlets: 3 },
+  { code: "ST-D5003", cat: "diverter", name: "Regale 3-Way Concealed Diverter", finishes: ["chrome"], variant: "square plate · 3 buttons", outlets: 3 },
+  { code: "ST-D5004", cat: "diverter", name: "Regale 6-Function Diverter Plate", finishes: ["chrome","roseGold","matteBlack"], variant: "tall plate · dial + 6 buttons", outlets: 6 },
   /* These two read "2-Way" and "3-Way" here and neither is. The July 2026
      catalogue heads p40 THREE FUNCTION THERMOSTATIC DIVERTER, "With Control
      Unit For 3 Outlets", and p39 FOUR FUNCTION, "With Control Unit For 4
      Outlets" — which is what `outlets` already said, so only the names were
      wrong. Taken from the page. */
-  { code: "ST-D5009", cat: "diverter", name: "3-Function Concealed Thermostat", finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "tall plate · 3 outlets", outlets: 3 },
-  { code: "ST-D5010", cat: "diverter", name: "4-Function Concealed Thermostat", finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "tall plate · 4 outlets · 2 together", outlets: 4 },
+  { code: "ST-D5009", cat: "diverter", name: "3-Function Concealed Thermostat", finishes: ["chrome","roseGold","matteBlack"], variant: "tall plate · 3 outlets", outlets: 3 },
+  { code: "ST-D5010", cat: "diverter", name: "4-Function Concealed Thermostat", finishes: ["chrome","roseGold","matteBlack"], variant: "tall plate · 4 outlets · 2 together", outlets: 4 },
   { code: "ST-BJ21F", cat: "body-jet", name: "Hydrix Body Jet", finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "50 x 50 mm · brass · rain rosette" },
   /* The folder shot this one in three. The other five are generated from its own
      chrome render by tools_finish.py (`--sku ST-2FBJ --write`), each through the
@@ -518,13 +531,13 @@ const RAW_PRODUCTS = [
      the "N Function Can Be Operated Simultaneously" line, which is a different
      number on the same page.
      ------------------------------------------------------------------------ */
-  { code: "ST-C1005", cat: "rain-shower", name: "Cascada Wide Ceiling Shower",   finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "550x450mm · rainfall, waterfall & mist", functions: 3 },
-  { code: "ST-C1006", cat: "rain-shower", name: "Lumina Compact Ceiling Shower", finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "380x250mm · LED · rainfall, waterfall & mist", functions: 3 },
-  { code: "ST-C1009", cat: "rain-shower", name: "Lumina Grand Ceiling Shower",   finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "700x450mm · LED · needs an electric point", functions: 4 },
+  { code: "ST-C1005", cat: "rain-shower", name: "Cascada Wide Ceiling Shower",   finishes: ["chrome"], variant: "550x450mm · rainfall, waterfall & mist", functions: 3 },
+  { code: "ST-C1006", cat: "rain-shower", name: "Lumina Compact Ceiling Shower", finishes: ["chrome"], variant: "380x250mm · LED · rainfall, waterfall & mist", functions: 3 },
+  { code: "ST-C1009", cat: "rain-shower", name: "Lumina Grand Ceiling Shower",   finishes: ["chrome"], variant: "700x450mm · LED · needs an electric point", functions: 4 },
   { code: "ST-C1020", cat: "rain-shower", name: "Cascada Powder Rain Ceiling Shower", finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "650x380mm · rain, rain-column, mist & powder-rain", functions: 4, badge: "New" },
 
-  { code: "ST-D5008", cat: "diverter", name: "Regale Flow Control Diverter", finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "thermostatic & volume · 3 outlets together", outlets: 3 },
-  { code: "ST-D5014", cat: "diverter", name: "Regale Progressive Diverter",  finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "single lever · progressive cartridge", outlets: 4 },
+  { code: "ST-D5008", cat: "diverter", name: "Regale Flow Control Diverter", finishes: ["chrome","roseGold","matteBlack"], variant: "thermostatic & volume · 3 outlets together", outlets: 3 },
+  { code: "ST-D5014", cat: "diverter", name: "Regale Progressive Diverter",  finishes: ["chrome"], variant: "single lever · progressive cartridge", outlets: 4 },
 
   /* The PDF prints no code for either spout — the page carries the finishes and
      nothing else — so this one is filed as ST-BUTTON beside ST-PLAIN, which is
@@ -538,11 +551,11 @@ const RAW_PRODUCTS = [
      the per-finish codes ride in `variant`, where the spec sheet still prints
      them for the consultant. */
   { code: "ST-1019", cat: "hand-shower", name: "Aria Brass Hand Shower", finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "brass · ST-1019 french gold / ST-1020 rose gold / ST-1021 matt black" },
-  { code: "ST-1011", cat: "hand-shower", name: "Aria Round Hand Shower",        finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "ABS · 1.5m tube & hook" },
-  { code: "ST-1024", cat: "hand-shower", name: "Aria Single-Spray Hand Shower", finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "ABS · 1.5m tube & hook" },
-  { code: "ST-1032", cat: "hand-shower", name: "Aria Sector-Spray Hand Shower", finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "ABS · 1.5m tube & hook" },
-  { code: "ST-3015", cat: "hand-shower", name: "Aria Wide-Grip Hand Shower",    finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "ABS · 1.5m tube & hook" },
-  { code: "ST-3017", cat: "hand-shower", name: "Aria Ribbed Hand Shower",       finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "ABS · 1.5m tube & hook" },
+  { code: "ST-1011", cat: "hand-shower", name: "Aria Round Hand Shower",        finishes: ["chrome"], variant: "ABS · 1.5m tube & hook" },
+  { code: "ST-1024", cat: "hand-shower", name: "Aria Single-Spray Hand Shower", finishes: ["chrome"], variant: "ABS · 1.5m tube & hook" },
+  { code: "ST-1032", cat: "hand-shower", name: "Aria Sector-Spray Hand Shower", finishes: ["chrome"], variant: "ABS · 1.5m tube & hook" },
+  { code: "ST-3015", cat: "hand-shower", name: "Aria Wide-Grip Hand Shower",    finishes: ["chrome"], variant: "ABS · 1.5m tube & hook" },
+  { code: "ST-3017", cat: "hand-shower", name: "Aria Ribbed Hand Shower",       finishes: ["chrome"], variant: "ABS · 1.5m tube & hook" },
 ];
 
 /* ---- build PRODUCTS map keyed by category -------------------------------- */
