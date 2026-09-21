@@ -105,17 +105,18 @@ const FINISH_ORDER = ["chrome", "gunGrey", "champagne", "roseGold", "brushedRose
    -------------------------------------------------------------------------- */
 // Fixed "shower column": overhead on top → thermostatic → concealed diverter
 // → bath spout at the bottom, all centred (fx 0.50). Scenes may fine-tune via place.
+/* FIVE CATEGORIES, AND ONLY FIVE (2026-09-21, asked for directly): diverters,
+   ceiling showers, body jets, spouts and hand showers. Basin mixers, wall taps,
+   health faucets and basin wastes are out — their rows and their category
+   entries. planner.js keeps its per-category mount tables for them; those are
+   lookups by id and inert without a row. */
 const CATEGORIES = [
   { id: "rain-shower",  name: "Overhead / Rain Showers", icon: "rainshower", anchor: { fx: 0.50, fy: 0.13, fw: 0.16 } },
   { id: "thermostatic", name: "Thermostatic Diverters",  icon: "diverter",   anchor: { fx: 0.50, fy: 0.46, fw: 0.11 } },
   { id: "diverter",     name: "Concealed Diverters",     icon: "diverter",   anchor: { fx: 0.50, fy: 0.60, fw: 0.055 } },
   { id: "bath-spout",   name: "Bath Spouts",             icon: "spout",      anchor: { fx: 0.50, fy: 0.72, fw: 0.12 } },
-  { id: "basin-mixer",  name: "Basin Mixers",            icon: "spout",      anchor: { fx: 0.55, fy: 0.70, fw: 0.12 } },
   { id: "hand-shower",  name: "Hand Showers",            icon: "spout",      anchor: { fx: 0.72, fy: 0.58, fw: 0.09 } },
   { id: "body-jet",     name: "Body Jets",               icon: "diverter",   anchor: { fx: 0.74, fy: 0.46, fw: 0.13 } },
-  { id: "wall-tap",     name: "Wall Taps",               icon: "spout",      anchor: { fx: 0.62, fy: 0.55, fw: 0.11 } },
-  { id: "health-faucet",name: "Health Faucets",          icon: "spout",      anchor: { fx: 0.30, fy: 0.60, fw: 0.09 } },
-  { id: "waste",        name: "Basin Wastes",            icon: "spout",      anchor: { fx: 0.60, fy: 0.82, fw: 0.05 } },
 ];
 
 /* ---- REAL PRODUCTS -------------------------------------------------------
@@ -246,8 +247,6 @@ const RAW_PRODUCTS = [
      own page photographs. The champagne WM-001 that WAS here was a corrupt
      file (a 900x578 sheet of magenta and cyan blocks, live on the site) and is
      replaced by the catalogue's brushed bronze render. */
-  { code: "ST-WM-001", cat: "basin-mixer", name: "Wall Mounted Basin Mixer",   finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], badge: "Signature", variant: "247 x 100 x 70 mm · brass · twin lever" },
-  { code: "ST-WM-002", cat: "basin-mixer", name: "Wall Mounted Basin Mixer",   finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "230 x 100 x 190 mm · brass · single lever" },
 
   /* ---- MANFRA deck basin mixers, new 2026-09-16 from the July catalogue ----
      The catalogue gives these a code PER FINISH rather than per model (p77-82):
@@ -256,9 +255,6 @@ const RAW_PRODUCTS = [
      gold as ST-MN-011 / 001 / 003. Six codes, one fitting. Filed the way
      ST-1019 already is — one row under the first code, the rest recorded in
      `variant` where the spec sheet still prints them. */
-  { code: "ST-MN-005", cat: "basin-mixer", name: "Manfra Basin Mixer",        finishes: ["roseGold"], badge: "New", variant: "178 mm · brass · ST-MN-005/007/009/011/001/003" },
-  { code: "ST-MN-006", cat: "basin-mixer", name: "Manfra Tall Basin Mixer",   finishes: ["roseGold"], badge: "New", variant: "290 mm · brass · ST-MN-006/008/010/012/002/004" },
-  { code: "ST-MN-015", cat: "basin-mixer", name: "Manfra High Pillar Tap",    finishes: ["roseGold"], badge: "New", variant: "290 mm · brass · pillar cock · ST-MN-013..019" },
 
   // ---- Thermostatic Control Trim (square dial) ----
   // Withdrawn from the list at the client's request (2026-09-05). It is left here
@@ -346,12 +342,6 @@ const RAW_PRODUCTS = [
      those pages and no CODE line at all, the same gap the spouts and body jets
      have. QB-AC's code comes off the page as "-QB-AC-RG" on p133 and "QB-AC-MB"
      on p134; the leading hyphen is the text extractor, not the code. */
-  { code: "MN-2W",   cat: "wall-tap", name: "Manfra 2-Way Tap",          finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], badge: "New", variant: "brass · wall two-way" },
-  { code: "ST-QB",   cat: "wall-tap", name: "Axis 2-Way Tap",            finishes: ["chrome","champagne","roseGold","matteBlack"], badge: "New", variant: "brass · square plate · wall two-way" },
-  { code: "MN-AC",   cat: "wall-tap", name: "Manfra Angle Valve",        finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], badge: "New", variant: "brass · round body" },
-  { code: "QB-AC",   cat: "wall-tap", name: "Axis Angle Valve",          finishes: ["champagne","matteBlack"], badge: "New", variant: "brass · square body" },
-  { code: "ST-CSC",  cat: "wall-tap", name: "Concealed Stop Cock",       finishes: ["chrome","champagne","roseGold","matteBlack"], badge: "New", variant: "200 mm · brass · round plate · code not in the catalogue" },
-  { code: "ST-CWO",  cat: "wall-tap", name: "Concealed Wall Out-let",    finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], badge: "New", variant: "brass · outlet elbow + handset hook · code not in the catalogue" },
 
   /* ---- WASTES AND TRAPS, new 2026-09-16 (p137-140) ----
      Neither page prints a code. Both are basin fittings rather than wall ones,
@@ -359,8 +349,6 @@ const RAW_PRODUCTS = [
      were pulled for exactly that reason. They go in because the client asked
      for the whole catalogue, and they are honest about where they sit — the
      waste drops into the basin, the trap hangs under it. */
-  { code: "ST-PUW",   cat: "waste", name: "Pop Up Waste Coupling",  finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], badge: "New", variant: "125 mm · brass · code not in the catalogue" },
-  { code: "ST-BTRAP", cat: "waste", name: "Bottle Trap",            finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], badge: "New", variant: "brass · 12\" + 6\" SS pipe · code not in the catalogue" },
 
   /* ---- HEALTH FAUCETS, new 2026-09-16 (p143-147) ----
      Three models, none of them coded. Each finish is photographed twice on the
@@ -369,9 +357,6 @@ const RAW_PRODUCTS = [
      four and three more, all chrome, distinguishable only by their photographs
      and with no code, name or size to tell them apart; those are left out until
      the factory names them. */
-  { code: "ST-HFSEL", cat: "health-faucet", name: "Selora Health Faucet", finishes: ["chrome","gunGrey","roseGold","brushedRoseGold","matteBlack"], badge: "New", variant: "ABS · 1 m SS tube & hook · code not in the catalogue" },
-  { code: "ST-HFSQ",  cat: "health-faucet", name: "Square Health Faucet", finishes: ["gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], badge: "New", variant: "brass · 1 m SS tube & brass hook · code not in the catalogue" },
-  { code: "ST-HFEST", cat: "health-faucet", name: "Estonia Health Faucet", finishes: ["chrome","matteBlack"], badge: "New", variant: "ABS · 1 m tube & ABS hook · code not in the catalogue" },
 
   // ---- Basin Wastes (square pop-up) ----
   // REMOVED (not a washroom fitting): basin pop-up waste — a part that sits inside the basin, not a wall fitting
