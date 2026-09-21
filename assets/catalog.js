@@ -150,23 +150,37 @@ const CATEGORIES = [
    commit message; do not read their lists as confirmed. */
 const RAW_PRODUCTS = [
   // ---- Overhead / Rain Showers (C-series) ----
-  { code: "ST-C1012", cat: "rain-shower", name: "Cascada Square Rain Shower",  finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"],                                   badge: "Signature", variant: "waterfall blades + LED strips", functions: 3 },
-  { code: "ST-C1013", cat: "rain-shower", name: "Cascada Slim Rain Shower",    finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "hex plate · 6 jets", functions: 2 },
-  { code: "ST-C1014", cat: "rain-shower", name: "Cascada Grande Rain Shower",  finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "hex plate · LED strips", functions: 2 },
-  { code: "ST-C1015", cat: "rain-shower", name: "Cascada Maxima Rain Shower",  finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "hex plate · LED strips + 5 jets", functions: 3 },
-  { code: "ST-C1016", cat: "rain-shower", name: "Lumina Rain Shower",          finishes: ["chrome"], variant: "square plate · plain", functions: 1 },
-  { code: "ST-C1017", cat: "rain-shower", name: "Lumina Edge Rain Shower",     finishes: ["chrome"], variant: "square plate · centre slot", functions: 2 },
-  { code: "ST-C1018", cat: "rain-shower", name: "Lumina Matrix Rain Shower",   finishes: ["chrome"], variant: "square plate · 4 jets", functions: 2 },
-  { code: "ST-C1019", cat: "rain-shower", name: "Aeon Rain Shower",            finishes: ["chrome","gunGrey","roseGold","brushedRoseGold","matteBlack"], badge: "Bestseller", variant: "wide plate · plain, slim edge", functions: 1 },
+  /* CEILING SHOWERS ARE NAMED BY WHAT THEY DO, NOT BY A SERIES (2026-09-21,
+     asked for directly: "for showers don't use their complicated names — only
+     keep Ceiling Shower with how many functions they provide", pointing at how
+     the diverters read). "Cascada Maxima Rain Shower" told a client nothing
+     they could act on; "3-Function Ceiling Shower" tells them what it does, and
+     the card already prints the same count as its own badge.
+     That makes the NAME repeat across the range — eight of them are 2-function
+     — so the SIZE carries the difference, and it is the catalogue's own figure
+     rather than a word: every `variant` here now opens with the mm printed on
+     that product's page (pp. 45-74). Between the size, the function count and
+     the photograph there is nothing left that a family word was doing.
+     The nine ABS and brass heads on a wall arm are deliberately NOT renamed —
+     ST-1017/1027/1033/1012/3014/3016/1023/1031/1022 mount on the back wall
+     (see SKU3D), so calling any of them a ceiling shower would be wrong. */
+  { code: "ST-C1012", cat: "rain-shower", name: "3-Function Ceiling Shower",  finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"],                                   badge: "Signature", variant: "650x450 mm · waterfall blades + LED strips", functions: 3 },
+  { code: "ST-C1013", cat: "rain-shower", name: "2-Function Ceiling Shower",    finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "480x330 mm · hex plate · 6 jets", functions: 2 },
+  { code: "ST-C1014", cat: "rain-shower", name: "2-Function Ceiling Shower",  finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "480x330 mm · hex plate · LED strips", functions: 2 },
+  { code: "ST-C1015", cat: "rain-shower", name: "3-Function Ceiling Shower",  finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "480x330 mm · hex plate · LED strips + 5 jets", functions: 3 },
+  { code: "ST-C1016", cat: "rain-shower", name: "1-Function Ceiling Shower",          finishes: ["chrome"], variant: "350x350 mm · square plate · plain", functions: 1 },
+  { code: "ST-C1017", cat: "rain-shower", name: "2-Function Ceiling Shower",     finishes: ["chrome"], variant: "350x350 mm · square plate · centre slot", functions: 2 },
+  { code: "ST-C1018", cat: "rain-shower", name: "2-Function Ceiling Shower",   finishes: ["chrome"], variant: "350x350 mm · square plate · 4 jets", functions: 2 },
+  { code: "ST-C1019", cat: "rain-shower", name: "1-Function Ceiling Shower",            finishes: ["chrome","gunGrey","roseGold","brushedRoseGold","matteBlack"], badge: "Bestseller", variant: "380x250 mm · wide plate · plain, slim edge", functions: 1 },
   // Added from the Stout asset library (2026-07-10) — descriptive names, rename to real SKU names anytime
-  { code: "ST-C1001", cat: "rain-shower", name: "Cascada Rainfall Panel",      finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "wide plate · LED strip", functions: 2 },
-  { code: "ST-C1002", cat: "rain-shower", name: "Cascada Slimline Panel",      finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "wide plate · 4 jets", functions: 2 },
-  { code: "ST-C1003", cat: "rain-shower", name: "Cascada Waterfall Panel",     finishes: ["chrome","gunGrey","roseGold","brushedRoseGold","matteBlack"], variant: "slim plate · LED strip", functions: 2 },
-  { code: "ST-C1004", cat: "rain-shower", name: "Cascada Duo Rainfall Panel",  finishes: ["chrome","gunGrey","roseGold","brushedRoseGold","matteBlack"], variant: "slim plate · 2 jets", functions: 2 },
-  { code: "ST-C1007", cat: "rain-shower", name: "Lumina Slim Panel",           finishes: ["chrome"], variant: "slim plate · LED strip + 4 jets", functions: 3 },
-  { code: "ST-C1008", cat: "rain-shower", name: "Cascada Compact Panel",       finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "wide plate · LED strip + 4 jets", functions: 3 },
-  { code: "ST-C1010", cat: "rain-shower", name: "Cascada Grande Panel",        finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "wide plate · plain", functions: 1 },
-  { code: "ST-C1011", cat: "rain-shower", name: "Cascada Maxima Panel",        finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "waterfall blades + LED + centre jet", functions: 4 },
+  { code: "ST-C1001", cat: "rain-shower", name: "2-Function Ceiling Shower",      finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "480x330 mm · wide plate · LED strip", functions: 2 },
+  { code: "ST-C1002", cat: "rain-shower", name: "2-Function Ceiling Shower",      finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "480x330 mm · wide plate · 4 jets", functions: 2 },
+  { code: "ST-C1003", cat: "rain-shower", name: "2-Function Ceiling Shower",     finishes: ["chrome","gunGrey","roseGold","brushedRoseGold","matteBlack"], variant: "380x250 mm · slim plate · LED strip", functions: 2 },
+  { code: "ST-C1004", cat: "rain-shower", name: "2-Function Ceiling Shower",  finishes: ["chrome","gunGrey","roseGold","brushedRoseGold","matteBlack"], variant: "380x250 mm · slim plate · 2 jets", functions: 2 },
+  { code: "ST-C1007", cat: "rain-shower", name: "3-Function Ceiling Shower",           finishes: ["chrome"], variant: "380x250 mm · slim plate · LED strip + 4 jets", functions: 3 },
+  { code: "ST-C1008", cat: "rain-shower", name: "3-Function Ceiling Shower",       finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "480x330 mm · wide plate · LED strip + 4 jets", functions: 3 },
+  { code: "ST-C1010", cat: "rain-shower", name: "1-Function Ceiling Shower",        finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "480x330 mm · wide plate · plain", functions: 1 },
+  { code: "ST-C1011", cat: "rain-shower", name: "4-Function Ceiling Shower",        finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "650x450 mm · waterfall blades + LED + centre jet", functions: 4 },
 
   // ---- Concealed Diverter (single-lever) ----
   /* "Regale Concealed Diverter" was ours. The catalogue calls it TWO WAY
@@ -324,7 +338,7 @@ const RAW_PRODUCTS = [
      within a shade. Polished gold is deliberately NOT offered — no jet in
      the range carries it and there is no measured curve for it. */
   { code: "ST-CBJ",   cat: "body-jet",    name: "Concealed Body Jet",         finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], badge: "New", variant: "130 x 120 mm · brass · flush recessed" },
-  { code: "ST-1030",  cat: "rain-shower", name: "Aqua Square Rain Shower",     finishes: ["chrome","matteBlack"], defaultFinish: "matteBlack", variant: "square plate · waterfall blades + jets", functions: 3 },   // filed as a body jet; its render is a full overhead plate
+  { code: "ST-1030",  cat: "rain-shower", name: "3-Function Ceiling Shower",     finishes: ["chrome","matteBlack"], defaultFinish: "matteBlack", variant: "square plate · waterfall blades + jets", functions: 3 },   // filed as a body jet; its render is a full overhead plate
 
   // ---- Wall Taps (single-lever wall bib tap) ----
   { code: "ST-SZ-01", cat: "wall-tap",    name: "Senza Wall Bib Tap",          finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"],                                  badge: "New" },
@@ -386,8 +400,8 @@ const RAW_PRODUCTS = [
   { code: "ST-1023",  cat: "rain-shower",  name: "Aria Fine-Spray Shower Head", finishes: ["chrome"], badge: "New", variant: "ABS · round · plain face", functions: 1 },
   { code: "ST-1031",  cat: "rain-shower",  name: "Aria Spiral-Jet Shower Head", finishes: ["chrome"], badge: "New", variant: "ABS · round · spiral jet pattern", functions: 1 },
   { code: "ST-1022",  cat: "rain-shower",  name: "Aqua Oval Shower Head",       finishes: ["chrome","matteBlack"], badge: "New", variant: "ABS · oval · slim arm", functions: 1 },
-  { code: "ST-1029",  cat: "rain-shower",  name: "Aqua Square Shower Head",     finishes: ["chrome"], badge: "New", variant: "brass · square plate · 9 x 9 jets", functions: 1 },
-  { code: "ST-SOH",   cat: "rain-shower",  name: "SS304 Square Shower Head",    finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], badge: "New", variant: "SS304 · 150-400 mm · code not in the catalogue", functions: 1 },
+  { code: "ST-1029",  cat: "rain-shower",  name: "1-Function Ceiling Shower",     finishes: ["chrome"], badge: "New", variant: "brass · square plate · 9 x 9 jets", functions: 1 },
+  { code: "ST-SOH",   cat: "rain-shower",  name: "1-Function Ceiling Shower",    finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], badge: "New", variant: "SS304 · 150-400 mm · code not in the catalogue", functions: 1 },
   { code: "ST-1017",  cat: "rain-shower",  name: "Regale Wall Shower Head",     finishes: ["chrome","roseGold","matteBlack"], functions: 1 },
   { code: "ST-1027",  cat: "rain-shower",  name: "Aeon Round Shower Head",      finishes: ["chrome"], functions: 1 },
   { code: "ST-1033",  cat: "rain-shower",  name: "Aeon Slim Round Head",        finishes: ["chrome"], functions: 1 },
@@ -464,7 +478,7 @@ const RAW_PRODUCTS = [
      lemon, not a metal — and the client has struck it once before ("this colour
      doesn't exist, remove it"); it came back with a later import. It is the
      Polished Gold below that this plate is actually offered in. */
-  { code: "ST-SS304", cat: "rain-shower",  name: "Aqua Square Rain Plate",          finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], badge: "New", variant: "square plate · square nozzles", functions: 1 },
+  { code: "ST-SS304", cat: "rain-shower",  name: "1-Function Ceiling Shower",          finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], badge: "New", variant: "square plate · square nozzles", functions: 1 },
   // waste
   { code: "ST-SZ1",   cat: "wall-tap",     name: "Senza Bib Tap",     finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"] },
   // concealed thermostatic panels
@@ -479,7 +493,7 @@ const RAW_PRODUCTS = [
 
   /* ---- 2026-09 Drive range: showers, diverters, spouts and body jets, each
      with the full set of finishes from the factory photography ---- */
-  { code: "ST-FDP", cat: "rain-shower", name: "Cascada Flow Rain Panel", finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "wide plate · centre waterfall slot", functions: 1 },
+  { code: "ST-FDP", cat: "rain-shower", name: "1-Function Ceiling Shower", finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "wide plate · centre waterfall slot", functions: 1 },
   { code: "ST-CP25", cat: "thermostatic", name: "Regale Digital Thermostatic Panel", finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "digital · dial + 4 function keys", outlets: 4 },
   { code: "ST-MB2", cat: "thermostatic", name: "Regale Smart Control Panel", finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "digital · dial + 4 function keys", outlets: 4 },
   { code: "ST-CJ1", cat: "thermostatic", name: "Regale Touch Control Panel", finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "digital · dial + 6 function keys", outlets: 6 },
@@ -531,10 +545,10 @@ const RAW_PRODUCTS = [
      the "N Function Can Be Operated Simultaneously" line, which is a different
      number on the same page.
      ------------------------------------------------------------------------ */
-  { code: "ST-C1005", cat: "rain-shower", name: "Cascada Wide Ceiling Shower",   finishes: ["chrome"], variant: "550x450mm · rainfall, waterfall & mist", functions: 3 },
-  { code: "ST-C1006", cat: "rain-shower", name: "Lumina Compact Ceiling Shower", finishes: ["chrome"], variant: "380x250mm · LED · rainfall, waterfall & mist", functions: 3 },
-  { code: "ST-C1009", cat: "rain-shower", name: "Lumina Grand Ceiling Shower",   finishes: ["chrome"], variant: "700x450mm · LED · needs an electric point", functions: 4 },
-  { code: "ST-C1020", cat: "rain-shower", name: "Cascada Powder Rain Ceiling Shower", finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "650x380mm · rain, rain-column, mist & powder-rain", functions: 4, badge: "New" },
+  { code: "ST-C1005", cat: "rain-shower", name: "3-Function Ceiling Shower",   finishes: ["chrome"], variant: "550x500 mm · rainfall, waterfall & mist", functions: 3 },
+  { code: "ST-C1006", cat: "rain-shower", name: "3-Function Ceiling Shower", finishes: ["chrome"], variant: "400x450 mm · LED · rainfall, waterfall & mist", functions: 3 },
+  { code: "ST-C1009", cat: "rain-shower", name: "4-Function Ceiling Shower",   finishes: ["chrome"], variant: "700x450 mm · LED · needs an electric point", functions: 4 },
+  { code: "ST-C1020", cat: "rain-shower", name: "4-Function Ceiling Shower", finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "650x380 mm · rain, rain-column, mist & powder-rain", functions: 4, badge: "New" },
 
   { code: "ST-D5008", cat: "diverter", name: "Regale Flow Control Diverter", finishes: ["chrome","roseGold","matteBlack"], variant: "thermostatic & volume · 3 outlets together", outlets: 3 },
   { code: "ST-D5014", cat: "diverter", name: "Regale Progressive Diverter",  finishes: ["chrome"], variant: "single lever · progressive cartridge", outlets: 4 },

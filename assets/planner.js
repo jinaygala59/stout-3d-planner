@@ -5325,32 +5325,25 @@ async function downloadSpecSheet() {
 
     /* The dark lockup band, identical on both pages so the two read as one
        document. `right` is the small line set against the right margin. */
+    /* THE BAND HOLDS THE MARK AND NOTHING ELSE (2026-09-21, asked for directly).
+       It used to carry a lockup — mark plus "SANITARYWARE" in gold — and, on
+       page 2, a right-aligned title and a room-and-date line. All of it is
+       gone. The mark is the client's own artwork and it already says who this
+       is from; the wordmark beside it said it twice, and the title and date
+       said what the page below says anyway. With the word gone the mark is no
+       longer half of a pair, so it centres on its own width rather than on the
+       width of the pair. `right` and `sub` are still taken so the two callers
+       need not change, and so it is one edit to put a line back if it is ever
+       wanted again. */
     function brandBand(top, h, right, sub) {
       doc.setFillColor(15, 15, 17); doc.rect(0, top, PW, h, "F");
       const LH = Math.min(12, h - 8), LW = LH * (707 / 268);   // the lockup is 707x268
-      /* The mark is the sheet's signature, so it sits on the page's centre line
-         rather than the left margin. Mark and wordmark are one lockup: measure
-         the pair and centre them together, or the mark alone ends up centred
-         with the word hanging off it. */
-      const WORD = "SANITARYWARE", GAP = 4;
-      doc.setFont("helvetica", "normal"); doc.setFontSize(9);
-      const wordW = doc.getTextWidth(WORD);
-      let markW = LW;
-      if (!logo) { doc.setFont("helvetica", "bold"); doc.setFontSize(20); markW = doc.getTextWidth("STOUT"); }
-      const lockX = (PW - (markW + GAP + wordW)) / 2;
-      if (logo) doc.addImage(logo, "JPEG", lockX, top + (h - LH) / 2, LW, LH, undefined, "FAST");
-      else { doc.setTextColor(255, 255, 255); doc.text("STOUT", lockX, top + h / 2 + 3); }
-      doc.setTextColor(...GOLD); doc.setFontSize(9); doc.setFont("helvetica", "normal");
-      doc.text(WORD, lockX + markW + GAP, top + h / 2 + 1);
-      /* 10pt, not 11: the centred lockup reaches 135mm, and the title at 11pt
-         reached back to 138 — the two nearly touched. */
-      if (right) {
-        doc.setTextColor(210, 210, 214); doc.setFontSize(10); doc.setFont("helvetica", "bold");
-        doc.text(right, PW - M, top + h / 2 - 2, { align: "right" });
-      }
-      if (sub) {
-        doc.setFont("helvetica", "normal"); doc.setFontSize(8); doc.setTextColor(150, 150, 154);
-        doc.text(sub, PW - M, top + h / 2 + 4, { align: "right" });
+      if (logo) {
+        doc.addImage(logo, "JPEG", (PW - LW) / 2, top + (h - LH) / 2, LW, LH, undefined, "FAST");
+      } else {
+        // no artwork loaded: the name, set as the mark would be, still alone
+        doc.setFont("helvetica", "bold"); doc.setFontSize(20); doc.setTextColor(255, 255, 255);
+        doc.text("STOUT", PW / 2, top + h / 2 + 3, { align: "center" });
       }
       doc.setDrawColor(...GOLD); doc.setLineWidth(0.8); doc.line(0, top + h, PW, top + h);
     }
@@ -5362,13 +5355,11 @@ async function downloadSpecSheet() {
        ====================================================================== */
     const PHOTO_H = showroom ? 88 : 0;
     if (showroom) doc.addImage(showroom, "JPEG", 0, 0, PW, PHOTO_H, undefined, "FAST");
+    /* "INFINITE BATHING" used to sit in the right of this band. It went with the
+       wordmark and the page-2 title for the same reason: the band holds the
+       mark and nothing else. The line still closes the About copy below, where
+       it reads as a sign-off rather than as a second logo. */
     brandBand(PHOTO_H, 24, null, null);
-    doc.setTextColor(...GOLD); doc.setFont("helvetica", "normal"); doc.setFontSize(8.5);
-    /* jsPDF measures a right-aligned string WITHOUT its letter spacing, so an
-       aligned tracked line runs off the page. Place it by measured width. */
-    const TAG = "INFINITE BATHING", TAG_SP = 1.2;
-    const tagW = doc.getTextWidth(TAG) + TAG_SP * (TAG.length - 1);
-    doc.text(TAG, PW - M - tagW, PHOTO_H + 14, { charSpace: TAG_SP });
 
     let y = PHOTO_H + 24 + 16;
     doc.setTextColor(...GOLD); doc.setFont("helvetica", "bold"); doc.setFontSize(9);
