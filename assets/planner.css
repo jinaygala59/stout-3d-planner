@@ -91,6 +91,12 @@ input{font-family:inherit}
 .btn.warn{border:1px solid var(--line-soft);color:var(--muted)}
 .btn.warn:hover{color:#e9b4ac;border-color:rgba(201,106,92,.55);background:rgba(201,106,92,.10)}
 .btn.icon{padding:8px 12px;letter-spacing:.12em;line-height:1}
+/* The room's finish, worn on the button that changes it. The dot is the answer
+   to "what colour is this room?" — the same 15px dot the room tabs use, so the
+   two read as the same kind of control. */
+.btn.fin-btn{display:inline-flex;align-items:center;gap:7px;padding-left:9px}
+.fin-btn i{width:15px;height:15px;border-radius:50%;background:var(--c,#888);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.18)}
 
 .menu{position:absolute;right:0;top:calc(100% + 8px);min-width:212px;padding:6px;
   background:rgba(18,19,22,.97);border:1px solid var(--line);border-radius:12px;
@@ -216,11 +222,20 @@ input{font-family:inherit}
 .ft-no{display:block;font-size:var(--t-micro);color:var(--muted);margin-top:5px;line-height:1.35}
 .fin-tile.no{opacity:.4;cursor:not-allowed}
 .fin-tile.no:hover{border-color:var(--line-soft);transform:none;background:var(--panel2)}
+/* the finish the room is already in — marked, because the room chooser opens on
+   a grid where one tile is the answer to "what am I looking at now?" */
+.fin-tile.on{border-color:var(--gold);background:rgba(198,161,91,.10)}
+.fin-tile.on .ft-nm{color:var(--gold)}
 @media (max-width:860px){ .fin-grid{grid-template-columns:repeat(auto-fit,minmax(112px,1fr))} }
 
 /* the tool card, once the valve has committed the room */
 .fin-lock{display:block;font-size:var(--t-micro);line-height:1.5;color:var(--muted)}
 .fin-lock b{color:var(--ink);font-weight:500}
+/* the way out of the lock, said where the lock is said */
+.lnk{font:inherit;color:var(--gold);text-decoration:underline;text-underline-offset:2px;
+  cursor:pointer;padding:0;border:0;background:none}
+.lnk:hover{color:var(--ink)}
+.lnk:focus-visible{outline:2px solid var(--gold);outline-offset:2px;border-radius:3px}
 
 .rail-empty{padding:26px 16px;text-align:center;color:var(--muted);font-size:var(--t-body);line-height:1.6}
 .rail-foot{padding:12px 16px;border-top:1px solid var(--line-soft)}
@@ -321,6 +336,10 @@ input{font-family:inherit}
   .themes button{padding:4px 9px 4px 5px;font-size:var(--t-small);gap:5px}
   .themes button i{width:12px;height:12px}
   .themes button span{display:none}
+  /* the dot carries it on a phone, as the room tabs' dots do */
+  .btn.fin-btn{padding-left:7px;gap:0}
+  .fin-btn i{width:13px;height:13px}
+  .fin-btn .rf-nm{display:none}
 
   .stage3d{grid-row:2;grid-column:1}
 

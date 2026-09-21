@@ -4296,12 +4296,16 @@ function renderTool() {
   /* NO SWATCHES ONCE THE VALVE IS IN. The finish was committed to when the
      valve went on the wall — for the valve and for everything the valve feeds —
      so offering a row of alternatives here would be offering something the tool
-     is about to refuse. Say what it is locked to, and say the way out. */
+     is about to refuse. Say what it is locked to, and say the way out — which is
+     now the toolbar's Finish, changing the whole room at once, not Reset all. */
   const lock = lockedFinish();
   if (lock) {
     $("#toolFins").innerHTML =
       `<span class="fin-lock">Locked to <b>${finName(lock)}</b> by the ` +
-      `${placedValve().product.name}. Clear the room to change it.</span>`;
+      `${placedValve().product.name}. <button type="button" class="lnk" data-roomfin>Change the room's finish</button> ` +
+      `to move every fitting together.</span>`;
+    const go = $("#toolFins").querySelector("[data-roomfin]");
+    if (go) go.onclick = openRoomFinish;
   } else
   $("#toolFins").innerHTML = rec.product.finishes.map(fid =>
     // a product referencing a finish the palette no longer defines must not take
@@ -4898,6 +4902,7 @@ function renderRail() {
     openFinishPick(p, fid => add(p, fid));
   });
   describeRoom();
+  syncRoomFin();          // the toolbar's finish button follows the room
   renderChosen();
   if (typeof renderEmptyState === "function") renderEmptyState();
 }
@@ -5617,9 +5622,11 @@ function setBasin(show) {
 }
 function clearAll() { [...placed.keys()].forEach(removeProduct); deselect(); saveDesign(); }
 /* RESET ALL — the same thing the room needs after a finish is committed, so it
-   is in the toolbar where it can be found, not only in the overflow menu. It is
-   the documented way back out of the finish lock, so hiding it would have made
-   that lock feel like a trap. */
+   is in the toolbar where it can be found, not only in the overflow menu.
+   It used to be the ONLY way back out of the finish lock, which is why it is
+   here at all. It no longer is: the Finish button beside it moves the whole room
+   to another colour and keeps the layout, and this is now what it says on the
+   tin — start the room again. */
 if ($("#resetAll")) $("#resetAll").onclick = () => {
   if (!placed.size) { toast("The room is already empty"); return; }
   askConfirm(() => {
@@ -5640,6 +5647,33 @@ if ($("#clearAll")) $("#clearAll").onclick = () => {
    20 px, and you certainly cannot tell what either does to THIS product. So the
    choice is made full size, with the piece itself shown in each finish. */
 let finPickRun = null;
+/* ONE TILE. The piece shown in the finish, its swatch, its name, and — when
+   something already on the wall is not made in it — why it cannot be picked.
+   Shared by the per-piece chooser and the room's own, so the two can never
+   disagree about what a refused finish looks like. */
+function finTile(p, fid, strands, label, on) {
+  const src = thumbOf((p.images && p.images[fid]) || "");
+  return `<button type="button" class="fin-tile${strands.length ? " no" : on ? " on" : ""}" data-fid="${fid}"
+      ${strands.length ? "disabled" : ""}
+      aria-label="${label}${strands.length ? ", unavailable" : ""}"${on ? ' aria-current="true"' : ""}>
+      <span class="ft-pic"><img src="${src}" alt="" decoding="async"></span>
+      <span class="ft-sw" style="background:${(FINISHES[fid] || {}).swatch || "#888"}"></span>
+      <span class="ft-nm">${finName(fid)}</span>
+      ${strands.length ? `<span class="ft-no">${strands.join(", ")} not made in it</span>` : ""}
+    </button>`;
+}
+/* the grid's own wiring — whatever put the tiles there, a tile closes the modal
+   and hands its finish to whoever asked */
+function bindFinPick() {
+  $("#finPickGrid").querySelectorAll("[data-fid]").forEach(b => b.onclick = () => {
+    const fid = b.dataset.fid, r = finPickRun;
+    closeFinishPick();
+    if (r) r(fid);
+  });
+  $("#finPick").hidden = false;
+  const first = $("#finPickGrid").querySelector("[data-fid]:not([disabled])");
+  if (first) first.focus();
+}
 function openFinishPick(p, run) {
   const m = $("#finPick"); if (!m) { run(cardFinish(p)); return; }
   finPickRun = run;
@@ -5649,29 +5683,86 @@ function openFinishPick(p, run) {
   $("#finPickBody").textContent = lock
     ? `The room is already in ${finName(lock)}, so that is the finish this goes in.`
     : `This is the finish the whole room is designed in — every fitting after it ` +
-      `matches. It locks when the piece goes on the wall, and clearing the room is the way back.`;
-  $("#finPickGrid").innerHTML = fins.map(fid => {
-    // a finish nothing already on the wall can wear is shown, and shown as refused,
-    // rather than quietly missing — the client should see why it is not an option
-    const strands = lock ? [] : finishStrands(fid);
-    const src = thumbOf((p.images && p.images[fid]) || "");
-    return `<button type="button" class="fin-tile${strands.length ? " no" : ""}" data-fid="${fid}"
-        ${strands.length ? "disabled" : ""}
-        aria-label="${p.name} in ${finName(fid)}${strands.length ? ", unavailable" : ""}">
-        <span class="ft-pic"><img src="${src}" alt="" decoding="async"></span>
-        <span class="ft-sw" style="background:${(FINISHES[fid] || {}).swatch || "#888"}"></span>
-        <span class="ft-nm">${finName(fid)}</span>
-        ${strands.length ? `<span class="ft-no">${strands.join(", ")} not made in it</span>` : ""}
-      </button>`;
-  }).join("");
-  $("#finPickGrid").querySelectorAll("[data-fid]").forEach(b => b.onclick = () => {
-    const fid = b.dataset.fid, r = finPickRun;
-    closeFinishPick();
-    if (r) r(fid);
-  });
-  m.hidden = false;
-  const first = $("#finPickGrid").querySelector("[data-fid]:not([disabled])");
-  if (first) first.focus();
+      `matches. It locks when the piece goes on the wall, and Finish in the toolbar ` +
+      `moves the whole room to another one.`;
+  // a finish nothing already on the wall can wear is shown, and shown as refused,
+  // rather than quietly missing — the client should see why it is not an option
+  $("#finPickGrid").innerHTML = fins.map(fid =>
+    finTile(p, fid, lock ? [] : finishStrands(fid), `${p.name} in ${finName(fid)}`, false)).join("");
+  bindFinPick();
+}
+
+/* =========================================================================
+   THE ROOM'S FINISH, CHANGED AFTER THE FACT
+   The valve locks the room to one finish, and until now Reset all was the only
+   way out of it — which takes the layout with it. A client who has placed eight
+   fittings and then wants to see the set in champagne was being asked to build
+   the room again, and (asked for directly, 2026-09-21) that is the wrong price
+   for changing your mind about a colour, least of all in the last minute before
+   the PDF.
+   THE LOCK IS NOT LIFTED, IT IS MOVED. Every piece changes together, so the room
+   is still in exactly one finish afterwards — which is the rule the lock exists
+   to keep (see lockedFinish, and do not weaken it: it has been asked for twice).
+   ========================================================================= */
+/* the finishes worth offering the room: every finish any placed piece is made
+   in, in catalogue order — each product's own list is already sorted, so taking
+   them first-seen keeps that order. The ones the whole room cannot wear come
+   back from finishStrands and are shown refused, not hidden. */
+function roomFinishes() {
+  const out = [];
+  [...placed.values()].forEach(r => (r.product.finishes || []).forEach(fid => {
+    if (!out.includes(fid)) out.push(fid);
+  }));
+  return out;
+}
+/* Move every fitting to one finish. `commit` on each, because the valve's lock
+   is what this is changing — the same door placeProduct uses when the valve
+   first sets the room's colour. The valve goes first so no intermediate state
+   has the room reading as locked to a finish nothing else is wearing yet. */
+function refinishRoom(fid) {
+  const items = [...placed.values()], v = placedValve();
+  const order = v ? [v, ...items.filter(r => r !== v)] : items;
+  const from = lockedFinish() || (items[0] && items[0].finishId);
+  const moved = order.filter(r => r.finishId !== fid);
+  if (!moved.length) return;
+  const undo = snapshot();
+  order.forEach(r => { if (r.finishId !== fid) changeFinish(r.uid, fid, true); });
+  toast(`The room is now ${finName(fid)} — ${moved.length} fitting${moved.length > 1 ? "s" : ""} changed`,
+        { label: "Undo", run: () => { restore(undo); sessionFinish = from; } });
+}
+/* The room chooser. Same modal as the per-piece one, because it is the same
+   decision at a larger size — and the piece on the tiles is the valve, which is
+   the piece whose finish the rest of the room was following anyway. */
+function openRoomFinish() {
+  const items = [...placed.values()];
+  if (!items.length) { toast("Add a few fittings first, then pick their finish"); return; }
+  const m = $("#finPick"); if (!m) return;
+  const cur = lockedFinish() || items[0].finishId;
+  const face = (placedValve() || items[0]).product;
+  finPickRun = fid => refinishRoom(fid);
+  $("#finPickTitle").textContent = "The room's finish";
+  $("#finPickBody").textContent =
+    `${items.length} fitting${items.length > 1 ? "s" : ""} in ${finName(cur)}. Picking another ` +
+    `changes them all together — the layout stays exactly as it is, and Undo puts the colour back. ` +
+    `A finish one of the pieces is not made in cannot be picked.`;
+  $("#finPickGrid").innerHTML = roomFinishes().map(fid =>
+    finTile(face, fid, finishStrands(fid), `The whole room in ${finName(fid)}`, fid === cur)).join("");
+  bindFinPick();
+  const on = $("#finPickGrid").querySelector(".fin-tile.on");
+  if (on) on.focus();
+}
+/* the toolbar button wears the room's colour, and is not there to be pressed
+   until there is a room to recolour */
+function syncRoomFin() {
+  const b = $("#roomFin"); if (!b) return;
+  const items = [...placed.values()];
+  b.hidden = !items.length;
+  if (!items.length) return;
+  const cur = lockedFinish() || items[0].finishId;
+  b.querySelector("i").style.setProperty("--c", (FINISHES[cur] || {}).swatch || "#888");
+  b.querySelector(".rf-nm").textContent = finName(cur);
+  b.title = `The room is ${finName(cur)} — change the finish of every fitting`;
+  b.setAttribute("aria-label", b.title);
 }
 function closeFinishPick() { const m = $("#finPick"); if (m) m.hidden = true; finPickRun = null; }
 
@@ -5706,6 +5797,7 @@ if ($("#jetCountNo")) $("#jetCountNo").onclick = closeJetCount;
 if ($("#jetCount")) $("#jetCount").onclick = e => { if (e.target === $("#jetCount")) closeJetCount(); };
 /* a set of jets, or a single fitting that has nothing to count */
 const asksJetCount = p => p && p.catId === "body-jet" && !skuCfg(p).single;
+if ($("#roomFin")) $("#roomFin").onclick = openRoomFinish;
 if ($("#finPickNo")) $("#finPickNo").onclick = closeFinishPick;
 if ($("#finPick")) $("#finPick").onclick = e => { if (e.target === $("#finPick")) closeFinishPick(); };
 
