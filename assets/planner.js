@@ -4474,15 +4474,31 @@ const RAIL_GROUPS = [
      showers into Showers (or a jet panel into Body Jets) can't quietly leave
      two overhead heads or eight jets on the same wall. */
   { id: "diverters", step: 1, name: "Diverter",  cats: ["thermostatic", "diverter"], solo: true },
-  /* CEILING ONLY, by the client's decision (meeting, 2026-09-09): the Shower
-     step offers overhead rain showers and not the three wall-mounted heads.
-     Those three are the only rain-shower SKUs whose SKU3D entry moves them off
-     the ceiling (mount: "back" — ST-1017 flat to the tile, ST-1027 / ST-1033 on
-     a built arm), so this list IS "everything not on the ceiling"; if another
-     wall head is ever filed under rain-shower it belongs here too. They stay
-     loaded, sized and anchored, same as the deck mixer under Spouts — one line
-     brings any of them back. */
-  { id: "showers",   step: 2, name: "Shower",    cats: ["rain-shower"], solo: true, omit: ["ST-1017", "ST-1027", "ST-1033"] },
+  /* CEILING PANELS ONLY. This started as "not the three wall-mounted heads"
+     (meeting, 2026-09-09): ST-1017 / ST-1027 / ST-1033 are the rain-shower SKUs
+     whose SKU3D entry moves them off the ceiling (mount: "back" — flat to the
+     tile or on a built arm), so the rule read "everything not on the ceiling".
+     WIDENED 2026-09-21, asked for directly off the rail: the eleven screw-on
+     overhead HEADS go too, leaving the ST-C concealed panels as the whole step.
+     They were ceiling-anchored and so passed the old rule, but a 150mm plate on
+     a stepped hub or a swivel joint is a head you screw on to an arm, not a
+     panel that drops into a false ceiling — eleven of them in front of twenty
+     real panels read as the same product photographed eleven ways. So the test
+     is now the FITTING, not its anchor: if a rain-shower SKU is not a concealed
+     ceiling panel, it belongs in this list. ST-C1005 is the one head-shaped
+     card that stays, because it is one — 550x500mm, three functions, three
+     supply lines.
+     Nothing is deleted. All fourteen keep their catalogue row, their category,
+     their anchor and their artwork, same as the deck mixer under Spouts, and
+     `offered` hides them from the auto-arrange as well as the rail — one line
+     brings any of them back. A room SAVED with one still loads it: hiding is
+     about what is OFFERED, not about emptying someone's bathroom (see OMITTED).
+     Auto-arrange is untouched: it reads `offered` and already opened on the
+     first ST-C panel, which sits above all eleven in the catalogue order. */
+  { id: "showers",   step: 2, name: "Shower",    cats: ["rain-shower"], solo: true,
+    omit: ["ST-1017", "ST-1027", "ST-1033",
+           "ST-1030", "ST-1012", "ST-3014", "ST-3016", "ST-1023", "ST-1031",
+           "ST-1022", "ST-1029", "ST-SOH", "ST-SS304", "ST-FDP"] },
   { id: "bodyjets",  step: 3, name: "Body Jet",  cats: ["body-jet"], solo: true },
   /* NO TAPS IN THE SPOUTS LIST (2026-09-09, asked for directly: "remove the
      spouts which are used for the taps"). A spout is an outlet; the moment a
