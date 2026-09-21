@@ -267,15 +267,12 @@ const RAW_PRODUCTS = [
   // { code: "ST-TX-01", cat: "thermostatic", name: "Regale Thermostatic Control Trim", finishes: ["brushedSteel"] },
 
   // ---- Basin Mixers (tall vessel, single-lever) ----
-  { code: "ST-BM-001", cat: "basin-mixer", name: "Aria Tall Basin Mixer",      finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], badge: "Signature" },
 
   // ---- Hand Showers (handsets) — added from the Stout asset library 2026-07-10 ----
-  { code: "ST-HS3211", cat: "hand-shower", name: "Aria Multi-Spray Hand Shower", finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"],                                              badge: "New" },
   /* From the Drive folder's PHS5380CP — the one handset in it that had never
      been imported (PSH5230 and psh3211 sit alongside it and are FIXED heads,
      not handsets, so they are not filed here). Chrome is the only finish the
      folder carries of it. */
-  { code: "ST-HS5380", cat: "hand-shower", name: "Aria Slim Hand Shower",       finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "round face · slim handle" },
   { code: "ST-1040",   cat: "hand-shower", name: "Aeon Multi-Function Hand Shower", finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], badge: "Bestseller" },
   { code: "ST-1018",   cat: "hand-shower", name: "Axis Hand Shower",            finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"] },
   { code: "ST-1025",   cat: "hand-shower", name: "Cascada Slim Hand Shower",    finishes: ["chrome"] },
@@ -341,7 +338,6 @@ const RAW_PRODUCTS = [
   { code: "ST-1030",  cat: "rain-shower", name: "3-Function Ceiling Shower",     finishes: ["chrome","matteBlack"], defaultFinish: "matteBlack", variant: "square plate · waterfall blades + jets", functions: 3 },   // filed as a body jet; its render is a full overhead plate
 
   // ---- Wall Taps (single-lever wall bib tap) ----
-  { code: "ST-SZ-01", cat: "wall-tap",    name: "Senza Wall Bib Tap",          finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"],                                  badge: "New" },
 
   /* ---- TAPS, VALVES AND OUTLETS, new 2026-09-16 from the July catalogue ----
      p127-136. The two-way taps and the angle valves DO carry codes; the stop
@@ -401,11 +397,9 @@ const RAW_PRODUCTS = [
   { code: "ST-1031",  cat: "rain-shower",  name: "Aria Spiral-Jet Shower Head", finishes: ["chrome"], badge: "New", variant: "ABS · round · spiral jet pattern", functions: 1 },
   { code: "ST-1022",  cat: "rain-shower",  name: "Aqua Oval Shower Head",       finishes: ["chrome","matteBlack"], badge: "New", variant: "ABS · oval · slim arm", functions: 1 },
   { code: "ST-1029",  cat: "rain-shower",  name: "1-Function Ceiling Shower",     finishes: ["chrome"], badge: "New", variant: "brass · square plate · 9 x 9 jets", functions: 1 },
-  { code: "ST-SOH",   cat: "rain-shower",  name: "1-Function Ceiling Shower",    finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], badge: "New", variant: "SS304 · 150-400 mm · code not in the catalogue", functions: 1 },
   { code: "ST-1017",  cat: "rain-shower",  name: "Regale Wall Shower Head",     finishes: ["chrome","roseGold","matteBlack"], functions: 1 },
   { code: "ST-1027",  cat: "rain-shower",  name: "Aeon Round Shower Head",      finishes: ["chrome"], functions: 1 },
   { code: "ST-1033",  cat: "rain-shower",  name: "Aeon Slim Round Head",        finishes: ["chrome"], functions: 1 },
-  { code: "ST-OP1",   cat: "health-faucet",name: "Cascada Jet Spray Health Faucet", finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"] },   // artwork is chrome — the -brushedGold file was mislabelled
   // more hand showers
   { code: "ST-1034",  cat: "hand-shower",  name: "Aeon Round Hand Shower",      finishes: ["chrome"] },
   /* All three were filed as "brushed steel", which is not a colour the factory
@@ -461,7 +455,6 @@ const RAW_PRODUCTS = [
      instruction was that these come in the whole range. If it turns out to be
      the wrong one, the fix is this line plus its import_map entry — nothing
      else references it. Code from the folder's own name, as ST-AZBS was. */
-  { code: "ST-2513",  cat: "bath-spout",   name: "Axis Single-Lever Wall Mixer", finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], badge: "New", variant: "square plate \u00b7 lever \u00b7 hand-shower outlet" },
   /* PLACEHOLDER ARTWORK, at the client's instruction ("use the plain spout for
      now"). This is the square spout with the cube diverter handle from their
      third upload; nothing in the 184-group Drive library matches it, so it
@@ -469,7 +462,6 @@ const RAW_PRODUCTS = [
      undo on that day: drop `art`, and extend `finishes` — the list here is
      ST-PLAIN's three, not this product's real range, because a borrowed photo
      can only be shown in the colours the stand-in was shot in. */
-  { code: "ST-BSDV",  cat: "bath-spout",   name: "Axis Wall Spout with Diverter", art: "ST-PLAIN", finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], badge: "New", variant: "square spout \u00b7 cube diverter handle \u00b7 artwork pending" },
   // health faucet (new category)
   /* "gold" is dropped: ST-SS304-gold.png is a flat neon yellow (hue 56), not a
      finish the factory makes — every real gold in the range sits at hue 30-44.
@@ -478,9 +470,7 @@ const RAW_PRODUCTS = [
      lemon, not a metal — and the client has struck it once before ("this colour
      doesn't exist, remove it"); it came back with a later import. It is the
      Polished Gold below that this plate is actually offered in. */
-  { code: "ST-SS304", cat: "rain-shower",  name: "1-Function Ceiling Shower",          finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], badge: "New", variant: "square plate · square nozzles", functions: 1 },
   // waste
-  { code: "ST-SZ1",   cat: "wall-tap",     name: "Senza Bib Tap",     finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"] },
   // concealed thermostatic panels
   // NOT IN THE CLIENT'S DRIVE FOLDER — no file in it names this SKU, so it
   // is not part of the range and must not be offered. Checked against all
@@ -493,10 +483,6 @@ const RAW_PRODUCTS = [
 
   /* ---- 2026-09 Drive range: showers, diverters, spouts and body jets, each
      with the full set of finishes from the factory photography ---- */
-  { code: "ST-FDP", cat: "rain-shower", name: "1-Function Ceiling Shower", finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "wide plate · centre waterfall slot", functions: 1 },
-  { code: "ST-CP25", cat: "thermostatic", name: "Regale Digital Thermostatic Panel", finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "digital · dial + 4 function keys", outlets: 4 },
-  { code: "ST-MB2", cat: "thermostatic", name: "Regale Smart Control Panel", finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "digital · dial + 4 function keys", outlets: 4 },
-  { code: "ST-CJ1", cat: "thermostatic", name: "Regale Touch Control Panel", finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "digital · dial + 6 function keys", outlets: 6 },
   /* The round concealed mixer the client sent on 2026-09-08. Its renders are the
      only ones in the Drive with no SKU in the filename — 55__1_ / 55__2_ for the
      rose gold and gold, AZBS1 / AZBS2 for the chrome and matte black — so the
@@ -564,7 +550,6 @@ const RAW_PRODUCTS = [
      same square brass handset on the same bracket — so it is one row here and
      the per-finish codes ride in `variant`, where the spec sheet still prints
      them for the consultant. */
-  { code: "ST-1019", cat: "hand-shower", name: "Aria Brass Hand Shower", finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "brass · ST-1019 french gold / ST-1020 rose gold / ST-1021 matt black" },
   { code: "ST-1011", cat: "hand-shower", name: "Aria Round Hand Shower",        finishes: ["chrome"], variant: "ABS · 1.5m tube & hook" },
   { code: "ST-1024", cat: "hand-shower", name: "Aria Single-Spray Hand Shower", finishes: ["chrome"], variant: "ABS · 1.5m tube & hook" },
   { code: "ST-1032", cat: "hand-shower", name: "Aria Sector-Spray Hand Shower", finishes: ["chrome"], variant: "ABS · 1.5m tube & hook" },
