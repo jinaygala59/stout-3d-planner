@@ -4828,7 +4828,10 @@ function railItems(group) {
   const q = railQuery.text.trim().toLowerCase();
   return items.filter(p => {
     if (!q) return true;
-    return (p.name + " " + p.code + " " + (p.variant || "")).toLowerCase().includes(q);
+    /* searchable by the model id AND by every per-finish number, so a client
+       who types ST-HY-RG off a quotation finds the jet. */
+    const codes = p.codes ? Object.values(p.codes).join(" ") : "";
+    return (p.name + " " + p.code + " " + codes + " " + (p.variant || "")).toLowerCase().includes(q);
   });
 }
 
@@ -4897,17 +4900,23 @@ function renderRail() {
          tapping the card opens its swatches and tapping a swatch is what places
          it. Every other product still adds on one tap — it inherits the lock. */
       const valve = isValve(p);
+      /* THE CODE THE CARD PRINTS FOLLOWS THE SWATCH IT IS WEARING. The spouts
+         and the body jets are coded per colour, so a card showing the rose gold
+         jet has to say ST-HY-RG; the bare model id is not a number the factory
+         can ship. Split cards already carry theirs in `code`; this covers the
+         rows that keep one card and change finish under it. */
+      const cardCode = catalogCode(p, fin) || (p.codes ? "Code on request" : p.code);
       const here = p.finishOnly ? isPlacedIn(p.baseId, p.finishOnly) : isPlaced(p.id);
       return `<div class="pcard ${here ? "placed" : ""}${why ? " blocked" : ""}" data-prod="${p.id}" data-cat="${p.catId}" data-fin="${fin}">
         <button type="button" class="pc-main" ${valve ? "data-arm" : "data-add"}${why ? " disabled" : ""}
                 ${valve && !why ? 'aria-haspopup="dialog"' : ""}
                 aria-label="${why ? p.name + ", unavailable: " + why
-                              : (valve ? "Choose a finish for " : "Add ") + p.name + ", " + p.code
+                              : (valve ? "Choose a finish for " : "Add ") + p.name + ", " + cardCode
                                 + (p.finishOnly ? " in " + finName(p.finishOnly) : "")
                                 + (here ? ", already in the room" : "")}">
           <span class="pic"><img src="${thumbOf(img)}" loading="lazy" decoding="async" alt=""></span>
           <span class="nm">${p.name}</span>
-          <span class="sub">${p.code}${p.variant ? " · " + p.variant : ""}</span>
+          <span class="sub">${cardCode}${p.variant ? " · " + p.variant : ""}</span>
           ${(p.outlets || p.functions) ? `<span class="fn">${p.outlets || p.functions} function${(p.outlets || p.functions) > 1 ? "s" : ""}</span>` : ""}
         </button>
         ${why ? `<span class="pc-why">${why}</span>` : ""}
@@ -5184,8 +5193,11 @@ if ($("#shareDesign")) $("#shareDesign").onclick = copyShareLink;
 const CONSULT_EMAIL = "skventuresdirect@gmail.com";
 function designAsText() {
   const items = [...placed.values()];
+  /* the number for the finish on the wall, like the card, the panel and the
+     sheet — this text is what a consultant quotes from. */
   const lines = items.map((r, i) =>
-    `${String(i + 1).padStart(2, "0")}. ${r.product.name}  (${r.product.code})  —  ` +
+    `${String(i + 1).padStart(2, "0")}. ${r.product.name}  ` +
+    `(${catalogCode(r.product, r.finishId) || (r.product.codes ? "code on request" : r.product.code)})  —  ` +
     `${(FINISHES[r.finishId] || {}).name || r.finishId}`);
   return [
     `My Stout bathroom design`,
@@ -5383,9 +5395,11 @@ function coverDataURL(paths, wpx, hpx) {
 
 /* A STOUT catalogue number, or nothing.
    Several products in here carry a working id rather than a catalogue code —
-   ST-PLAIN, ST-SARM, ST-BSDV, ST-BUTTON and the filename-derived ones — because
-   the factory has not issued a number for that piece yet (the spouts, the shower
-   arm and most body jets are printed in the catalogue with no code at all).
+   ST-SARM, ST-BSDV and the filename-derived ones — because the factory has not
+   issued a number for that piece yet (the shower arm is printed in the
+   catalogue with no code at all). The spouts and the body jets HAVE numbers as
+   of the client's list of 2026-09-21, but per colour, so ST-PLAIN / ST-BUTTON /
+   ST-HY and the rest remain ids and the number comes from `codes` below.
    Printing "ST-PLAIN" on a sheet a client hands to a fitter invents a part
    number; this prints the truth instead, and the consultant fills it in. */
 /* A SECOND SHAPE, for the codes that end in a FINISH rather than a number.
@@ -5394,7 +5408,10 @@ function coverDataURL(paths, wpx, hpx) {
    row holds them and is consulted first; everything else still has to look like
    a catalogue number to print at all. */
 const CODE_RE = /^ST-[A-Z]{0,2}\d{3,5}$/i;
-const FIN_CODE_RE = /^ST-[A-Z]{2,6}-[A-Z]{2,3}$/i;
+/* The model segment can carry a DIGIT — ST-2F-CP, ST-3F-CP — so it is not
+   [A-Z] only. It was, and those two jets printed "Code on request" against a
+   code they actually have. */
+const FIN_CODE_RE = /^ST-[A-Z0-9]{2,6}-[A-Z]{2,3}$/i;
 function catalogCode(p, fid) {
   const byFinish = p && p.codes && fid && p.codes[fid];
   if (byFinish && FIN_CODE_RE.test(String(byFinish).trim())) return String(byFinish).trim();
