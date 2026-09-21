@@ -1350,14 +1350,14 @@ const METAL_TONE = {
 const METAL_BASE = { chrome: 0xd9e4ef, gunGrey: 0x26272b, brushedGold: 0x6a3707, champagne: 0x6d4d2c, gold: 0xf4b357, polishedGold: 0xd88b26, roseGold: 0xcf4b2b, brushedRoseGold: 0xbc4422, matteBlack: 0x151617 };
 /* How far fittingEnv's studio is pushed away from its own mean. See the note
    where it is applied: this is what stops every modelled fitting rendering flat. */
-const STUDIO_CONTRAST = 2.2;
+let STUDIO_CONTRAST = 2.2;   /*TUNE*/
 /* Re-solved with STUDIO_CONTRAST in place: the wider environment range loses a
    little more to the tone-mapping shoulder, so the gain carries the piece back
    to the level every finish was calibrated at. Measured, not guessed — the plain
    spout in French Gold sits at p50 188 either side of the change, which is the
    photograph's 189. Re-solve BOTH of these together if the environment, the
    roughness table or the exposure moves; neither means anything alone. */
-const METAL_ENV_GAIN = 1.505;
+let METAL_ENV_GAIN = 1.505;   /*TUNE*/
 /* the linear reflectance for an sRGB hex — the fallback path, for a finish
    without a solved base */
 const srgbHexToLinear = hex => {
@@ -6289,6 +6289,7 @@ function loop() {
   if (!started) { started = true; $("#loading").classList.add("hide"); }
 }
 
+window.__TUNE = { set(sc, g) { STUDIO_CONTRAST = sc; METAL_ENV_GAIN = g; if (_fitEnv) { _fitEnv.dispose(); _fitEnv = null; } }, get: () => ({ STUDIO_CONTRAST, METAL_ENV_GAIN }), MODEL_FOR_SKU, ART_TONE, METAL_TONE, METAL_BASE, artTone, artPixels, artBandMean, ART_BANDS, clampTint, normaliseArtwork, finishTexture, exposeAllArtwork };   /*TUNE*/
 window.__STOUT3D = { scene, camera, controls, renderer, shell, lightRig, room, THEMES, applyTheme, animateCam,
                      placed, placeProduct, changeFinish, PRODUCTS, exposeAllArtwork };   // the last five are for console checks only
 
