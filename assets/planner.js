@@ -671,10 +671,13 @@ controls.update();
 
      white — seamless warm microcement / plaster, high-key light  (ref: minimal
              monolithic bathroom, backlit mirror, cove)
-     black — charcoal large-format slabs + a split-face black stone feature wall,
-             pale polished floor, dark walnut vanity, dramatic downlight pools
-     grey  — book-matched grey marble slabs everywhere, white veining, polished
+     black — charcoal stone walls, pale polished floor, dark walnut vanity,
+             dramatic downlight pools
+     grey  — book-matched grey marble everywhere, white veining, polished
              floor, matt-black accents
+
+   In all three, a WALL IS ONE UNBROKEN SLAB — no panel joints, no grout lines.
+   Only the floors are laid in pieces.
 
    Switching a theme rebuilds the SHELL (walls / floor / ceiling / furniture /
    light rig / environment). Fittings the client already placed live in their own
@@ -760,10 +763,15 @@ function strokePaths(ctx, paths, color, alpha, width) {
   ctx.restore();
 }
 
-/* ---- split-face stone cladding (the black room's feature wall) ------------
+/* ---- split-face stone cladding -------------------------------------------
    Rows of stacked stone strips, each row broken into random-width blocks with a
    top-lit / bottom-shadowed face + chipped striations. The bump map carries the
-   same relief, so under the ceiling spots it genuinely looks three-dimensional. */
+   same relief, so under the ceiling spots it genuinely looks three-dimensional.
+
+   UNUSED since the "no dividing lines" brief (Sep 2026) — it was the black
+   room's feature wall, and stacked stone is nothing but dividing lines. Kept
+   because it is the only non-slab surface we have; `kind: "splitface"` on any
+   surface spec brings it straight back. */
 function drawSplitFace(c, b, r, W, H, R, spec) {
   const rows = spec.rows || 24, rh = H / rows;
   c.fillStyle = spec.mortar || "#0b0b0c"; c.fillRect(0, 0, W, H);
@@ -1001,21 +1009,25 @@ const THEMES = {
        plain wall, a room of four featureless surfaces has nothing in it for the
        eye to focus on, so it reads as an unsharp photograph rather than as a
        real room. Marble fixes that on its own terms — veins are detail with
-       DIRECTION, panel joints are genuine hard edges, and a polished face
-       carries a reflection gradient that tells you where the light is. So the
-       walls are now book-matched large-format slabs: a warm Calacatta bed with
-       cooler grey veining over it, in 1.5 x 1.3 m panels, polished (roughness
-       0.2 — the floor's own polish for reference is 0.3). The feature wall gets
-       the bolder run and a steeper flow, the side walls a quieter, flatter one,
-       which is how a real stone bathroom is actually specified. */
+       DIRECTION, and a polished face carries a reflection gradient that tells
+       you where the light is. So the walls are now book-matched large-format
+       slabs: a warm Calacatta bed with cooler grey veining over it, polished
+       (roughness 0.2 — the floor's own polish for reference is 0.3). The
+       feature wall gets the bolder run and a steeper flow, the side walls a
+       quieter, flatter one, which is how a real stone bathroom is specified.
+
+       WALLS CARRY NO JOINTS (client, Sep 2026): each wall is ONE slab, edge to
+       edge, so nothing divides the stone. The veining is generated at the
+       wall's own aspect ratio and the back wall's four panels are already cut
+       from one texture set, so a whole wall is genuinely a whole face — there
+       is no seam left to hide. The FLOOR keeps its joints: a floor laid in one
+       3 x 2.6 m piece is not a thing, and the request was about the walls. */
     surfaces: {
       side:    { kind: "slab", base: "#eeebe3", vein: "#9a9181", vein2: "#c9b794", veins: 10, veinAlpha: 0.7, veinSoft: 7, flow: -0.55,
                  clouds: 16, cloudSize: 0.14, cloudAlpha: 0.7, grain: 0.05,
-                 joints: { cols: 2, rows: 2, color: "#cfc8ba", width: 2.2 },
                  rough: 0.3, metal: 0.05, bumpScale: 0.01, envI: 0.72, keepEnv: true },
       feature: { kind: "slab", base: "#ebe7de", vein: "#8d8474", vein2: "#c0ac85", veins: 12, veinAlpha: 0.78, veinSoft: 8, flow: -0.88,
                  clouds: 16, cloudSize: 0.14, cloudAlpha: 0.7, grain: 0.05,
-                 joints: { cols: 2, rows: 2, color: "#c9c2b4", width: 2.2 },
                  rough: 0.28, metal: 0.05, bumpScale: 0.011, envI: 0.78, keepEnv: true },
       // the floor is the same stone in a smaller format, so the room is one
       // material rather than three that happen to be pale
@@ -1044,13 +1056,22 @@ const THEMES = {
     /* This room was BLACK, not dark: every surface sat between 0x0b and 0x2b, so
        the stone, the joints and the fittings all fell into the same hole and you
        could not read the room at all. The whole palette moves up into charcoal
-       and graphite — still unmistakably the dark room, but now the split-face
-       cladding, the slab veining and the grout lines are all legible, and a matt
-       black fitting has something to sit against. */
+       and graphite — still unmistakably the dark room, but now the slab veining
+       is legible and a matt black fitting has something to sit against.
+
+       WALLS CARRY NO JOINTS (client, Sep 2026) — see the white room's note. In
+       this room that also retired the split-face cladding on the feature wall:
+       stacked stone IS dividing lines, twenty-six rows of them, so it could not
+       stay under a brief of "one whole marble, no lines". The feature wall is
+       now the same charcoal stone as the sides, run a little bolder and
+       polished a little harder so the wall still reads as the feature.
+       drawSplitFace() is kept below, unused, in case the cladding is wanted
+       back — restoring it is this one line. */
     surfaces: {
       side:    { kind: "slab", base: "#3c3c42", vein: "#85878f", veins: 12, veinAlpha: 0.34, clouds: 20, cloudSize: 0.16, grain: 0.03,
-                 joints: { cols: 2, rows: 3, color: "#1f1f23", width: 2.6 }, rough: 0.4, metal: 0.06, bumpScale: 0.022, envI: 1.2 },
-      feature: { kind: "splitface", base: "#38383e", mortar: "#181820", rows: 26, rough: 0.7, metal: 0.03, bumpScale: 0.055, envI: 0.9 },
+                 rough: 0.4, metal: 0.06, bumpScale: 0.022, envI: 1.2 },
+      feature: { kind: "slab", base: "#3a3a40", vein: "#8e9099", veins: 15, veinAlpha: 0.38, flow: -0.88, clouds: 20, cloudSize: 0.16, grain: 0.03,
+                 rough: 0.34, metal: 0.07, bumpScale: 0.018, envI: 1.25 },
       floor:   { kind: "slab", base: "#35353b", vein: "#767780", veins: 11, veinAlpha: 0.36, clouds: 20, cloudSize: 0.16, grain: 0.035,
                  joints: { cols: 3, rows: 3, color: "#26262b", width: 2.4 }, rough: 0.3, metal: 0.08, bumpScale: 0.014, envI: 0.85 },
       ceiling: { color: 0x2b2b2f, rough: 0.9 },
@@ -1072,11 +1093,12 @@ const THEMES = {
     id: "grey", label: "Grey", swatch: "#93969a",
     bg: 0x0e0f11, exposure: 0.96, art: 0.85,
     env: ["#d3d3d7", "#84848a", "#2e2e32"],
+    // walls carry no joints — see the white room's note
     surfaces: {
       side:    { kind: "slab", base: "#9d9a96", vein: "#e6e3de", veins: 16, veinAlpha: 0.42, clouds: 20, grain: 0.07,
-                 joints: { cols: 2, rows: 3, color: "#7c7975", width: 2.2 }, rough: 0.3, metal: 0.06, bumpScale: 0.014, envI: 1.2 },
+                 rough: 0.3, metal: 0.06, bumpScale: 0.014, envI: 1.2 },
       feature: { kind: "slab", base: "#8b8885", vein: "#e4e1dc", veins: 18, veinAlpha: 0.45, clouds: 20, grain: 0.07,
-                 joints: { cols: 2, rows: 3, color: "#6d6a67", width: 2.2 }, rough: 0.28, metal: 0.07, bumpScale: 0.014, envI: 1.25 },
+                 rough: 0.28, metal: 0.07, bumpScale: 0.014, envI: 1.25 },
       floor:   { kind: "slab", base: "#a7a4a0", vein: "#e0ddd8", veins: 14, veinAlpha: 0.38, clouds: 20, grain: 0.07,
                  joints: { cols: 3, rows: 3, color: "#8b8884", width: 2.0 }, rough: 0.26, metal: 0.08, bumpScale: 0.01, envI: 1.3 },
       ceiling: { color: 0xd9d7d4, rough: 0.9 },
