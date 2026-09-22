@@ -17,7 +17,13 @@ DIST = os.path.join(ROOT, "dist")
 # anyone building locally would have shipped them.
 SKIP_DIRS = {".git", "dist", "_dev", "__pycache__", "_quarantine", "_drive"}
 SKIP_EXT = (".py", ".log")
-STAMPED = ("assets/planner.css", "assets/catalog.js", "assets/planner.js")
+# The favicon is in here for a CACHING reason, not a build one: vercel.json
+# serves assets/brand/* as "immutable, max-age=31536000", so a redrawn
+# favicon at the same URL would never reach anyone who had already opened
+# the planner — the tab would keep the old icon for a year. Stamping the
+# href moves it to a new URL whenever the file's bytes change.
+STAMPED = ("assets/planner.css", "assets/catalog.js", "assets/planner.js",
+           "assets/brand/favicon.svg")
 
 
 def stamp(rel):
