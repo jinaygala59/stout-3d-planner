@@ -7,7 +7,7 @@
    ========================================================================== */
 (() => {
 "use strict";
-const { FINISHES, CATEGORIES, PRODUCTS } = window.STOUT;
+const { FINISHES, CATEGORIES, PRODUCTS, MRP, MRP_FROM } = window.STOUT;
 const $ = s => document.querySelector(s);
 if (!window.THREE) { $("#loading").textContent = "3D engine failed to load."; return; }
 
@@ -5265,7 +5265,11 @@ $("#snapCol").onclick = () => autoArrange();
 /* =========================================================================
    PDF SPEC SHEET — the client's chosen design as a shareable document.
    Contents: the 3D design snapshot + the list of selected fittings with
-   their finish + Stout code. NO PRICING (ever) — pricing is the consultant's.
+   their finish + Stout code, each with its MRP off the July 2026 price list
+   and a total. Until 2026-09-22 this said "NO PRICING (ever)"; the client
+   asked for the prices in the PDF, so the sheet now carries the catalogue's
+   MRP per code and finish (see MRP in catalog.js). The consultant's quotation
+   still supersedes it, and the sheet says so under the total.
    ========================================================================= */
 let toastEl = null, toastTimer = null;
 function toast(msg, action) {
@@ -5440,6 +5444,18 @@ function coverDataURL(paths, wpx, hpx) {
    depends on which finish is on the wall, not on the SKU alone. `codes` on the
    row holds them and is consulted first; everything else still has to look like
    a catalogue number to print at all. */
+/* THE MRP FOR A PLACED PIECE — the catalogue's figure for this code in THIS
+   finish, or null when the price list has none (a finish the factory codes
+   but does not price, or a product outside the July 2026 catalogue). Null is
+   printed as "on request"; it is never guessed from a neighbouring colour. */
+function mrpOf(p, fid) {
+  const row = p && MRP && MRP[p.code];
+  const v = row && fid && row[fid];
+  return Number.isFinite(v) ? v : null;
+}
+/* Rupees the way an Indian price list groups them — 1,08,850 — with a plain
+   "Rs" because the PDF's Helvetica has no rupee glyph and prints ₹ as a box. */
+const fmtRs = n => "Rs " + Math.round(n).toLocaleString("en-IN");
 const CODE_RE = /^ST-[A-Z]{0,2}\d{3,5}$/i;
 /* The model segment can carry a DIGIT — ST-2F-CP, ST-3F-CP — so it is not
    [A-Z] only. It was, and those two jets printed "Code on request" against a
@@ -5461,6 +5477,31 @@ async function downloadSpecSheet() {
   const items = [...placed.values()];
   if (!items.length) { toast("Add a few products first, then download"); return; }
 
+  /* ONE LINE PER PRODUCT, CARRYING ITS NUMBER OF PIECES (asked for directly,
+     2026-09-21: "diverter - 1, hand shower - 1"). The same fitting placed twice
+     is one thing to order two of, not two rows the reader has to add up.
+     Identical means the same SKU AND the same finish — two hand showers in
+     different finishes are two different things to buy, so they stay apart.
+     A body jet is placed once as a SET, and the set's own count is the piece
+     count: a set of four is four jets on the wall and four jets on the order. */
+  const orderLines = [];
+  const byKey = new Map();
+  items.forEach(rec => {
+    const pcs = rec.jetSet ? jetCountOf(rec.jets) : 1;
+    const key = `${rec.product.id}|${rec.finishId}|${pcs}`;
+    const seen = byKey.get(key);
+    if (seen) { seen.pcs += pcs; return; }
+    const line = { rec, pcs };
+    byKey.set(key, line); orderLines.push(line);
+  });
+  const totalPcs = orderLines.reduce((n, l) => n + l.pcs, 0);
+  /* The sheet's money: each line is unit MRP x pieces, and the total is the
+     sum of the lines that HAVE a price. A line without one is counted and
+     named under the total rather than silently left out of it. */
+  orderLines.forEach(l => { l.unit = mrpOf(l.rec.product, l.rec.finishId); l.amount = l.unit == null ? null : l.unit * l.pcs; });
+  const totalMRP = orderLines.reduce((n, l) => n + (l.amount || 0), 0);
+  const unpriced = orderLines.filter(l => l.amount == null).length;
+
   // No fly-to: captureFrom() borrows the camera and hands it straight back, so
   // the client's view is still where they left it when the download finishes.
   const prev = selected; deselect();
@@ -5470,7 +5511,7 @@ async function downloadSpecSheet() {
     // prints identically whatever this jsPDF build does with PNG alpha
     imageDataURL("assets/brand/logo-pdf.jpg"),
     coverDataURL(["assets/brand/about-showroom.jpg", "assets/brand/about-showroom.png"], 1680, 704),
-    ...items.map(rec => {
+    ...orderLines.map(({ rec }) => {
       const path = (rec.product.images && (rec.product.images[rec.finishId] || rec.product.images[rec.product.defaultFinish])) || "";
       return path ? thumbDataURL(thumbOf(path), 300) : Promise.resolve(null);
     }),
@@ -5485,6 +5526,16 @@ async function downloadSpecSheet() {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF({ unit: "mm", format: "a4" });
     const PW = 210, PH = 297, M = 14;
+    // width reserved at the right edge of a product row for its piece count,
+    // so the finish column can be laid out clear of it
+    const QTY_W = 14;
+    /* and, inboard of that, the MRP column; then the finish column. The finish
+       column was 48 mm when it was the last thing before the count; the price
+       takes 26 of the row now, so the finish keeps 40 and the name column gives
+       up the rest (the name already shrinks and then clips to fit). */
+    const MRP_W = 26, FIN_W = 40;
+    const X_FIN = PW - M - QTY_W - MRP_W - FIN_W;   // left edge of the swatch
+    const X_MRP = PW - M - QTY_W - 4;               // right edge of the price
     const GOLD = [198, 161, 91], INK = [28, 28, 30], MUTE = [120, 120, 124], LINE = [222, 218, 208];
 
     /* The dark lockup band, identical on both pages so the two read as one
@@ -5515,7 +5566,8 @@ async function downloadSpecSheet() {
     /* ======================================================================
        PAGE 1 — ABOUT STOUT
        The showroom full-bleed across the top, then who Stout is, then the
-       engineering the client never sees. No products, no prices.
+       engineering the client never sees. No products, no prices — those are
+       page 2's.
        ====================================================================== */
     const PHOTO_H = showroom ? 88 : 0;
     if (showroom) doc.addImage(showroom, "JPEG", 0, 0, PW, PHOTO_H, undefined, "FAST");
@@ -5589,8 +5641,8 @@ async function downloadSpecSheet() {
     doc.setTextColor(...INK); doc.setFont("helvetica", "bold"); doc.setFontSize(12);
     doc.text("Your Design", M, y); y += 4;
     /* A long selection needs the room below more than it needs a big render, so
-       the two angles give height back once the list passes eight pieces. */
-    const shrink = items.length > 8 ? 0.72 : 1;
+       the two angles give height back once the list passes eight rows. */
+    const shrink = orderLines.length > 8 ? 0.72 : 1;
     if (shots.length) {
       const availW = PW - 2 * M, gap = 6;
       const frameW = (shots.length > 1 ? (availW - gap) / 2 : availW * 0.64) * shrink;
@@ -5610,17 +5662,31 @@ async function downloadSpecSheet() {
     doc.setTextColor(...INK); doc.setFont("helvetica", "bold"); doc.setFontSize(12);
     doc.text("Selected Products", M, y);
     doc.setFont("helvetica", "normal"); doc.setFontSize(8.5); doc.setTextColor(...MUTE);
-    doc.text(`${items.length} ${items.length === 1 ? "piece" : "pieces"}`, PW - M, y, { align: "right" });
+    doc.text(`${orderLines.length} ${orderLines.length === 1 ? "product" : "products"}   ·   ${totalPcs} ${totalPcs === 1 ? "pc" : "pcs"}`
+             + (totalMRP ? `   ·   MRP ${fmtRs(totalMRP)}` : ""),
+             PW - M, y, { align: "right" });
     y += 2;
-    doc.setDrawColor(...LINE); doc.setLineWidth(0.3); doc.line(M, y + 1, PW - M, y + 1); y += 7;
+    doc.setDrawColor(...LINE); doc.setLineWidth(0.3); doc.line(M, y + 1, PW - M, y + 1);
+    /* Column heads, because the right of the row now carries two different
+       numbers-and-words and an unlabelled "4" against a fitting is a question,
+       not an answer. They get their own band between the rule and the first
+       row rather than sharing a line with either. */
+    y += 5;
+    doc.setFont("helvetica", "bold"); doc.setFontSize(7); doc.setTextColor(...MUTE);
+    // left edge of the swatch, so the head sits over the column it names
+    doc.text("FINISH", X_FIN, y);
+    doc.text("MRP", X_MRP, y, { align: "right" });
+    doc.text("QTY", PW - M, y, { align: "right" });
+    y += 5;
 
     /* Rows close up rather than spill onto a third page: the sheet is meant to
        be two pages, About and this. Below 15 mm a 300 px thumbnail stops being
        readable, so at that point a further page is the honest answer. */
-    const room = (PH - 26) - y;
-    const rowH = Math.max(15, Math.min(24, room / items.length));
+    // the total block under the list needs its own 18 mm before the footer
+    const room = (PH - 26) - y - 18;
+    const rowH = Math.max(15, Math.min(24, room / orderLines.length));
     const thumbMM = Math.min(18, rowH - 5);
-    items.forEach((rec, i) => {
+    orderLines.forEach(({ rec, pcs, unit, amount }, i) => {
       if (y + rowH > PH - 22) { doc.addPage(); y = M + 8; }
       const fin = FINISHES[rec.finishId] || {};
       const top = y - 5;
@@ -5630,12 +5696,22 @@ async function downloadSpecSheet() {
         doc.addImage(thumbs[i], "JPEG", M + 0.6, top + 0.6, thumbMM - 1.2, thumbMM - 1.2, undefined, "FAST");
       }
       const tx = M + thumbMM + 5;
+      /* The text column now has to end somewhere: the finish and the piece
+         count sit in fixed columns on the right, and the catalogue's own names
+         and descriptions are long enough to run straight through them
+         ("Six Function Thermostatic Diverter with Flow Control"). Everything
+         below is measured against this width rather than trusted to fit. */
+      const textW = X_FIN - (tx + 6) - 4;
       doc.setTextColor(...GOLD); doc.setFont("helvetica", "bold"); doc.setFontSize(8);
       doc.text(String(i + 1).padStart(2, "0"), tx, y - 1.5);
-      doc.setTextColor(...INK); doc.setFont("helvetica", "bold"); doc.setFontSize(10.5);
-      doc.text(rec.product.name || "Product", tx + 6, y - 1.5);
-      /* The finish matters to the number: the spouts are coded per colour, so
-         the sheet has to print the code for the one actually on the wall. */
+      /* Shrink the name a little before clipping it — a 10.5pt name that would
+         overrun reads better at 9 than it does cut off at the same size. */
+      doc.setTextColor(...INK); doc.setFont("helvetica", "bold");
+      const nm = rec.product.name || "Product";
+      let nmSize = 10.5;
+      doc.setFontSize(nmSize);
+      while (nmSize > 7.2 && doc.getTextWidth(nm) > textW) doc.setFontSize(nmSize -= 0.5);
+      doc.text(doc.splitTextToSize(nm, textW)[0], tx + 6, y - 1.5);
       const code = catalogCode(rec.product, rec.finishId);
       doc.setTextColor(...MUTE); doc.setFont("helvetica", "normal"); doc.setFontSize(8.5);
       doc.text(`${categoryName(rec.product.catId)}   ·   ${code ? "Code " + code : "Code on request"}`, tx + 6, y + 3);
@@ -5658,12 +5734,62 @@ async function downloadSpecSheet() {
         ? "#" + METAL_TONE[rec.finishId].toString(16).padStart(6, "0")
         : (fin.tone || "#c9ced3"));
       doc.setFillColor(...sw); doc.setDrawColor(200, 196, 186); doc.setLineWidth(0.2);
-      doc.roundedRect(PW - M - 40, y - 4.4, 5.4, 5.4, 0.9, 0.9, "FD");
+      doc.roundedRect(X_FIN, y - 4.4, 5.4, 5.4, 0.9, 0.9, "FD");
       doc.setTextColor(...INK); doc.setFont("helvetica", "normal"); doc.setFontSize(9.5);
-      doc.text(fin.name || "—", PW - M - 32.5, y - 0.6);
+      // the finish name has FIN_W less the swatch to live in; "Brushed Rose Gold"
+      // at 9.5 pt is 27 mm, so it fits, but a longer one would be shrunk not cut
+      const finName = fin.name || "—";
+      let finSize = 9.5; doc.setFontSize(finSize);
+      while (finSize > 7.5 && doc.getTextWidth(finName) > FIN_W - 9) doc.setFontSize(finSize -= 0.5);
+      doc.text(finName, X_FIN + 7.5, y - 0.6);
+      /* THE PRICE. The line amount (unit x pieces) in the row's own weight,
+         and when there is more than one piece the unit it came from underneath,
+         so the arithmetic is on the page and not left to the reader. A fitting
+         the price list does not price says so, in the muted tone, rather than
+         printing a dash that could be read as free. */
+      if (amount != null) {
+        doc.setFont("helvetica", "bold"); doc.setFontSize(9.5); doc.setTextColor(...INK);
+        doc.text((MRP_FROM[rec.product.code] ? "from " : "") + fmtRs(amount), X_MRP, y - 1.5, { align: "right" });
+        if (pcs > 1 || MRP_FROM[rec.product.code]) {
+          doc.setFont("helvetica", "normal"); doc.setFontSize(6.8); doc.setTextColor(...MUTE);
+          doc.text(pcs > 1 ? `${fmtRs(unit)} x ${pcs}` : "smallest size", X_MRP, y + 2.6, { align: "right" });
+        }
+      } else {
+        doc.setFont("helvetica", "normal"); doc.setFontSize(7.6); doc.setTextColor(...MUTE);
+        doc.text("on request", X_MRP, y - 1.5, { align: "right" });
+      }
+      /* The piece count, against the product it belongs to — this is the number
+         the client reads off the sheet when they order. */
+      doc.setFont("helvetica", "bold"); doc.setFontSize(10.5); doc.setTextColor(...INK);
+      doc.text(String(pcs), PW - M, y - 1.5, { align: "right" });
+      doc.setFont("helvetica", "normal"); doc.setFontSize(7.2); doc.setTextColor(...MUTE);
+      doc.text(pcs === 1 ? "pc" : "pcs", PW - M, y + 2.6, { align: "right" });
       doc.setDrawColor(...LINE); doc.setLineWidth(0.2); doc.line(M, top + thumbMM + 2.5, PW - M, top + thumbMM + 2.5);
       y += rowH;
     });
+
+    /* ---- the total ----
+       One figure, in the sheet's boldest weight, against the same right edge
+       the prices sit on, so the column adds up where the eye lands. Under it
+       the two things a reader has to know before quoting it back: which price
+       list it is off, and that the consultant's quotation is the one that
+       binds. If any line was "on request" the total says how many it leaves
+       out, so it is never mistaken for the whole bill. */
+    if (y + 20 > PH - 22) { doc.addPage(); y = M + 8; }
+    y += 1;
+    doc.setDrawColor(...INK); doc.setLineWidth(0.4); doc.line(X_FIN, y - 5, PW - M, y - 5);
+    doc.setFont("helvetica", "bold"); doc.setFontSize(9); doc.setTextColor(...INK);
+    doc.text("TOTAL MRP", X_FIN, y + 1);
+    doc.setFontSize(12.5);
+    doc.text(totalMRP ? fmtRs(totalMRP) : "on request", X_MRP, y + 1, { align: "right" });
+    doc.setFont("helvetica", "normal"); doc.setFontSize(6.8); doc.setTextColor(...MUTE);
+    // wrapped to the money column's own width, so it reads as the total's
+    // footnote and not as a line of the list
+    const priceNote = doc.splitTextToSize([
+      "MRP as printed in the STOUT price list, W.E.O 1st July 2026. Your Stout consultant's quotation supersedes this sheet.",
+      unpriced ? `${unpriced} ${unpriced === 1 ? "item is" : "items are"} priced on request and not included in the total.` : "",
+    ].filter(Boolean).join(" "), PW - M - X_FIN);
+    doc.text(priceNote, X_FIN, y + 5.4);
 
     // ---- footer on every page ----
     const pages = doc.getNumberOfPages();
@@ -5672,10 +5798,11 @@ async function downloadSpecSheet() {
       doc.setDrawColor(...LINE); doc.setLineWidth(0.3); doc.line(M, PH - 16, PW - M, PH - 16);
       doc.setTextColor(...MUTE); doc.setFont("helvetica", "normal"); doc.setFontSize(7.8);
       // The disclaimer and the contact line were dropped at the client's ask
-      // (2026-09-16). Page 1 already says the sheet is not a quotation and that
-      // the consultant prices it, so repeating it under every page read as
-      // small print on a document meant to look like a proposal. The page
-      // number stays — it is the only thing a footer here has to do.
+      // (2026-09-16). The one line that matters — that the consultant's
+      // quotation supersedes the printed MRP — sits under the total on page 2,
+      // once, so repeating it under every page would read as small print on a
+      // document meant to look like a proposal. The page number stays — it is
+      // the only thing a footer here has to do.
       doc.text(`Page ${p} / ${pages}`, PW - M, PH - 7, { align: "right" });
       // the sheet is a picture of a decision; this line makes it the decision —
       // whoever holds the paper can reopen the room and keep working on it
@@ -6341,8 +6468,8 @@ function renderEmptyState() {
     '<h2>Step 1 — choose your diverter</h2>' +
     '<p class="e-body">The diverter comes first, because it decides the rest: tap one to pick ' +
     'its finish, and the whole room is designed in that finish. How many functions it has is how ' +
-    'many fittings it can feed. Nothing is priced here — Stout supplies and installs the whole ' +
-    'design, and your consultant quotes it.</p>' +
+    'many fittings it can feed. Your PDF lists each fitting with its MRP from the July 2026 ' +
+    'price list — Stout supplies and installs the whole design, and your consultant confirms the quotation.</p>' +
     '<div class="e-row">' +
       '<button type="button" data-e="first">Choose a diverter</button>' +
       '<button type="button" data-e="set">Auto-arrange a full set</button>' +

@@ -717,5 +717,113 @@ const SCENES = [
     palette: { wall: "#2a2320", wall2: "#171210", floor: "#33291f", accent: "#b98b4e", niche: "#3a3025", glass: "#3a352c", vein: "#4a3b2c", shadow: "rgba(0,0,0,.5)" } },
 ];
 
+/* ---- MRP, PER CODE AND PER FINISH (2026-09-22, asked for directly: "add the
+   prices in the pdf") -------------------------------------------------------
+   Every figure here is read off the client's STOUT July 2026 price list
+   (W.E.O 1st July 2026), the same PDF the names above come from — the MRP
+   printed under the CODE line of the finish it belongs to, rupees, no GST
+   arithmetic of ours on top. The spec sheet prints them and totals them; the
+   rail does not show them.
+
+   Keyed by the row's `code` above, then by finish id, because the catalogue
+   prices per finish and the two differ: chrome is cheaper than the plated
+   finishes on almost every fitting, and brushed bronze is dearer than the
+   rest on a few (ST-D5017, ST-C1013/14/15, ST-QB, QB-AC).
+
+   A finish that is NOT here has no price in the catalogue, and the sheet
+   prints "on request" against it rather than borrowing the price of a
+   different colour. A row with no entry at all is a product the catalogue
+   does not price.
+
+   Where a row stands for a family the catalogue codes per finish (the two
+   spouts), the price sits under the row's own code here and the per-finish
+   part number still comes from `codes`. Where the catalogue prices a hand
+   shower twice — the handset alone and the set with its tube and hook — the
+   SET price is taken, because that is what the row describes. ST-1017 is
+   the overhead WITH its 150 mm arm; ST-1037/38/39 are priced with the
+   L-type hook (N), the wall-outlet hook (WO) being 2,500 more on each.
+
+   Regenerate from the price-list spreadsheet rather than editing by hand: one
+   wrong digit here is a wrong quotation on paper. */
+const MRP = {
+  "ST-D5018": { roseGold: 72000, chrome: 62000, matteBlack: 72000, brushedRoseGold: 72000, champagne: 72000, gunGrey: 72000 },
+  "ST-D5019": { roseGold: 62000, chrome: 52000, matteBlack: 62000, brushedRoseGold: 62000, champagne: 62000, gunGrey: 62000 },
+  "ST-D5020": { roseGold: 55000, chrome: 45000, matteBlack: 55000, brushedRoseGold: 55000, champagne: 55000, gunGrey: 55000 },
+  "ST-D5021": { roseGold: 61000, chrome: 53000, matteBlack: 61000, brushedRoseGold: 61000, champagne: 61000, gunGrey: 61000 },
+  "ST-D5022": { roseGold: 55000, chrome: 46000, matteBlack: 55000, brushedRoseGold: 55000, champagne: 55000, gunGrey: 55000 },
+  "ST-D5012": { roseGold: 50000, chrome: 42000, matteBlack: 50000, brushedRoseGold: 50000, champagne: 50000, gunGrey: 50000 },
+  "ST-D5011": { roseGold: 45000, chrome: 35000, matteBlack: 45000, brushedRoseGold: 45000, champagne: 45000, gunGrey: 45000 },
+  "ST-D5015": { roseGold: 28500, chrome: 23000, matteBlack: 28500, brushedRoseGold: 28500, champagne: 28500, gunGrey: 28500 },
+  "ST-D5016": { roseGold: 34000, chrome: 28500, matteBlack: 34000, brushedRoseGold: 34000, champagne: 34000, gunGrey: 34000 },
+  "ST-D5017": { chrome: 11500, roseGold: 14500, matteBlack: 14500, brushedRoseGold: 14500, champagne: 16500, gunGrey: 14500 },
+  "ST-D5004": { roseGold: 42000, chrome: 36000, matteBlack: 42000 },
+  "ST-D5008": { roseGold: 72000, chrome: 61000, matteBlack: 72000 },
+  "ST-D5009": { roseGold: 27000, chrome: 22000, matteBlack: 27000 },
+  "ST-D5010": { roseGold: 32000, chrome: 27000, matteBlack: 32000 },
+  "ST-D5002": { chrome: 12500 },
+  "ST-D5003": { chrome: 26500 },
+  "ST-D5014": { chrome: 22000 },
+  "ST-C1001": { roseGold: 30000, matteBlack: 30000, brushedRoseGold: 36000, champagne: 36000, gunGrey: 36000, chrome: 22000 },
+  "ST-C1002": { roseGold: 30000, matteBlack: 30000, brushedRoseGold: 36000, champagne: 36000, gunGrey: 36000, chrome: 22000 },
+  "ST-C1003": { roseGold: 24000, chrome: 17000, matteBlack: 24000, brushedRoseGold: 29500, gunGrey: 29500 },
+  "ST-C1004": { roseGold: 24000, chrome: 17000, matteBlack: 24000, brushedRoseGold: 29500, gunGrey: 29500 },
+  "ST-C1005": { chrome: 42000 },
+  "ST-C1006": { chrome: 41500 },
+  "ST-C1007": { chrome: 20000 },
+  "ST-C1008": { roseGold: 33000, matteBlack: 33000, brushedRoseGold: 38000, champagne: 38000, gunGrey: 38000, chrome: 26000 },
+  "ST-C1009": { chrome: 120000 },
+  "ST-C1010": { roseGold: 26000, matteBlack: 26000, brushedRoseGold: 31500, champagne: 31500, gunGrey: 31500, chrome: 18000 },
+  "ST-C1011": { roseGold: 80000, chrome: 70000, matteBlack: 80000, brushedRoseGold: 80000, champagne: 80000, gunGrey: 80000 },
+  "ST-C1012": { roseGold: 70000, chrome: 60000, matteBlack: 70000, brushedRoseGold: 70000, champagne: 70000, gunGrey: 70000 },
+  "ST-C1013": { roseGold: 35000, chrome: 28000, matteBlack: 35000, brushedRoseGold: 35000, champagne: 40000, gunGrey: 35000 },
+  "ST-C1014": { roseGold: 35000, chrome: 28000, matteBlack: 35000, brushedRoseGold: 35000, champagne: 40000, gunGrey: 35000 },
+  "ST-C1015": { roseGold: 50000, chrome: 35000, matteBlack: 50000, brushedRoseGold: 50000, champagne: 55000, gunGrey: 50000 },
+  "ST-C1016": { chrome: 17500 },
+  "ST-C1017": { chrome: 20000 },
+  "ST-C1018": { chrome: 20000 },
+  "ST-C1019": { roseGold: 20000, chrome: 15000, matteBlack: 20000, brushedRoseGold: 25000, gunGrey: 25000 },
+  "ST-C1020": { roseGold: 75000, chrome: 65000, matteBlack: 75000, brushedRoseGold: 75000, champagne: 75000, gunGrey: 75000 },
+  "ST-1040": { chrome: 5000, roseGold: 7000, matteBlack: 7000, brushedRoseGold: 7000, champagne: 7000, gunGrey: 7000 },
+  "ST-1012": { chrome: 600 },
+  "ST-3014": { chrome: 1250 },
+  "ST-3016": { chrome: 1250 },
+  "ST-1023": { chrome: 850 },
+  "ST-1031": { chrome: 1450 },
+  "ST-1022": { matteBlack: 5500, chrome: 3500 },
+  "ST-1030": { matteBlack: 5500, chrome: 3500 },
+  "ST-1029": { chrome: 950 },
+  "ST-1027": { chrome: 950 },
+  "ST-1033": { chrome: 450 },
+  "ST-1018": { roseGold: 4500, matteBlack: 4500, brushedRoseGold: 5000, champagne: 5000, gunGrey: 5000, chrome: 2900 },
+  "ST-1011": { chrome: 2250 },
+  "ST-1024": { chrome: 2500 },
+  "ST-1028": { chrome: 2600 },
+  "ST-1032": { chrome: 3100 },
+  "ST-1034": { chrome: 2100 },
+  "ST-3015": { chrome: 2900 },
+  "ST-3017": { chrome: 2900 },
+  "ST-1025": { chrome: 2050 },
+  "ST-1026": { chrome: 2050 },
+  "ST-1035": { chrome: 2500 },
+  "ST-1036": { chrome: 2050 },
+  "ST-1017": { chrome: 1250, roseGold: 3000, matteBlack: 3000 },
+  "ST-1037": { brushedRoseGold: 6500 },
+  "ST-1038": { gunGrey: 6500 },
+  "ST-1039": { champagne: 6500 },
+  "ST-HY": { roseGold: 4000, chrome: 3000, matteBlack: 4000, brushedRoseGold: 4000, champagne: 4000, gunGrey: 4000 },
+  "ST-CB": { chrome: 7500, roseGold: 8500, matteBlack: 8500, brushedRoseGold: 9500, champagne: 9500, gunGrey: 9500 },
+  "ST-2F": { chrome: 4500, roseGold: 5500, matteBlack: 5500, brushedRoseGold: 6000, champagne: 6000, gunGrey: 6000 },
+  "ST-SF": { chrome: 1450, roseGold: 2750, matteBlack: 2750, brushedRoseGold: 3050, champagne: 3050, gunGrey: 3050 },
+  "ST-DC": { chrome: 3300, roseGold: 4500, matteBlack: 4500 },
+  "ST-3F": { chrome: 4500 },
+  "ST-PLAIN": { chrome: 3000, roseGold: 3500, matteBlack: 3500, brushedRoseGold: 3850, champagne: 3850, gunGrey: 3850 },
+  "ST-BUTTON": { chrome: 4500, roseGold: 5000, matteBlack: 5000, brushedRoseGold: 5250, champagne: 5250, gunGrey: 5250 },
+  "ST-SARM": { roseGold: 2750, matteBlack: 2750, brushedRoseGold: 2750, champagne: 2750, gunGrey: 2750 },
+};
+/* Rows priced by size in the catalogue, where the figure above is the smallest
+   size and the sheet says "from". None in this range at present; the SS304
+   overhead plate that needed it is not offered here. */
+const MRP_FROM = {};
+
 /* expose to app.js (classic scripts share global scope) */
-window.STOUT = { FINISHES, ALL_FINISHES, CORE_FINISHES, CATEGORIES, PRODUCTS, SCENES };
+window.STOUT = { FINISHES, ALL_FINISHES, CORE_FINISHES, CATEGORIES, PRODUCTS, SCENES, MRP, MRP_FROM };
