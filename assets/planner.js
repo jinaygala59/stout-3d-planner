@@ -5791,6 +5791,35 @@ async function downloadSpecSheet() {
     ].filter(Boolean).join(" "), PW - M - X_FIN);
     doc.text(priceNote, X_FIN, y + 5.4);
 
+    /* ---- how to reach STOUT ----
+       The left half of the page under the last row was empty, and the person
+       who has just read a total is exactly the one who wants a number to call.
+       So the two ways in sit there, on the total's own baseline and under a
+       rule of the same weight, so the foot of the sheet reads as two columns
+       rather than as a line dropped in afterwards. (2026-09-22, asked for.)
+
+       BOTH ARE REAL LINKS IN THE PDF, which is the whole point of putting them
+       here rather than in the footer: tel: dials from a phone, or hands off to
+       one from a laptop, and the Instagram opens in a browser. A printed
+       number that has to be retyped is a step at which an enquiry gets lost.
+       textWithLink draws the text and lays the hotspot over it from the
+       measured width, so the clickable area follows the string; keep the
+       display text and the href together if either ever changes. */
+    const TEL_SHOWN = "+91 99678 88156", TEL_HREF = "tel:+919967888156";
+    const IG_SHOWN = "instagram.com/stoutsanitaryware";
+    const IG_HREF = "https://www.instagram.com/stoutsanitaryware/?hl=en";
+    /* the rule is cut to the caption, not to a guessed 26 mm, so it still lines
+       up if the wording changes; charSpace pads after every glyph but the last */
+    const CAP = "SPEAK TO STOUT", CAP_SP = 0.7;
+    doc.setFont("helvetica", "bold"); doc.setFontSize(6.6);
+    const capW = doc.getTextWidth(CAP) + (CAP.length - 1) * CAP_SP;
+    doc.setDrawColor(...GOLD); doc.setLineWidth(0.4); doc.line(M, y - 5, M + capW, y - 5);
+    doc.setTextColor(...GOLD);
+    doc.text(CAP, M, y + 1, { charSpace: CAP_SP });
+    doc.setFont("helvetica", "normal"); doc.setFontSize(9); doc.setTextColor(...INK);
+    doc.textWithLink(TEL_SHOWN, M, y + 7, { url: TEL_HREF });
+    doc.textWithLink(IG_SHOWN, M, y + 12.2, { url: IG_HREF });
+
     // ---- footer on every page ----
     const pages = doc.getNumberOfPages();
     for (let p = 1; p <= pages; p++) {
