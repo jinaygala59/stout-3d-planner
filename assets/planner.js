@@ -228,14 +228,25 @@ const MAX_H = {
      metre, so the caps say so, and the widths below say what each plate really
      measures. The cap still bites on anything past that. */
   "thermostatic": 0.50, "diverter": 0.52, "body-jet": 0.34,
-  // A handset's artwork is taller than it is wide, so THIS is what sets its
-  // size on the wall — its `width` never binds, and raising `width` alone does
-  // nothing. 0.40 (was 0.34) is the client asking for "a bit big", 2026-09-19.
-  // Measured on the wall, ST-HS3211 with its bracket and hose goes from
-  // 209 x 541 mm to 245 x 637 — 18% up, which is the "bit". Still what a real
-  // handset measures once the hose tail these renders include is counted
-  // (25-30 cm of body).
-  "bath-spout": 0.30, "hand-shower": 0.40, "health-faucet": 0.30,
+  /* A handset's artwork is taller than it is wide, so THIS is what sets its
+     size on the wall — its `width` never binds, and changing `width` alone does
+     nothing.
+     0.34 is the client asking for "a bit smaller", 2026-09-22, off the 0.40
+     that was their "a bit big" three days earlier (2026-09-19). Measured on the
+     wall with the piece settled — read it AFTER the landing pop, which holds
+     the mesh at 0.55 scale and will otherwise report a handset two-fifths too
+     small — ST-1018 goes from 236 x 637 mm to 201 x 541, 15% off, which is the
+     "bit" the other way.
+     IT IS STILL BIG FOR THE BARE HANDSETS, and one cap cannot fix that: these
+     renders are not framed alike. ST-1018 / ST-1040 / ST-HS3211 are the handset
+     ALONE, so the round face is the full width of the artwork, while ST-1019
+     and ST-1037 carry their bracket, elbow and hose in the photograph and the
+     face is only 29-41% of it. A single height therefore lands ST-1018's face
+     at 133 mm and ST-1037's at 33 mm — the same catalogue fitting, four times
+     the size. ST-1018 is the one with a printed figure, "size 100mm", so the
+     honest fix is a per-SKU width keyed to the face, not a smaller cap. That
+     would make some of these BIGGER, which is not what was asked for here. */
+  "bath-spout": 0.30, "hand-shower": 0.34, "health-faucet": 0.30,
   "basin-mixer": 0.34, "wall-tap": 0.28, "waste": 0.30,
 };
 const maxHeight = (product, cfg) =>
