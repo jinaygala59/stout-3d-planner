@@ -21,22 +21,31 @@ OUT = os.path.join("assets", "products", "face")
 S = 512    # decal size (square)
 
 JETS = {
-    # square head, 4x4 nub grid. Its four finishes are FOUR DIFFERENT RENDERS
-    # (different camera, different crop), so the face is measured per finish.
-    # brushedGold is gone (2026-09-17): that render was the jet's ROSE GOLD one
-    # filed under the wrong name — see catalog.js. Its quad went with it.
+    # square head, a straight 4x4 grid of 16 nozzles and NO centre hole. Its
+    # finishes are DIFFERENT RENDERS (different camera, different crop), so the
+    # face is measured per finish.
+    # THE GUN GREY RENDER WAS A DIFFERENT PRODUCT until 2026-09-22 - the DUAL
+    # function jet, whose face is ~20 domes in a diagonal lattice around a centre
+    # mist pinhole - and chrome, brushed bronze and brushed rose gold had been
+    # generated from it by tools_finish.py, so one wrong source render became
+    # five, and four of the six decals cut the wrong jet's face. All four now
+    # come off the catalogue's own single-function pages; see the note on
+    # UNCODED["ST-SF"] in tools_july.py. roseGold and matteBlack were always
+    # this jet and are untouched, quads and all.
+    # These quads are FITTED, not eyeballed: the 16 nozzles are detected, a
+    # homography is solved from grid index to pixel (max residual 0.19 px on the
+    # p118 frame, 0.74 px on chrome), and the corners are taken 0.7 of a cell
+    # outside the outermost nozzles. 0.85 let the plate's own edge into the
+    # decal; 0.55 cropped inside the border the render actually shows.
     "ST-SF": { "mask": "square", "quads": {
         "roseGold":    [(148, 57), (294, 33), (292, 262), (148, 305)],     # 299x317, plate left
-        "gunGrey":     [(8, 108), (505, 205), (500, 858), (32, 676)],      # 900x861, seen from above-left, plate right
-        # The one-palette pass gave this jet chrome, brushed bronze and brushed
-        #    rose gold, generated from the GUN GREY render by tools_finish.py — so
-        #    they are that same 900x861 frame off that same camera and take its
-        #    quad unchanged. Without them the jet had no spray face in chrome,
-        #    which is its default finish: the decal 404'd and the head came up blank.
-        "chrome":          [(8, 108), (505, 205), (500, 858), (32, 676)],
-        "champagne":       [(8, 108), (505, 205), (500, 858), (32, 676)],
-        "brushedRoseGold": [(8, 108), (505, 205), (500, 858), (32, 676)],
         "matteBlack":  [(240, 112), (465, 72), (465, 433), (240, 478)],    # 478x481, plate left, shot from the other side
+        "chrome":      [(58, 37), (158, 19), (157, 139), (58, 162)],       # 164x164, p117, plate RIGHT
+        # p118 prints these three at one size off one camera - their alpha
+        # silhouettes differ by ~130 pixels in 24k - so ONE quad cuts all three.
+        "gunGrey":         [(1, 16), (83, 25), (82, 141), (4, 117)],       # 160x149, p118, plate left
+        "champagne":       [(1, 16), (83, 25), (82, 141), (4, 117)],
+        "brushedRoseGold": [(1, 16), (83, 25), (82, 141), (4, 117)],
     } },
     # rounded-square head, three nozzles. All eight renders are 900x701 off the
     # same camera, so ONE quad cuts them all.

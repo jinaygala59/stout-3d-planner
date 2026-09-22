@@ -86,14 +86,27 @@ UNCODED = {
     "ST-HFSEL": {"pages": [146, 147], "want": None},   # SELORA HEALTH FAUCET
     "ST-HFSQ":  {"pages": [148, 149], "want": None},   # SQUARE HEALTH FAUCET
     "ST-HFEST": {"pages": [150],      "want": None},   # ESTONIA HEALTH FAUCET
-    # NOT extracted, deliberately: the catalogue also carries finishes this app
-    # does not have for the SINGLE FUNCTION jet (p117/118: chrome, french gold,
-    # brushed bronze, brushed rose gold) and the DANCING jet (p119: chrome, matt
-    # black). Both render as real geometry wearing a 512 px face decal cut from
-    # the photograph (tools_decal.py), and those particular renders are printed
-    # 150-230 px wide - a decal upscaled 3x from them is visibly softer than the
-    # ones beside it. They go in when a render of that finish arrives at a size
-    # worth cutting, not from these.
+    # THE SINGLE FUNCTION JET, and it is a CORRECTION rather than a gap.
+    # ST-SF carried the client's Drive render, which is a DIFFERENT PRODUCT: its
+    # face is ~20 domes in a diagonal lattice around a centre mist pinhole, which
+    # is the DUAL function jet (p115/116). The single function jet is a straight
+    # 4x4 grid of 16 nozzles and no centre hole - the catalogue prints it on
+    # p117/118 and the client's own code list photographs it beside ST-SF-CP.
+    # Worse, that wrong render was the gun grey one, and the one-palette pass
+    # generated chrome, brushed bronze and brushed rose gold FROM it, so one bad
+    # source became six - including chrome, the jet's default finish.
+    # Only roseGold and matteBlack were right (they came in separately, and are
+    # bigger than these), so `want` takes the rest off the catalogue and leaves
+    # those two alone.
+    # These renders trim to ~160 px, which is small: that is why they were passed
+    # over the first time, on sharpness. A soft picture of the right jet beats a
+    # sharp picture of the wrong one, so they go in. Replace them the day the
+    # factory sends this jet at a size worth cutting.
+    "ST-SF": {"pages": [120, 121],
+              "want": {"chrome", "gunGrey", "champagne", "brushedRoseGold", "gold"}},
+    # NOT extracted, deliberately: the DANCING jet's chrome and matt black
+    # (p119) are printed 150-230 px wide and this app already has both of them
+    # bigger. They go in when a render of that finish arrives worth cutting.
 }
 
 doc = fitz.open(PDF)
@@ -304,6 +317,11 @@ def main():
     ap.add_argument("--list", action="store_true")
     ap.add_argument("--extract", action="store_true")
     ap.add_argument("--check", action="store_true")
+    # Re-run ONE sku without rewriting the whole range. Without it a correction
+    # to a single jet rewrites every render the tool owns, and a 300-file diff
+    # hides the one file that was meant to change.
+    ap.add_argument("--only", nargs="+", metavar="SKU",
+                    help="limit --list/--extract/--check to these SKUs")
     a = ap.parse_args()
     # per-process, because the cutout path round-trips each image through it:
     # two copies of this script running at once raced on a shared name and wrote
@@ -312,6 +330,12 @@ def main():
 
     everything = ([(s, pairs(s)) for s in JOBS] +
                   [(s, uncoded_pairs(s)) for s in UNCODED])
+    if a.only:
+        want = set(a.only)
+        missing = want - {s for s, _ in everything}
+        if missing:
+            raise SystemExit(f"--only: not a SKU this tool owns: {sorted(missing)}")
+        everything = [(s, g) for s, g in everything if s in want]
 
     if a.list:
         for sku, got in everything:

@@ -337,6 +337,22 @@ const RAW_PRODUCTS = [
      brushed bronze, brushed rose gold, rose gold, matt black, gun grey), so the
      swatch was offering a colour the factory does not ship AND showing the
      wrong one. Artwork moved to _quarantine. */
+  /* ARTWORK CORRECTED 2026-09-22, on the client's report that this jet and the
+     2-flow one had been mixed up. They had: the render filed here was the DUAL
+     FUNCTION jet. The two are easy to confuse in a thumbnail and impossible to
+     confuse once you know what to look for —
+       SINGLE FLOW: a straight 4x4 grid, 16 nozzles, NO centre hole. One flow.
+       2 FLOW:      ~20 domes in a diagonal lattice AROUND A CENTRE PINHOLE,
+                    which is the second flow, the mist. (p115/116, and it is
+                    what ST-2F has always carried — that row was right.)
+     The wrong render arrived as the client's Drive file "single-flow" and was
+     the GUN GREY one, then the one-palette pass generated chrome, brushed
+     bronze and brushed rose gold from it, so one bad file became five — chrome
+     included, which is this jet's default and so the first thing anyone saw.
+     roseGold and matteBlack came in separately and were always right.
+     The five now come off the catalogue's own SINGLE FUNCTION pages (p117/118)
+     and the spray-face decals were re-cut to match; every other jet was checked
+     finish by finish and is consistent. See tools_july.py UNCODED["ST-SF"]. */
   { code: "ST-SF", cat: "body-jet",    name: "Single Flow Body Jet",   finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "50 x 50 mm · brass · rain",
     codes: { chrome: "ST-SF-CP", roseGold: "ST-SF-RG", matteBlack: "ST-SF-MB", gold: "ST-SF-FG", brushedRoseGold: "ST-SF-BRG", champagne: "ST-SF-BV", gunGrey: "ST-SF-GG" } },
   /* New 2026-09-16. The catalogue's CONCEALED BODY JET (p113/114), 130 x 120 x
