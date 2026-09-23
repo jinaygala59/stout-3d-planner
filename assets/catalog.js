@@ -172,7 +172,15 @@ const RAW_PRODUCTS = [
   { code: "ST-C1016", cat: "rain-shower", name: "1-Function Ceiling Shower",          finishes: ["chrome"], variant: "350x350 mm · square plate · plain", functions: 1 },
   { code: "ST-C1017", cat: "rain-shower", name: "2-Function Ceiling Shower",     finishes: ["chrome"], variant: "350x350 mm · square plate · centre slot", functions: 2 },
   { code: "ST-C1018", cat: "rain-shower", name: "2-Function Ceiling Shower",   finishes: ["chrome"], variant: "350x350 mm · square plate · 4 jets", functions: 2 },
-  { code: "ST-C1019", cat: "rain-shower", name: "1-Function Ceiling Shower",            finishes: ["chrome","gunGrey","roseGold","brushedRoseGold","matteBlack"], badge: "Bestseller", variant: "380x250 mm · wide plate · plain, slim edge", functions: 1 },
+  /* BRUSHED BRONZE PUT BACK (2026-09-23, asked for directly off the picker,
+     which greyed the card "Not made in Matt Black" beside it). The catalogue
+     prints no ST-C1019-BV: pp. 72-73 code this plate RG / CP / MB and
+     BRG / FG / GG, and price BRG and GG at 25,000. So the finish is offered
+     on the client's word, not the page's — its render is the recoloured one
+     from the eight-finish pass, and the MRP table below has no entry for it,
+     so the sheet prints "on request" against it rather than a figure the
+     price list never printed. Confirm the code and price with the factory. */
+  { code: "ST-C1019", cat: "rain-shower", name: "1-Function Ceiling Shower",            finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], badge: "Bestseller", variant: "380x250 mm · wide plate · plain, slim edge", functions: 1 },
   // Added from the Stout asset library (2026-07-10) — descriptive names, rename to real SKU names anytime
   { code: "ST-C1001", cat: "rain-shower", name: "2-Function Ceiling Shower",      finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "480x330 mm · wide plate · LED strip", functions: 2 },
   { code: "ST-C1002", cat: "rain-shower", name: "2-Function Ceiling Shower",      finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "480x330 mm · wide plate · 4 jets", functions: 2 },
