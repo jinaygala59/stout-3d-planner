@@ -194,10 +194,22 @@ const CAT3D = {
      to the trim. Nothing else is out there — the shattaf lane at z 0.52 belongs
      to health-faucet, which the rail does not offer, and the WC is floor-level
      furniture 0.7 m below this.
-     y 1.10 puts the bracket at 1.06, which is where a handset holder is actually
-     set. No swing: it hangs in a bracket, and a bracket does not follow the
-     camera. */
-  "hand-shower":  { mount: "right", width: 0.20, y: 1.10, z: 0.36, billboard: false },
+     y 1.34 is the VALVE'S OWN LINE — the same anchor height as thermostatic and
+     diverter, so the handset reads as the piece beside the trim rather than one
+     hanging below it. It was 1.10 (bracket 1.06, a holder height taken on its
+     own), and on the wall that put the head a clear 24 cm under the trim with
+     the hose trailing down past the lower jet row: from across the room it read
+     as a fitting parked under the valve set, not part of it. Raised
+     (2026-09-23, asked for directly off the render: "take the hand shower a bit
+     up beside the diverter"), and ONLY y moved — z stays 0.36, so the lateral
+     place the ask calls "the same place as it is" is untouched, along with the
+     83 mm to the nearest jet and 144 mm to the trim measured above.
+     The bracket therefore sits at 1.30, which is still a real holder height for
+     a handset fed off the valve beside it — a riser-less bracket goes where the
+     hose can reach the trim, not at basin height. Nothing else moves into its
+     band: the jets clear it in z, and the spout is 0.56 m below.
+     No swing: it hangs in a bracket, and a bracket does not follow the camera. */
+  "hand-shower":  { mount: "right", width: 0.20, y: 1.34, z: 0.36, billboard: false },
   // over the basin, which is the wall-hung vanity on the LEFT (COUNTER.x -1.06)
   // — the only place a basin mixer can go, whatever the rest of the layout does.
   // The deck-mounted ones override this with mount:"counter".
