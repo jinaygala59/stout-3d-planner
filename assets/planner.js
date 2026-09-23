@@ -5817,7 +5817,7 @@ async function downloadSpecSheet() {
        textWithLink draws the text and lays the hotspot over it from the
        measured width, so the clickable area follows the string; keep the
        display text and the href together if either ever changes. */
-    const TEL_SHOWN = "+91 99678 88156", TEL_HREF = "tel:+919967888156";
+    const TEL_SHOWN = "+91 90046 06093", TEL_HREF = "tel:+919004606093";
     const IG_SHOWN = "instagram.com/stoutsanitaryware";
     const IG_HREF = "https://www.instagram.com/stoutsanitaryware/?hl=en";
     /* the rule is cut to the caption, not to a guessed 26 mm, so it still lines
