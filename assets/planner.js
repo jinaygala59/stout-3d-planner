@@ -7,7 +7,7 @@
    ========================================================================== */
 (() => {
 "use strict";
-const { FINISHES, CATEGORIES, PRODUCTS, MRP, MRP_FROM } = window.STOUT;
+const { FINISHES, CATEGORIES, PRODUCTS, MRP, MRP_FROM, MRP_OFFLIST } = window.STOUT;
 const $ = s => document.querySelector(s);
 if (!window.THREE) { $("#loading").textContent = "3D engine failed to load."; return; }
 
@@ -273,6 +273,9 @@ const SKU3D = {
   // --- overhead plates (ceiling): real plate widths ---
   "ST-C1012": { width: 0.52 }, "ST-C1013": { width: 0.50 }, "ST-C1014": { width: 0.62 },
   "ST-C1015": { width: 0.68 }, "ST-C1016": { width: 0.50 }, "ST-C1017": { width: 0.50 },
+  // the plain hex plate is ST-C1013's tooling with the mist jets left out — the
+  // two renders register nozzle for nozzle — so it is drawn at C1013's width
+  "ST-HEX1":  { width: 0.50 },
   "ST-C1018": { width: 0.50 }, "ST-C1019": { width: 0.55 }, "ST-C1001": { width: 0.60 },
   "ST-C1002": { width: 0.60 }, "ST-C1003": { width: 0.62 }, "ST-C1004": { width: 0.62 },
   "ST-C1007": { width: 0.58 }, "ST-C1008": { width: 0.42 }, "ST-C1010": { width: 0.70 },
@@ -4399,8 +4402,7 @@ function renderTool() {
      the card offered it under and the same one the spec sheet will print. On a
      per-finish row `code` is the internal id (ST-BUTTON), which is not a part
      number and must not appear here. */
-  const shownCode = catalogCode(rec.product, rec.finishId)
-    || (rec.product.codes ? "Code on request" : rec.product.code);
+  const shownCode = catalogCode(rec.product, rec.finishId) || "Code on request";
   $("#toolName").innerHTML = `${rec.product.name}<em>${shownCode}` +
     `${rec.product.variant ? " · " + rec.product.variant : ""}</em>`;
 
@@ -4857,7 +4859,7 @@ function finishCard(p, fid) {
      the same words the spec sheet uses. It must not fall back to `code`: on
      these two that is ST-PLAIN / ST-BUTTON, an internal id, and printing it in
      the part-number slot is exactly the invented number this avoids. */
-  const code = catalogCode(p, fid) || (p.codes ? "Code on request" : p.code);
+  const code = catalogCode(p, fid) || "Code on request";
   return { ...p, id, baseId: p.id, finishOnly: fid, code,
            finishes: [fid], defaultFinish: fid,
            variant: [p.variant, finName(fid)].filter(Boolean).join(" · ") };
@@ -4950,7 +4952,7 @@ function renderRail() {
          jet has to say ST-HY-RG; the bare model id is not a number the factory
          can ship. Split cards already carry theirs in `code`; this covers the
          rows that keep one card and change finish under it. */
-      const cardCode = catalogCode(p, fin) || (p.codes ? "Code on request" : p.code);
+      const cardCode = catalogCode(p, fin) || "Code on request";
       const here = p.finishOnly ? isPlacedIn(p.baseId, p.finishOnly) : isPlaced(p.id);
       return `<div class="pcard ${here ? "placed" : ""}${why ? " blocked" : ""}" data-prod="${p.id}" data-cat="${p.catId}" data-fin="${fin}">
         <button type="button" class="pc-main" ${valve ? "data-arm" : "data-add"}${why ? " disabled" : ""}
@@ -5242,7 +5244,7 @@ function designAsText() {
      sheet — this text is what a consultant quotes from. */
   const lines = items.map((r, i) =>
     `${String(i + 1).padStart(2, "0")}. ${r.product.name}  ` +
-    `(${catalogCode(r.product, r.finishId) || (r.product.codes ? "code on request" : r.product.code)})  —  ` +
+    `(${catalogCode(r.product, r.finishId) || "code on request"})  —  ` +
     `${(FINISHES[r.finishId] || {}).name || r.finishId}`);
   return [
     `My Stout bathroom design`,
@@ -5473,6 +5475,13 @@ const CODE_RE = /^ST-[A-Z]{0,2}\d{3,5}$/i;
    [A-Z] only. It was, and those two jets printed "Code on request" against a
    code they actually have. */
 const FIN_CODE_RE = /^ST-[A-Z0-9]{2,6}-[A-Z]{2,3}$/i;
+/* A NULL FROM HERE MEANS "no catalogue number", AND EVERY CALLER MUST SAY SO.
+   These four used to fall back to `p.code` when the row had no `codes` map,
+   on the assumption that such a row always carries a real part number. Two do
+   not — ST-SARM, which is on no code list the client has sent, and ST-HEX1,
+   whose product has no catalogue page at all — and both printed their internal
+   id in the slot where a client reads a number to order against. The PDF was
+   already right; the screen was not. */
 function catalogCode(p, fid) {
   const byFinish = p && p.codes && fid && p.codes[fid];
   if (byFinish && FIN_CODE_RE.test(String(byFinish).trim())) return String(byFinish).trim();
@@ -5513,6 +5522,8 @@ async function downloadSpecSheet() {
   orderLines.forEach(l => { l.unit = mrpOf(l.rec.product, l.rec.finishId); l.amount = l.unit == null ? null : l.unit * l.pcs; });
   const totalMRP = orderLines.reduce((n, l) => n + (l.amount || 0), 0);
   const unpriced = orderLines.filter(l => l.amount == null).length;
+  // a priced line whose figure is not off the printed list — see MRP_OFFLIST
+  const offlist = orderLines.filter(l => l.amount != null && MRP_OFFLIST[l.rec.product.code]).length;
 
   // No fly-to: captureFrom() borrows the camera and hands it straight back, so
   // the client's view is still where they left it when the download finishes.
@@ -5800,6 +5811,7 @@ async function downloadSpecSheet() {
     const priceNote = doc.splitTextToSize([
       "MRP as printed in the STOUT price list, W.E.O 1st July 2026. Your Stout consultant's quotation supersedes this sheet.",
       unpriced ? `${unpriced} ${unpriced === 1 ? "item is" : "items are"} priced on request and not included in the total.` : "",
+      offlist ? `${offlist} ${offlist === 1 ? "item is" : "items are"} quoted by STOUT direct and not in that list.` : "",
     ].filter(Boolean).join(" "), PW - M - X_FIN);
     doc.text(priceNote, X_FIN, y + 5.4);
 

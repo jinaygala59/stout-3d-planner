@@ -178,6 +178,39 @@ const RAW_PRODUCTS = [
   { code: "ST-C1013", cat: "rain-shower", name: "Hex Ceiling Mounted Showers",    finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "480x330 mm · hex plate · 6 jets", functions: 2 },
   { code: "ST-C1014", cat: "rain-shower", name: "Hex Ceiling Mounted Showers",  finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "480x330 mm · hex plate · LED strips", functions: 2 },
   { code: "ST-C1015", cat: "rain-shower", name: "Hex Ceiling Mounted Showers",  finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "480x330 mm · hex plate · LED strips + 5 jets", functions: 3 },
+  /* THE PLAIN HEX PLATE (2026-09-24, asked for directly: "single function,
+     rain shower", with its six colours and their prices).
+
+     IT IS NOT IN THE JULY 2026 CATALOGUE, and that was checked rather than
+     assumed: pp. 54-59 carry three hex plates and no fourth, every ST-C code
+     the PDF prints (C1001-C1020) is already a row here, and no product in it
+     is priced at 24,000 chrome / 30,000 plated. So there is no page, no part
+     number and no printed MRP for this one.
+
+     What there IS. The factory's own CAD set names three siblings in
+     ~/stout-3d-models/"Stout Product 3D files"/ceiling shower — 29959-1,
+     "29959-2 hex rm" and "29959-3 hex rw" — and rain+mist / rain+waterfall
+     are C1013 and C1014, which leaves 29959-1 for the plain one. And the
+     client's render registers on C1013's photograph nozzle for nozzle: the
+     same 480x330 hex silhouette, the same four corner fixings, with the four
+     centre mist jets simply absent. The product is real and the geometry is
+     the factory's; only the paperwork is missing.
+
+     THE ARTWORK IS THE CLIENT'S OWN RENDER. Chrome is that file itself, cut
+     off its flat ground and nothing else done to it — put through the chrome
+     curve it came back almost white, with the nozzle grid washed out of it.
+     The other five are derived from it by the measured curves in
+     tools_finish.py, the same way every other generated variant here is made;
+     their median hue and saturation land on C1013's own renders. What a CAD
+     render cannot give them is a specular gradient, so the plate reads flatter
+     than its neighbours until the factory's studio shots arrive.
+
+     `code` IS AN INTERNAL ID, NOT A PART NUMBER. ST-HEX1 deliberately fails
+     CODE_RE in planner.js, so the rail card and the spec sheet print "Code on
+     request" instead of a number nobody could order against. When the factory
+     issues the real code, put it here and add an OLD_CODE alias so the rooms
+     already shared still open. */
+  { code: "ST-HEX1", cat: "rain-shower", name: "Hex Ceiling Mounted Showers",  finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], badge: "New", variant: "480x330 mm · hex plate · plain", functions: 1 },
   { code: "ST-C1016", cat: "rain-shower", name: "Ceiling Mounted Showers",          finishes: ["chrome"], variant: "350x350 mm · square plate · plain", functions: 1 },
   { code: "ST-C1017", cat: "rain-shower", name: "Ceiling Mounted Showers",     finishes: ["chrome"], variant: "350x350 mm · square plate · centre slot", functions: 2 },
   { code: "ST-C1018", cat: "rain-shower", name: "Ceiling Mounted Showers",   finishes: ["chrome"], variant: "350x350 mm · square plate · 4 jets", functions: 2 },
@@ -795,6 +828,9 @@ const MRP = {
   "ST-C1013": { roseGold: 35000, chrome: 28000, matteBlack: 35000, brushedRoseGold: 35000, champagne: 40000, gunGrey: 35000 },
   "ST-C1014": { roseGold: 35000, chrome: 28000, matteBlack: 35000, brushedRoseGold: 35000, champagne: 40000, gunGrey: 35000 },
   "ST-C1015": { roseGold: 50000, chrome: 35000, matteBlack: 50000, brushedRoseGold: 50000, champagne: 55000, gunGrey: 50000 },
+  /* The one figure here that is NOT off the price list: the plain hex plate has
+     no catalogue page, so these six are the client's own (2026-09-24). */
+  "ST-HEX1":  { roseGold: 30000, chrome: 24000, matteBlack: 30000, brushedRoseGold: 30000, champagne: 30000, gunGrey: 30000 },
   "ST-C1016": { chrome: 17500 },
   "ST-C1017": { chrome: 20000 },
   "ST-C1018": { chrome: 20000 },
@@ -842,5 +878,13 @@ const MRP = {
    overhead plate that needed it is not offered here. */
 const MRP_FROM = {};
 
+/* Rows whose price is NOT off the printed list. The spec sheet's footnote says
+   every figure on it is "MRP as printed in the STOUT price list, W.E.O 1st July
+   2026", and that sentence has to stay true: the plain hex plate has no page in
+   that list at all, so its six figures came from the client direct. A sheet
+   carrying one says so under the total, and the client can still quote it —
+   it just is not claimed to be something it is not. */
+const MRP_OFFLIST = { "ST-HEX1": true };
+
 /* expose to app.js (classic scripts share global scope) */
-window.STOUT = { FINISHES, ALL_FINISHES, CORE_FINISHES, CATEGORIES, PRODUCTS, SCENES, MRP, MRP_FROM };
+window.STOUT = { FINISHES, ALL_FINISHES, CORE_FINISHES, CATEGORIES, PRODUCTS, SCENES, MRP, MRP_FROM, MRP_OFFLIST };
