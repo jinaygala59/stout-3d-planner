@@ -6114,13 +6114,21 @@ function syncRoomFin() {
   const b = $("#roomFin"); if (!b) return;
   const items = [...placed.values()];
   b.hidden = !items.length;
-  if (!items.length) return;
-  const cur = lockedFinish() || items[0].finishId;
-  b.querySelector("i").style.setProperty("--c", (FINISHES[cur] || {}).swatch || "#888");
-  // the word "Finish" is in the markup and stays put; this is only its value
-  b.querySelector(".rf-nm").textContent = finName(cur);
-  b.title = `The room is ${finName(cur)} — change the finish of every fitting`;
-  b.setAttribute("aria-label", b.title);
+  if (items.length) {
+    const cur = lockedFinish() || items[0].finishId;
+    b.querySelector("i").style.setProperty("--c", (FINISHES[cur] || {}).swatch || "#888");
+    // the word "Finish" is in the markup and stays put; this is only its value
+    b.querySelector(".rf-nm").textContent = finName(cur);
+    b.title = `The room is ${finName(cur)} — change the finish of every fitting`;
+    b.setAttribute("aria-label", b.title);
+  }
+  /* AND THE BAR HAS TO BE MEASURED AGAIN. This button is absent until the first
+     fitting lands, and its width is however long the finish's name is, so the
+     bar gets wider with no resize to notice it. On the live site that put
+     Download PDF 127px off the right edge the moment a room was auto-arranged,
+     and only nudging the window brought it back. Every path that changes this
+     button's width ends here, so this is the one place that has to re-fold. */
+  syncToolbar();
 }
 function closeFinishPick() { const m = $("#finPick"); if (m) m.hidden = true; finPickRun = null; }
 
@@ -6248,8 +6256,8 @@ const OVERFLOW_ORDER = ["#ceilTabs", "#wallTabs", "#lookToggle", "#resetView", "
    NOT in MENU_LABEL: it is a composite of a swatch, the word and the finish
    name, and setting textContent on it would delete all three (the same trap the
    note on #wallTabs describes). In the menu it keeps its dot and its label. */
-let toolbarHome = null, toolbarRecheck = false;
-function syncToolbar() {
+let toolbarHome = null, toolbarQueued = false;
+function syncToolbar(phase) {
   const menu = $("#moreMenu"); if (!menu) return;
   if (!toolbarHome) {
     toolbarHome = new Map();
@@ -6285,28 +6293,33 @@ function syncToolbar() {
      moves — #roomFin is the one — has no media query to bring it back, so
      folding it once was a one-way trip: it stayed in the menu at 1440px with
      half the bar empty. Restore, then re-measure, so widening the window gives
-     the controls back in the same order it took them. */
+     the controls back in the same order it took them.
+
+     BUT NOT IN THE SAME FRAME IT RESTORED THEM. Reading `bar.scrollWidth` in
+     the tick that moved a control back hands back the width the bar had BEFORE
+     the move, so the pass folds nothing and leaves the bar spilling. Tracing a
+     recolour caught it exactly: `renderRail` calls this four times in a row and
+     the reads came back 1134 / 1503 / 1134 / 1503 — every other pass was a lie,
+     and whether Download PDF ended up on screen was a coin toss. So phase one
+     restores and stops, and phase two measures a frame later, when the number
+     is honest. */
   const bar = document.querySelector(".topbar");
-  if (bar) {
+  if (bar && phase !== "fold") {
     OVERFLOW_ORDER.forEach(sel => {
       if (TO_MENU.includes(sel)) return;      // those are the media queries' to own
       const el = $(sel); if (el) backHome(el);
     });
+    if (!toolbarQueued) {
+      toolbarQueued = true;
+      requestAnimationFrame(() => { toolbarQueued = false; syncToolbar("fold"); });
+    }
+  } else if (bar) {
     const spills = () => bar.scrollWidth > bar.clientWidth + 1;
     for (const sel of OVERFLOW_ORDER) {
       if (!spills()) break;
       const el = $(sel); if (!el) continue;
       intoMenu(el);
-    }
-    /* AND ONE MORE LOOK NEXT FRAME. Measuring inside the same tick as the resize
-       reads a bar the browser has not finished laying out — at 1440 the first
-       pass saw it fitting, left Download PDF 28px off the edge, and a second
-       resize put it right. So if it still spills, re-run once the frame has
-       settled. `toolbarRecheck` keeps that to a single follow-up: the next pass
-       either fixes it or has genuinely run out of things to fold. */
-    if (spills() && !toolbarRecheck) {
-      toolbarRecheck = true;
-      requestAnimationFrame(() => { toolbarRecheck = false; syncToolbar(); });
+      el.getBoundingClientRect();        // flush, so the next read is this frame's
     }
   }
   // A group whose controls have all moved into the menu is left empty — but it
