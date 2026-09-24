@@ -4421,16 +4421,20 @@ function renderTool() {
   /* NO SWATCHES ONCE THE VALVE IS IN. The finish was committed to when the
      valve went on the wall — for the valve and for everything the valve feeds —
      so offering a row of alternatives here would be offering something the tool
-     is about to refuse. Say what it is locked to, and say the way out.
-     That way out USED to be a "Change the room's finish" link here, into the
-     toolbar's Finish button. Both went on 2026-09-24 (see the note by
-     openFinishPick), so this says Reset all again — a dead link that silently
-     threw is worse than the longer road. */
+     is about to refuse. Say what it is locked to, and say the way out — which is
+     now the toolbar's Finish, changing the whole room at once, not Reset all.
+     THIS LINK AND THAT BUTTON ARE ONE FEATURE. They were removed together on
+     2026-09-24 and put back together the same day; if the button ever goes
+     again, this goes with it, or the page throws ReferenceError on load —
+     which is exactly what happened the first time. */
   const lock = lockedFinish();
   if (lock) {
     $("#toolFins").innerHTML =
       `<span class="fin-lock">Locked to <b>${finName(lock)}</b> by the ` +
-      `${placedValve().product.name}. Reset all starts the room again in another finish.</span>`;
+      `${placedValve().product.name}. <button type="button" class="lnk" data-roomfin>Change the room's finish</button> ` +
+      `to move every fitting together.</span>`;
+    const go = $("#toolFins").querySelector("[data-roomfin]");
+    if (go) go.onclick = openRoomFinish;
   } else
   $("#toolFins").innerHTML = rec.product.finishes.map(fid =>
     // a product referencing a finish the palette no longer defines must not take
@@ -5062,6 +5066,7 @@ function renderRail() {
     openFinishPick(p, fid => add(p, fid));
   });
   describeRoom();
+  syncRoomFin();          // the toolbar's finish button follows the room
   renderChosen();
   if (typeof renderEmptyState === "function") renderEmptyState();
 }
@@ -6035,8 +6040,8 @@ function openFinishPick(p, run) {
   $("#finPickBody").textContent = lock
     ? `The room is already in ${finName(lock)}, so that is the finish this goes in.`
     : `This is the finish the whole room is designed in — every fitting after it ` +
-      `matches. It locks when the piece goes on the wall, and Reset all starts the ` +
-      `room again in another one.`;
+      `matches. It locks when the piece goes on the wall, and Finish in the toolbar ` +
+      `moves the whole room to another one.`;
   // a finish nothing already on the wall can wear is shown, and shown as refused,
   // rather than quietly missing — the client should see why it is not an option
   $("#finPickGrid").innerHTML = fins.map(fid =>
@@ -6045,18 +6050,78 @@ function openFinishPick(p, run) {
 }
 
 /* =========================================================================
-   THE ROOM'S FINISH BUTTON IS GONE (2026-09-24, asked for directly).
-   A "Finish" button sat in the toolbar from 2026-09-21 and recoloured every
-   fitting at once. It was taken out at the client's word, and the toolbar seat
-   it held now belongs to Download PDF, which is the thing the session is for
-   and which was hidden in the ··· menu on a phone.
-   WHAT WENT WITH IT: roomFinishes / refinishRoom / openRoomFinish /
-   syncRoomFin, and the #roomFin markup and .fin-btn styles. What did NOT go is
-   the finish chooser itself — openFinishPick below still runs when a piece is
-   added, which is where a finish is picked now. Restoring the room-wide version
-   means restoring those four functions and the button; the lock rule they had
-   to respect is unchanged (see lockedFinish).
+   THE ROOM'S FINISH, CHANGED AFTER THE FACT
+   The valve locks the room to one finish, and until now Reset all was the only
+   way out of it — which takes the layout with it. A client who has placed eight
+   fittings and then wants to see the set in champagne was being asked to build
+   the room again, and (asked for directly, 2026-09-21) that is the wrong price
+   for changing your mind about a colour, least of all in the last minute before
+   the PDF.
+   THE LOCK IS NOT LIFTED, IT IS MOVED. Every piece changes together, so the room
+   is still in exactly one finish afterwards — which is the rule the lock exists
+   to keep (see lockedFinish, and do not weaken it: it has been asked for twice).
    ========================================================================= */
+/* the finishes worth offering the room: every finish any placed piece is made
+   in, in catalogue order — each product's own list is already sorted, so taking
+   them first-seen keeps that order. The ones the whole room cannot wear come
+   back from finishStrands and are shown refused, not hidden. */
+function roomFinishes() {
+  const out = [];
+  [...placed.values()].forEach(r => (r.product.finishes || []).forEach(fid => {
+    if (!out.includes(fid)) out.push(fid);
+  }));
+  return out;
+}
+/* Move every fitting to one finish. `commit` on each, because the valve's lock
+   is what this is changing — the same door placeProduct uses when the valve
+   first sets the room's colour. The valve goes first so no intermediate state
+   has the room reading as locked to a finish nothing else is wearing yet. */
+function refinishRoom(fid) {
+  const items = [...placed.values()], v = placedValve();
+  const order = v ? [v, ...items.filter(r => r !== v)] : items;
+  const from = lockedFinish() || (items[0] && items[0].finishId);
+  const moved = order.filter(r => r.finishId !== fid);
+  if (!moved.length) return;
+  const undo = snapshot();
+  order.forEach(r => { if (r.finishId !== fid) changeFinish(r.uid, fid, true); });
+  toast(`The room is now ${finName(fid)} — ${moved.length} fitting${moved.length > 1 ? "s" : ""} changed`,
+        { label: "Undo", run: () => { restore(undo); sessionFinish = from; } });
+}
+/* The room chooser. Same modal as the per-piece one, because it is the same
+   decision at a larger size — and the piece on the tiles is the valve, which is
+   the piece whose finish the rest of the room was following anyway. */
+function openRoomFinish() {
+  const items = [...placed.values()];
+  if (!items.length) { toast("Add a few fittings first, then pick their finish"); return; }
+  const m = $("#finPick"); if (!m) return;
+  const cur = lockedFinish() || items[0].finishId;
+  const face = (placedValve() || items[0]).product;
+  finPickRun = fid => refinishRoom(fid);
+  $("#finPickTitle").textContent = "The room's finish";
+  $("#finPickBody").textContent =
+    `${items.length} fitting${items.length > 1 ? "s" : ""} in ${finName(cur)}. Picking another ` +
+    `changes them all together — the layout stays exactly as it is, and Undo puts the colour back. ` +
+    `A finish one of the pieces is not made in cannot be picked.`;
+  $("#finPickGrid").innerHTML = roomFinishes().map(fid =>
+    finTile(face, fid, finishStrands(fid), `The whole room in ${finName(fid)}`, fid === cur)).join("");
+  bindFinPick();
+  const on = $("#finPickGrid").querySelector(".fin-tile.on");
+  if (on) on.focus();
+}
+/* the toolbar button wears the room's colour, and is not there to be pressed
+   until there is a room to recolour */
+function syncRoomFin() {
+  const b = $("#roomFin"); if (!b) return;
+  const items = [...placed.values()];
+  b.hidden = !items.length;
+  if (!items.length) return;
+  const cur = lockedFinish() || items[0].finishId;
+  b.querySelector("i").style.setProperty("--c", (FINISHES[cur] || {}).swatch || "#888");
+  // the word "Finish" is in the markup and stays put; this is only its value
+  b.querySelector(".rf-nm").textContent = finName(cur);
+  b.title = `The room is ${finName(cur)} — change the finish of every fitting`;
+  b.setAttribute("aria-label", b.title);
+}
 function closeFinishPick() { const m = $("#finPick"); if (m) m.hidden = true; finPickRun = null; }
 
 /* HOW MANY JETS. The same jet is sold as a pair or as a set of four, so this is
@@ -6090,6 +6155,7 @@ if ($("#jetCountNo")) $("#jetCountNo").onclick = closeJetCount;
 if ($("#jetCount")) $("#jetCount").onclick = e => { if (e.target === $("#jetCount")) closeJetCount(); };
 /* a set of jets, or a single fitting that has nothing to count */
 const asksJetCount = p => p && p.catId === "body-jet" && !skuCfg(p).single;
+if ($("#roomFin")) $("#roomFin").onclick = openRoomFinish;
 if ($("#finPickNo")) $("#finPickNo").onclick = closeFinishPick;
 if ($("#finPick")) $("#finPick").onclick = e => { if (e.target === $("#finPick")) closeFinishPick(); };
 
@@ -6174,8 +6240,15 @@ const MENU_LABEL = { resetView: "Reset the view", lookToggle: "Cursor turn",
    measured and keeps folding until it actually fits the window it is in.
    Download PDF and the ··· button are deliberately NOT in this list: one is the
    point of the session and the other is where everything folds TO. */
-const OVERFLOW_ORDER = ["#ceilTabs", "#wallTabs", "#lookToggle", "#resetView", "#toggleBasin", "#resetAll"];
-let toolbarHome = null;
+const OVERFLOW_ORDER = ["#ceilTabs", "#wallTabs", "#lookToggle", "#resetView", "#toggleBasin", "#resetAll", "#roomFin"];
+/* #roomFin folds LAST, and only on the narrowest phones. With it back in the bar
+   (2026-09-24) a 375px screen wants 421px once everything else has already gone
+   into the menu, which put Download PDF's right edge 4px past the window — so
+   the colour button gives way rather than the spec sheet. It is deliberately
+   NOT in MENU_LABEL: it is a composite of a swatch, the word and the finish
+   name, and setting textContent on it would delete all three (the same trap the
+   note on #wallTabs describes). In the menu it keeps its dot and its label. */
+let toolbarHome = null, toolbarRecheck = false;
 function syncToolbar() {
   const menu = $("#moreMenu"); if (!menu) return;
   if (!toolbarHome) {
@@ -6207,14 +6280,33 @@ function syncToolbar() {
     const el = $(sel); if (!el) return;
     (window.matchMedia(menuMQ(sel)).matches ? intoMenu : backHome)(el);
   });
-  /* then the measured pass: anything still hanging off the edge folds away too */
+  /* then the measured pass: anything still hanging off the edge folds away too.
+     EVERYTHING IT CAN FOLD COMES HOME FIRST. A control that only this pass ever
+     moves — #roomFin is the one — has no media query to bring it back, so
+     folding it once was a one-way trip: it stayed in the menu at 1440px with
+     half the bar empty. Restore, then re-measure, so widening the window gives
+     the controls back in the same order it took them. */
   const bar = document.querySelector(".topbar");
   if (bar) {
+    OVERFLOW_ORDER.forEach(sel => {
+      if (TO_MENU.includes(sel)) return;      // those are the media queries' to own
+      const el = $(sel); if (el) backHome(el);
+    });
     const spills = () => bar.scrollWidth > bar.clientWidth + 1;
     for (const sel of OVERFLOW_ORDER) {
       if (!spills()) break;
       const el = $(sel); if (!el) continue;
       intoMenu(el);
+    }
+    /* AND ONE MORE LOOK NEXT FRAME. Measuring inside the same tick as the resize
+       reads a bar the browser has not finished laying out — at 1440 the first
+       pass saw it fitting, left Download PDF 28px off the edge, and a second
+       resize put it right. So if it still spills, re-run once the frame has
+       settled. `toolbarRecheck` keeps that to a single follow-up: the next pass
+       either fixes it or has genuinely run out of things to fold. */
+    if (spills() && !toolbarRecheck) {
+      toolbarRecheck = true;
+      requestAnimationFrame(() => { toolbarRecheck = false; syncToolbar(); });
     }
   }
   // A group whose controls have all moved into the menu is left empty — but it
