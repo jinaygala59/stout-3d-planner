@@ -4968,7 +4968,7 @@ function renderRail() {
           <span class="pic"><img src="${thumbOf(img)}" loading="lazy" decoding="async" alt=""></span>
           <span class="nm">${p.name}</span>
           <span class="sub">${cardCode}${p.variant ? " · " + p.variant : ""}</span>
-          ${(p.outlets || p.functions) ? `<span class="fn">${p.outlets || p.functions} function${(p.outlets || p.functions) > 1 ? "s" : ""}</span>` : ""}
+          ${(p.outlets || p.functions) ? `<span class="fn">${p.outlets || p.functions} function${(p.outlets || p.functions) > 1 ? "s" : ""}${p.size ? " · " + p.size : ""}</span>` : ""}
         </button>
         ${why ? `<span class="pc-why">${why}</span>` : ""}
       </div>`;
