@@ -98,6 +98,31 @@ def main():
     with open(os.path.join(DIST, "vercel.json"), "w") as fh:
         json.dump({k: full[k] for k in ("headers", "redirects", "cleanUrls") if k in full}, fh, indent=2)
 
+    # A MANIFEST OF EVERY SHIPPED FILE, so the copy on the company site can keep
+    # itself current (2026-09-25). stoutsanitaryware.com/visualizer/ is a static
+    # folder on Hostinger that used to be re-uploaded by hand after each push,
+    # and it went stale more than once while the Vercel copy was fine. A WPCode
+    # snippet on the WordPress side now fetches this file from Vercel, compares
+    # each hash with what it has, and downloads only what changed — so a rename
+    # of nothing and a re-render under the same name both reach the site. Paths
+    # are dist-relative with forward slashes; index.html is listed last so the
+    # sync writes it after the files it points at.
+    manifest = []
+    for base, dirs, files in os.walk(DIST):
+        dirs[:] = [d for d in dirs if not d.startswith(".")]
+        for name in files:
+            if name.startswith(".") or name in ("manifest.json", "vercel.json"):
+                continue
+            path = os.path.join(base, name)
+            rel = os.path.relpath(path, DIST).replace(os.sep, "/")
+            with open(path, "rb") as fh:
+                digest = hashlib.sha1(fh.read()).hexdigest()
+            manifest.append({"path": rel, "sha1": digest, "size": os.path.getsize(path)})
+    manifest.sort(key=lambda m: (m["path"] == "index.html", m["path"]))
+    with open(os.path.join(DIST, "manifest.json"), "w") as fh:
+        json.dump({"built": __import__("time").strftime("%Y-%m-%dT%H:%M:%SZ", __import__("time").gmtime()),
+                   "files": manifest}, fh, separators=(",", ":"))
+
     print("dist/ ready — %d files, %.1f MB" % (copied, total / 1048576.0))
     print("Upload the contents of dist/ to any static host. No server code needed.")
 
