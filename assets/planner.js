@@ -1028,51 +1028,95 @@ function aoPlane(w, h, sides) {
    ============================================================================= */
 const THEMES = {
   white: {
-    id: "white", label: "White", swatch: "#f1ede6",
-    bg: 0x121214, exposure: 0.94, art: 1.0,
-    env: ["#e9e1d3", "#a89f8e", "#4c473e"],
+    id: "white", label: "White", swatch: "#fafafa",
+    bg: 0x121214, exposure: 1.0, art: 1.0,
+    env: ["#f7f7f8", "#dcdce0", "#727276"],
     /* WHITE = MARBLE. Flat plaster was the problem: however finely you grain a
        plain wall, a room of four featureless surfaces has nothing in it for the
        eye to focus on, so it reads as an unsharp photograph rather than as a
        real room. Marble fixes that on its own terms — veins are detail with
        DIRECTION, and a polished face carries a reflection gradient that tells
-       you where the light is. So the walls are now book-matched large-format
-       slabs: a warm Calacatta bed with cooler grey veining over it, polished
-       (roughness 0.2 — the floor's own polish for reference is 0.3). The
-       feature wall gets the bolder run and a steeper flow, the side walls a
-       quieter, flatter one, which is how a real stone bathroom is specified.
+       you where the light is.
 
-       WALLS CARRY NO JOINTS (client, Sep 2026): each wall is ONE slab, edge to
-       edge, so nothing divides the stone. The veining is generated at the
-       wall's own aspect ratio and the back wall's four panels are already cut
-       from one texture set, so a whole wall is genuinely a whole face — there
-       is no seam left to hide. The FLOOR keeps its joints: a floor laid in one
-       3 x 2.6 m piece is not a thing, and the request was about the walls. */
+       THE STONE IS STATUARIO, AND IT IS MEASURED (client sample, Sep 2026 —
+       "bright white"). It used to be a warm Calacatta: a cream bed with tan
+       veining, which under this room's warm light read as beige, not white.
+       Every number below comes off the sample the client sent, masked and
+       profiled by luminance percentile the way the finishes are:
+
+         bed, brightest 60%        #fcfbfc   (neutral: channel spread 1)
+         vein body, p0.5-2%        #c5c2bf - #dbdad8
+         vein core, p0.05%         #9a9690   (spread 10, barely warm)
+         face covered by vein      1.5%
+
+       So: a near-white neutral bed, a light grey vein, and FEW of them. The old
+       spec ran 10-12 veins at alpha 0.7-0.78 with a 7-8 px halo, which is why
+       the walls read as figured stone rather than as white — the sample is
+       mostly empty white with a handful of sharp runs across it. Vein count,
+       alpha and halo all come down; the bed goes up to the measured white; the
+       clouding that carried the cream mottle is nearly off.
+
+       NOTHING IS DIVIDED. Walls and FLOOR are each one slab, edge to edge (the
+       black and grey rooms still lay their floors in pieces — this is the white
+       room's brief). The veining is generated at each surface's own aspect
+       ratio and the back wall's four panels are cut from one texture set, so a
+       whole surface is genuinely a whole face, not tiles with the grout hidden.
+
+       THE LIGHT HAD TO COME WITH IT. Bed and lamp are multiplied, so a #fcfbfc
+       slab under a 0xffeed6 key renders cream and the measurement is wasted.
+       The rig keeps its warm SIDE — a bathroom lit at 6500 K looks like a
+       morgue — but the warmth is now a tint rather than the whole cast, and the
+       hemisphere, ambient and environment are neutral. */
     surfaces: {
-      side:    { kind: "slab", base: "#eeebe3", vein: "#9a9181", vein2: "#c9b794", veins: 10, veinAlpha: 0.7, veinSoft: 7, flow: -0.55,
-                 clouds: 16, cloudSize: 0.14, cloudAlpha: 0.7, grain: 0.05,
-                 rough: 0.3, metal: 0.05, bumpScale: 0.01, envI: 0.72, keepEnv: true },
-      feature: { kind: "slab", base: "#ebe7de", vein: "#8d8474", vein2: "#c0ac85", veins: 12, veinAlpha: 0.78, veinSoft: 8, flow: -0.88,
-                 clouds: 16, cloudSize: 0.14, cloudAlpha: 0.7, grain: 0.05,
-                 rough: 0.28, metal: 0.05, bumpScale: 0.011, envI: 0.78, keepEnv: true },
-      // the floor is the same stone in a smaller format, so the room is one
-      // material rather than three that happen to be pale
-      floor:   { kind: "slab", base: "#ebe8e0", vein: "#b0a797", vein2: "#cdbf9f", veins: 9, veinAlpha: 0.44, veinSoft: 6, clouds: 20, grain: 0.06,
-                 joints: { cols: 3, rows: 3, color: "#c2b9a7", width: 3.0 }, rough: 0.3, metal: 0.06, bumpScale: 0.018, envI: 1.05 },
-      ceiling: { color: 0xf8f5ee, rough: 0.95 },
+      side:    { kind: "slab", base: "#fbfbfb", vein: "#8d8a86", vein2: "#c9c7c4", veins: 7, veinAlpha: 0.5, veinSoft: 5, flow: -0.55,
+                 clouds: 10, cloudSize: 0.12, cloudAlpha: 0.35, grain: 0.03,
+                 rough: 0.3, metal: 0.05, bumpScale: 0.01, envI: 1.12, keepEnv: true },
+      feature: { kind: "slab", base: "#fafafa", vein: "#87847f", vein2: "#c5c2bf", veins: 8, veinAlpha: 0.56, veinSoft: 6, flow: -0.88,
+                 clouds: 10, cloudSize: 0.12, cloudAlpha: 0.35, grain: 0.03,
+                 rough: 0.28, metal: 0.05, bumpScale: 0.011, envI: 1.18, keepEnv: true },
+      // the floor is the same stone, so the room is one material rather than
+      // three that happen to be pale. Quieter veining: a floor you look along
+      // shows far more of itself at once than a wall you look at.
+      floor:   { kind: "slab", base: "#f7f7f7", vein: "#9d9a97", vein2: "#cfcdca", veins: 6, veinAlpha: 0.34, veinSoft: 5, clouds: 12, cloudAlpha: 0.4, grain: 0.035,
+                 rough: 0.3, metal: 0.06, bumpScale: 0.018, envI: 1.28 },
+      ceiling: { color: 0xfbfbfb, rough: 0.95 },
     },
-    niche:  { lining: 0xd2ccbe, shelf: 0xf6f3ec, trim: 0xaaa496 },
+    niche:  { lining: 0xd8d7d4, shelf: 0xf9f9f8, trim: 0xa8a6a2 },
     // and it was lit as flatly as it was textured: hemisphere everywhere, a
     // 0.26 key, nothing to cast a shadow or strike a highlight. The key and the
     // ceiling spots now carry the room, so surfaces have a light side and a dark
     // side; the cove haze that washed the top of the feature wall is pulled back.
-    light:  { hemiSky: 0xfff4e2, hemiGround: 0xa79e8c, hemi: 0.18, amb: 0.04, ambColor: 0xffefdd,
-              key: 0.38, keyColor: 0xffeed6, fill: 0.09, fillColor: 0xdfe8f6,
-              spot: 0.58, spotColor: 0xffe9c9, trim: 0xa9a294, bulb: 0xfff6e6,
-              cove: 0.2, coveColor: 0xffe6c4, coveAlpha: 0.22, niche: 0.16, mirror: 0.22, mirrorColor: 0xfff2e0 },
-    furn:   { cab: 0xefebe3, counter: 0xf9f7f2, bowl: 0xfdfcfa, mixer: 0x4a4540, mixerRough: 0.34,
-              wc: 0xfbfaf7, mirrorFrame: 0xd6d0c5, rail: 0x4a4540, towel: 0xf1ede4, mat: 0xded7c8, drain: 0xb2aca1, wet: 0xd8d2c4,
-              pelmet: 0xf1eee7 },
+    /* "Bright white", measured off the render, not judged by eye. With the bed
+       at its sampled #fcfbfc the walls still came out #e0e0e0: a lit surface is
+       its albedo times what reaches it, and this rig was built to light a cream
+       room. Four levers moved, in this order, re-measuring each time —
+         hemisphere   0.18 -> 0.42   |  ambient  0.04 -> 0.09
+         env wall band  #a89f8e -> #dcdce0 (also neutral)
+         surface envI   side/feature/floor 0.72/0.78/1.05 -> 1.12/1.18/1.28
+         exposure     0.94 -> 1.0
+       The first three are the soft, shadow-filling terms and the stone's own
+       response — they lift the marble without touching anything else. Exposure
+       went last and grudgingly, because it tone-maps the WHOLE frame including
+       every calibrated fitting; 1.0 is what the black room already runs, so it
+       is inside the spread the themes carry rather than new territory. The KEY
+       is deliberately untouched at 0.38: it is what gives the room a light side,
+       and pushing it would flatten the room to win a number.
+       Result: back wall #ebebeb, channel spread 0, 1.3% of the frame clipped.
+       Checked after, on the thing that could have broken — the Axora panel in
+       Rose Gold measures #e9c0ad against METAL_TONE's #e7beaa, out by 2/2/3, so
+       the exposure step did not move the finishes off their targets. Re-check
+       that number if these levers are touched again. */
+    light:  { hemiSky: 0xfdfcfb, hemiGround: 0xa5a4a2, hemi: 0.42, amb: 0.09, ambColor: 0xfbfaf9,
+              key: 0.38, keyColor: 0xfff8ef, fill: 0.09, fillColor: 0xe6ecf6,
+              spot: 0.58, spotColor: 0xfff4e6, trim: 0xa6a5a2, bulb: 0xfffaf2,
+              cove: 0.2, coveColor: 0xfff0dc, coveAlpha: 0.2, niche: 0.16, mirror: 0.22, mirrorColor: 0xfdf8f2 },
+    // the room's whites had a cream cast of their own — a #fbfbfb wall beside a
+    // #efebe3 cabinet just makes the cabinet look dirty. Neutralised to match,
+    // keeping the VALUE order (counter brighter than cabinet, mat darker than
+    // towel) so the room still has light and shade rather than one flat white.
+    furn:   { cab: 0xeeeeee, counter: 0xfafafa, bowl: 0xfdfdfd, mixer: 0x474645, mixerRough: 0.34,
+              wc: 0xfbfbfb, mirrorFrame: 0xd3d2cf, rail: 0x474645, towel: 0xf0f0ef, mat: 0xd9d8d5, drain: 0xb0afac, wet: 0xd6d5d2,
+              pelmet: 0xf1f1f0 },
     ao: 0.62, diffEnv: 0.32,
   },
   black: {
