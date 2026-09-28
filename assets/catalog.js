@@ -170,12 +170,22 @@ const RAW_PRODUCTS = [
      were corrected but these six strings were missed. They now say waterfall,
      and the third function is named mist rather than left as a jet count.
 
-     FOUR ROWS KEEP THEIR LED, because on those four it is a real feature the
-     factory sells and charges for, not a misread render: C1006 "Coloured Led
-     With Remote Controller; Need Electricity Power", C1009 and C1011 and
-     C1012 "Chromotherapy (Rgb) Led Light. Includes Remote Control For Led
-     Lights. (Requires Electric Point)". Taking the word off those would drop
-     a selling point off a 41,500 to 120,000 fitting. */
+     THE OTHER FOUR SAY NO LED EITHER, at the client's decision the same day.
+     On those four the light is real and the factory charges for it — C1006 is
+     "Coloured Led With Remote Controller; Need Electricity Power", and C1009,
+     C1011 and C1012 are "Chromotherapy (Rgb) Led Light. Includes Remote
+     Control For Led Lights. (Requires Electric Point)" — so they were left
+     alone at first and the client was asked. The answer was to take it off
+     those as well, so the word appears nowhere in the range now.
+
+     Each of the four kept something in place of it rather than losing a
+     segment, because `variant` is what tells near-identical plates apart and
+     C1011 and C1012 are both 650x450 with waterfall blades: they now carry
+     the functions the page lists for them (rain column & mist, and mist),
+     and C1009 carries its other headline, the "In-Build Sound System With
+     (Bluetooth Connectivity)", which is also why it needs the electric point
+     the line already mentioned. The LED is still on every one of these four
+     fittings — it is simply not written on the card. */
   /* CEILING SHOWERS ARE NAMED BY WHAT THEY DO, NOT BY A SERIES (2026-09-21,
      asked for directly: "for showers don't use their complicated names — only
      keep Ceiling Shower with how many functions they provide", pointing at how
@@ -196,7 +206,7 @@ const RAW_PRODUCTS = [
      pp. 48-77), asked for on 2026-09-25 so the card's function line reads
      "2 FUNCTIONS · 480x330 MM". Twenty codes were checked against the list one
      by one; ST-HEX1 is not in the list and carries its hex family's 480x330. */
-  { code: "ST-C1012", cat: "rain-shower", name: "Three Function Ceiling Showers",  finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"],                                   badge: "Signature", variant: "650x450 mm · waterfall blades + LED strips", size: "650x450 mm", functions: 3 },
+  { code: "ST-C1012", cat: "rain-shower", name: "Three Function Ceiling Showers",  finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"],                                   badge: "Signature", variant: "650x450 mm · waterfall blades + mist", size: "650x450 mm", functions: 3 },
   { code: "ST-C1013", cat: "rain-shower", name: "Hex Ceiling Mounted Showers",    finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "480x330 mm · hex plate · 6 jets", size: "480x330 mm", functions: 2 },
   { code: "ST-C1014", cat: "rain-shower", name: "Hex Ceiling Mounted Showers",  finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "480x330 mm · hex plate · waterfall", size: "480x330 mm", functions: 2 },
   { code: "ST-C1015", cat: "rain-shower", name: "Hex Ceiling Mounted Showers",  finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "480x330 mm · hex plate · waterfall + 5 mist jets", size: "480x330 mm", functions: 3 },
@@ -253,7 +263,7 @@ const RAW_PRODUCTS = [
   { code: "ST-C1007", cat: "rain-shower", name: "Ceiling Mounted Showers",           finishes: ["chrome"], variant: "380x250 mm · slim plate · waterfall + 4 mist jets", size: "380x250 mm", functions: 3 },
   { code: "ST-C1008", cat: "rain-shower", name: "Ceiling Mounted Showers",       finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "480x330 mm · wide plate · waterfall + 4 mist jets", size: "480x330 mm", functions: 3 },
   { code: "ST-C1010", cat: "rain-shower", name: "Ceiling Mounted Showers",        finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "480x330 mm · wide plate · plain", size: "480x330 mm", functions: 1 },
-  { code: "ST-C1011", cat: "rain-shower", name: "Four Function Ceiling Showers",        finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "650x450 mm · waterfall blades + LED + centre jet", size: "650x450 mm", functions: 4 },
+  { code: "ST-C1011", cat: "rain-shower", name: "Four Function Ceiling Showers",        finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "650x450 mm · waterfall blades + rain column & mist", size: "650x450 mm", functions: 4 },
 
   // ---- Concealed Diverter (single-lever) ----
   /* "Regale Concealed Diverter" was ours. The catalogue calls it TWO WAY
@@ -651,8 +661,8 @@ const RAW_PRODUCTS = [
      number on the same page.
      ------------------------------------------------------------------------ */
   { code: "ST-C1005", cat: "rain-shower", name: "Ceiling Mounted Showers",   finishes: ["chrome"], variant: "550x500 mm · rainfall, waterfall & mist", size: "550x500 mm", functions: 3 },
-  { code: "ST-C1006", cat: "rain-shower", name: "Ceiling Mounted Showers", finishes: ["chrome"], variant: "400x450 mm · LED · rainfall, waterfall & mist", size: "400x450 mm", functions: 3 },
-  { code: "ST-C1009", cat: "rain-shower", name: "Ceiling Mounted Showers",   finishes: ["chrome"], variant: "700x450 mm · LED · needs an electric point", size: "700x450 mm", functions: 4 },
+  { code: "ST-C1006", cat: "rain-shower", name: "Ceiling Mounted Showers", finishes: ["chrome"], variant: "400x450 mm · rainfall, waterfall & mist", size: "400x450 mm", functions: 3 },
+  { code: "ST-C1009", cat: "rain-shower", name: "Ceiling Mounted Showers",   finishes: ["chrome"], variant: "700x450 mm · Bluetooth sound system · needs an electric point", size: "700x450 mm", functions: 4 },
   { code: "ST-C1020", cat: "rain-shower", name: "Four Function Ceiling Showers", finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "650x380 mm · rain, rain-column, mist & powder-rain", size: "650x380 mm", functions: 4, badge: "New" },
 
   { code: "ST-D5008", cat: "diverter", name: "Three Function Flow Control Diverter", finishes: ["chrome","roseGold","matteBlack"], variant: "thermostatic & volume · 3 outlets together", outlets: 3 },
