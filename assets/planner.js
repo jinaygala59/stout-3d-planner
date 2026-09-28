@@ -5980,7 +5980,127 @@ async function downloadSpecSheet() {
     toast("PDF downloaded");
   }, 420);
 }
-$("#downloadPdf").onclick = downloadSpecSheet;
+/* ---- who the spec sheet is for ----------------------------------------------
+   The sheet is the moment someone stops browsing and starts specifying, so it
+   is the one place worth asking for a name. Three rules shape this:
+
+   1. ASK ONCE PER BROWSER. Someone who downloads a second version of the same
+      bathroom should not have to type their details again, so a good answer is
+      remembered and the gate does not reappear.
+   2. NEVER LOSE THE DOWNLOAD TO THE NETWORK. The sheet is what we promised; the
+      lead is what we would like. If the save fails, or storage is blocked, or
+      the endpoint is unreachable, the PDF still downloads and the lead is
+      queued for the next visit instead of being dropped on the floor.
+   3. DO NOT ASK FOR DETAILS WE CANNOT USE. An empty room has no sheet to send,
+      so that is checked before the form is shown, not after it is filled in. */
+const LEAD_KEY = "stout.lead.v1";
+/* Absolute, because this file is served from two origins: the company site at
+   stoutsanitaryware.com/visualizer/ (same-origin, no preflight) and the Vercel
+   copy (cross-origin, which is why the endpoint sends CORS headers). Posting
+   URLSearchParams keeps it a "simple" request, so no OPTIONS preflight either
+   way. */
+const LEAD_ENDPOINT = "https://stoutsanitaryware.com/wp-json/stout/v1/lead";
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i;
+
+function readLead() {
+  try { return JSON.parse(localStorage.getItem(LEAD_KEY) || "null"); }
+  catch (e) { return null; }            // private window, blocked storage: just ask again
+}
+function writeLead(v) {
+  try { localStorage.setItem(LEAD_KEY, JSON.stringify(v)); } catch (e) {}
+}
+
+/* One message at a time, naming the field it belongs to, because colour on a
+   border is not an error message. */
+function leadProblem(v) {
+  if (v.name.length < 2) return ["#leadName", "Please tell us your name."];
+  const digits = v.phone.replace(/[^0-9]/g, "");
+  if (digits.length < 10 || digits.length > 15)
+    return ["#leadPhone", "Please enter a contact number of at least 10 digits."];
+  if (!EMAIL_RE.test(v.email)) return ["#leadEmail", "That email address does not look right."];
+  return null;
+}
+
+// what they actually configured - the useful half of the enquiry for whoever calls back
+function leadRoomSummary() {
+  try {
+    return [...placed.values()]
+      .map(r => `${r.product.code || r.product.id} (${finName(r.finishId)})`)
+      .join(", ").slice(0, 900);
+  } catch (e) { return ""; }
+}
+
+function sendLead(v) {
+  const body = new URLSearchParams({
+    name: v.name, phone: v.phone, email: v.email,
+    room: leadRoomSummary(), source: location.host || "unknown",
+  });
+  return fetch(LEAD_ENDPOINT, { method: "POST", body, keepalive: true })
+    .then(r => r.ok)
+    .catch(() => false)
+    .then(ok => { writeLead(Object.assign({}, v, { sent: !!ok })); return ok; });
+}
+
+/* A lead that never reached the server is retried on the next visit rather than
+   lost - the details are already in hand, so there is nothing to ask for. */
+function retryPendingLead() {
+  const v = readLead();
+  if (v && v.email && v.sent === false) sendLead(v);
+}
+
+let leadRun = null;
+function openLeadGate(run) {
+  const m = $("#leadGate");
+  if (!m) { run(); return; }            // no modal in this build: never block the download
+  leadRun = run;
+  const err = $("#leadErr"); if (err) err.hidden = true;
+  ["#leadName", "#leadPhone", "#leadEmail"].forEach(sel => {
+    const el = $(sel); if (el) el.classList.remove("bad");
+  });
+  m.hidden = false;
+  const first = $("#leadName"); if (first) first.focus();
+}
+function closeLeadGate() { const m = $("#leadGate"); if (m) m.hidden = true; leadRun = null; }
+
+(function initLeadGate() {
+  const form = $("#leadForm"); if (!form) return;
+  form.addEventListener("submit", e => {
+    e.preventDefault();
+    const v = {
+      name:  $("#leadName").value.trim(),
+      phone: $("#leadPhone").value.trim(),
+      email: $("#leadEmail").value.trim(),
+    };
+    ["#leadName", "#leadPhone", "#leadEmail"].forEach(sel => $(sel).classList.remove("bad"));
+    const bad = leadProblem(v);
+    const err = $("#leadErr");
+    if (bad) {
+      const [field, msg] = bad;
+      if (err) { err.textContent = msg; err.hidden = false; }
+      const el = $(field); if (el) { el.classList.add("bad"); el.focus(); }
+      return;
+    }
+    writeLead(Object.assign({}, v, { sent: false, at: Date.now() }));
+    const run = leadRun;
+    closeLeadGate();
+    // deliberately NOT awaited: the sheet is what we promised, and it should not
+    // wait on a form post that has already been written down locally
+    sendLead(v);
+    if (run) run();
+  });
+  const no = $("#leadNo"); if (no) no.onclick = closeLeadGate;
+  const m = $("#leadGate");
+  if (m) m.onclick = e => { if (e.target === m) closeLeadGate(); };
+})();
+
+$("#downloadPdf").onclick = () => {
+  // an empty room has no sheet to send, so say so BEFORE asking for anyone's details
+  if (!placed.size) { toast("Add a few products first, then download"); return; }
+  const have = readLead();
+  if (have && have.email) { downloadSpecSheet(); return; }
+  openLeadGate(downloadSpecSheet);
+};
+retryPendingLead();
 
 /* one of each of the four core categories, as a tidy shower column on the back wall */
 function autoArrange() {
@@ -6302,6 +6422,7 @@ if ($("#confirm")) $("#confirm").addEventListener("click", e => { if (e.target =
   document.addEventListener("keydown", e => {
     if (e.key !== "Escape") return;
     if (!menu.hidden) { close(); btn.focus(); }
+    else if ($("#leadGate") && !$("#leadGate").hidden) closeLeadGate();
     else if ($("#jetCount") && !$("#jetCount").hidden) closeJetCount();
     else if ($("#confirm") && !$("#confirm").hidden) closeConfirm();
     else if (selected) deselect();

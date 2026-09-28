@@ -221,6 +221,34 @@
     </div>
   </div>
 
+  <!-- WHO THE SHEET IS FOR. The spec sheet is the point at which someone stops
+       browsing and starts specifying, so it is the one place worth asking for a
+       name. Asked once per browser: a client who downloads a second version of
+       the same bathroom should not have to type it again. -->
+  <div class="modal" id="leadGate" role="dialog" aria-modal="true" aria-labelledby="leadGateTitle" hidden>
+    <div class="modal-card">
+      <h2 id="leadGateTitle">Where should we send this?</h2>
+      <p id="leadGateBody">Your spec sheet is ready. Leave your details and it downloads straight away — and a Stout consultant can pick the conversation up from here.</p>
+      <form id="leadForm" novalidate>
+        <label class="lead-f" for="leadName"><span>Your name</span>
+          <input id="leadName" type="text" autocomplete="name" spellcheck="false" />
+        </label>
+        <label class="lead-f" for="leadPhone"><span>Contact number</span>
+          <input id="leadPhone" type="tel" inputmode="tel" autocomplete="tel" />
+        </label>
+        <label class="lead-f" for="leadEmail"><span>Email address</span>
+          <input id="leadEmail" type="email" inputmode="email" autocomplete="email" spellcheck="false" />
+        </label>
+        <p class="lead-err" id="leadErr" role="alert" hidden></p>
+        <div class="modal-row">
+          <button type="button" class="btn ghost" id="leadNo">Cancel</button>
+          <button type="submit" class="btn gold" id="leadGo">Download the PDF</button>
+        </div>
+      </form>
+      <p class="lead-note">We use this to send your design and answer questions about it.</p>
+    </div>
+  </div>
+
   <script src="assets/lib/three.min.js"></script>
   <script src="assets/lib/OrbitControls.js"></script>
   <script src="assets/lib/OBJLoader.js"></script>
