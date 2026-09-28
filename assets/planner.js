@@ -1183,8 +1183,69 @@ const THEMES = {
               pelmet: 0xd9d7d4 },
     ao: 0.64, diffEnv: 0.38,
   },
+  /* THE FOURTH ROOM (client, Sep 2026): "brownish beige, without dividing
+     lines", with a reference render of a warm stone cloakroom — beige marble
+     walls with gold-brown veining, a sage-green vanity, dark bronze trim, a
+     dark taupe ceiling and a warm LED strip up the mirror wall.
+
+     The reference is a MOODY render, so what it measures is lit appearance,
+     not albedo — its walls come out #a6917d only because half the room is in
+     shadow. Reading those numbers straight into `base` would give a brown
+     room, not a beige one. What the reference is actually specifying is a
+     HUE and a RELATIONSHIP, so those are what is taken from it:
+
+       walls, lit bed      #a6917d   warm, red over blue by ~41
+       wall vein core      #806a55 (side) / #3b2c1d (the bolder back wall)
+       floor, lit bed      #d9cbbb   a full stop lighter than the walls
+       vanity cabinet      #756e5a   desaturated sage, not a true green
+       ceiling             #4f3e2d   dark warm taupe, and it reads as a lid
+
+     The bases below sit above those, because this planner lights a room to
+     SHOW fittings rather than to flatter a photograph — a showroom, not a
+     hotel at dusk. The render is then measured back against the reference's
+     hue and its floor-to-wall step, which is what actually makes it read as
+     the same room. The values here are the settled end of that loop.
+
+     NO JOINTS ANYWHERE, walls or floor, as asked. */
+  beige: {
+    id: "beige", label: "Beige", swatch: "#c9b195",
+    bg: 0x14110e, exposure: 0.98, art: 0.92,
+    env: ["#f2e2c6", "#c9ad85", "#63513c"],
+    surfaces: {
+      side:    { kind: "slab", base: "#dec5a4", vein: "#7d5c36", vein2: "#bd9c74", veins: 9, veinAlpha: 0.66, veinSoft: 7, flow: -0.62,
+                 clouds: 16, cloudSize: 0.15, cloudAlpha: 0.65, grain: 0.05,
+                 rough: 0.3, metal: 0.05, bumpScale: 0.011, envI: 0.95, keepEnv: true },
+      // the feature wall carries the reference's darker, more dramatic run
+      feature: { kind: "slab", base: "#dabf9c", vein: "#634828", vein2: "#ab8955", veins: 11, veinAlpha: 0.78, veinSoft: 8, flow: -0.92,
+                 clouds: 16, cloudSize: 0.15, cloudAlpha: 0.65, grain: 0.05,
+                 rough: 0.28, metal: 0.05, bumpScale: 0.012, envI: 1.0, keepEnv: true },
+      // a stop lighter than the walls, and quieter — the reference's floor is
+      // the calm surface the rest of the room is set against
+      floor:   { kind: "slab", base: "#ecd6b4", vein: "#96754e", vein2: "#c9ac86", veins: 7, veinAlpha: 0.46, veinSoft: 6, clouds: 16, cloudAlpha: 0.5, grain: 0.05,
+                 rough: 0.3, metal: 0.06, bumpScale: 0.016, envI: 0.98 },
+      ceiling: { color: 0x6f5c4a, rough: 0.92 },
+    },
+    niche:  { lining: 0xbfae98, shelf: 0xe4d8c6, trim: 0x8a7458 },
+    light:  { hemiSky: 0xfff1dc, hemiGround: 0x8a7a66, hemi: 0.22, amb: 0.05, ambColor: 0xffeedb,
+              key: 0.34, keyColor: 0xffeacd, fill: 0.09, fillColor: 0xe8e2d6,
+              spot: 0.56, spotColor: 0xffe4bb, trim: 0x8a7458, bulb: 0xfff4e2,
+              cove: 0.34, coveColor: 0xffcf8f, coveAlpha: 0.42, niche: 0.22, mirror: 0.3, mirrorColor: 0xffeccf },
+    /* the sage vanity is the reference's own, and it is what stops the room
+       being beige on beige: a desaturated green is the only cool thing in it.
+       cab looks far too dark to be sage, and it is — read it as LINEAR, not as
+       a swatch. three r128 has no colour management (the same fact METAL_BASE
+       is built on), so a hex handed to a material is used as linear light: the
+       sage you would pick off the reference, 0x7b7c63, renders as a pale grey
+       green with no colour in it at all. 0x4a4c33 is that sage once the room
+       has lit it. Every furn value here is in that space — pick them by what
+       the render does, never by how the hex looks in an editor. */
+    furn:   { cab: 0x4a4c33, counter: 0xa89a86, bowl: 0xfbfaf8, mixer: 0x3a3229, mixerRough: 0.4,
+              wc: 0xfaf9f6, mirrorFrame: 0x3a3229, rail: 0x3a3229, towel: 0xe8dccb, mat: 0xc3b39c, drain: 0x8a7a68, wet: 0xcabba7,
+              pelmet: 0x6f5c4a },
+    ao: 0.62, diffEnv: 0.36,
+  },
 };
-const THEME_ORDER = ["white", "black", "grey"];
+const THEME_ORDER = ["white", "black", "grey", "beige"];
 const THEME_KEY = "stout.3d.theme";
 
 /* -----------------------------------------------------------------------------
