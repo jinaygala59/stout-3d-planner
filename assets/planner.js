@@ -5907,7 +5907,14 @@ async function downloadSpecSheet() {
        list it is off, and that the consultant's quotation is the one that
        binds. If any line was "on request" the total says how many it leaves
        out, so it is never mistaken for the whole bill. */
-    if (y + 20 > PH - 22) { doc.addPage(); y = M + 8; }
+    /* Who the sheet was made for, if the gate knows. Read BEFORE the page-break
+       test below, because the block adds ~24 mm to the foot of the page and the
+       test has to know whether that space is wanted. */
+    const buyer = (() => {
+      try { const v = readLead(); return (v && v.name && v.email) ? v : null; }
+      catch (e) { return null; }
+    })();
+    if (y + (buyer ? 44 : 20) > PH - 22) { doc.addPage(); y = M + 8; }
     y += 1;
     doc.setDrawColor(...INK); doc.setLineWidth(0.4); doc.line(X_FIN, y - 5, PW - M, y - 5);
     doc.setFont("helvetica", "bold"); doc.setFontSize(9); doc.setTextColor(...INK);
@@ -5952,6 +5959,49 @@ async function downloadSpecSheet() {
     doc.setFont("helvetica", "normal"); doc.setFontSize(9); doc.setTextColor(...INK);
     doc.textWithLink(TEL_SHOWN, M, y + 7, { url: TEL_HREF });
     doc.textWithLink(IG_SHOWN, M, y + 12.2, { url: IG_HREF });
+
+    /* ---- who it was prepared for (2026-09-28, asked for; this spot chosen off
+       four marked on a proof) ----
+       The download gate already asks for a name, a number and an email before
+       the sheet is built, so the sheet can say whose it is instead of leaving
+       the consultant to write it on the top by hand. It sits directly under
+       SPEAK TO STOUT, in the same two lines under the same gold rule, so the
+       foot of the page reads as one small pair: who it is from, then who it is
+       for.
+
+       PRINTED ONLY WHEN WE ACTUALLY HAVE IT. A private window, cleared
+       storage, or a build with no gate at all each give nothing back, and a
+       "Prepared for" over a blank line is worse than no line — so the caption,
+       its rule and the room they take are all conditional on `buyer`.
+
+       WHOSE NAME THIS IS. The details belong to the BROWSER that downloaded
+       the sheet, not to the room. A consultant who opens a client's shared
+       link on their own laptop prints their own name here. That is the right
+       behaviour for the common case — the client downloads their own sheet —
+       but it is worth knowing before anyone treats the line as proof of who
+       the design belongs to. */
+    if (buyer) {
+      const CAP2 = "PREPARED FOR";
+      doc.setFont("helvetica", "bold"); doc.setFontSize(6.6);
+      const cap2W = doc.getTextWidth(CAP2) + (CAP2.length - 1) * CAP_SP;
+      doc.setDrawColor(...GOLD); doc.setLineWidth(0.4); doc.line(M, y + 18, M + cap2W, y + 18);
+      doc.setTextColor(...GOLD);
+      doc.text(CAP2, M, y + 24, { charSpace: CAP_SP });
+      // the block may not run past the money column, so a long name or a long
+      // email is SHRUNK to fit rather than allowed to collide with the total
+      const COL = X_FIN - M - 6;
+      const fit = (txt, start, floor) => {
+        let size = start; doc.setFontSize(size);
+        while (size > floor && doc.getTextWidth(txt) > COL) doc.setFontSize(size -= 0.4);
+        return size;
+      };
+      doc.setFont("helvetica", "normal"); doc.setTextColor(...INK);
+      fit(buyer.name, 9, 6.5);
+      doc.text(buyer.name, M, y + 30);
+      doc.setTextColor(...MUTE);
+      fit(buyer.email, 8.4, 6);
+      doc.text(buyer.email, M, y + 35);
+    }
 
     // ---- footer on every page ----
     const pages = doc.getNumberOfPages();
