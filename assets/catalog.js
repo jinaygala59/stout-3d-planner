@@ -160,6 +160,22 @@ const CATEGORIES = [
    editing a name here, find it in that PDF. */
 const RAW_PRODUCTS = [
   // ---- Overhead / Rain Showers (C-series) ----
+  /* NO LED WHERE THE CATALOGUE DOES NOT SELL ONE (2026-09-28, asked for
+     directly: "remove the led strip text, for the showers").
+     Six of these called their long bar an "LED strip". It is a WATERFALL
+     SLOT. The July 2026 pages say so in their own words — C1001, C1003 and
+     C1014 are "Functions:Rainfall & Waterfall", C1007, C1008 and C1015 are
+     "Rainfall, Waterfall & Mist" — and the same reading was already recorded
+     under `functions` in buildProducts on 2026-09-12, where the outlet counts
+     were corrected but these six strings were missed. They now say waterfall,
+     and the third function is named mist rather than left as a jet count.
+
+     FOUR ROWS KEEP THEIR LED, because on those four it is a real feature the
+     factory sells and charges for, not a misread render: C1006 "Coloured Led
+     With Remote Controller; Need Electricity Power", C1009 and C1011 and
+     C1012 "Chromotherapy (Rgb) Led Light. Includes Remote Control For Led
+     Lights. (Requires Electric Point)". Taking the word off those would drop
+     a selling point off a 41,500 to 120,000 fitting. */
   /* CEILING SHOWERS ARE NAMED BY WHAT THEY DO, NOT BY A SERIES (2026-09-21,
      asked for directly: "for showers don't use their complicated names — only
      keep Ceiling Shower with how many functions they provide", pointing at how
@@ -182,8 +198,8 @@ const RAW_PRODUCTS = [
      by one; ST-HEX1 is not in the list and carries its hex family's 480x330. */
   { code: "ST-C1012", cat: "rain-shower", name: "Three Function Ceiling Showers",  finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"],                                   badge: "Signature", variant: "650x450 mm · waterfall blades + LED strips", size: "650x450 mm", functions: 3 },
   { code: "ST-C1013", cat: "rain-shower", name: "Hex Ceiling Mounted Showers",    finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "480x330 mm · hex plate · 6 jets", size: "480x330 mm", functions: 2 },
-  { code: "ST-C1014", cat: "rain-shower", name: "Hex Ceiling Mounted Showers",  finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "480x330 mm · hex plate · LED strips", size: "480x330 mm", functions: 2 },
-  { code: "ST-C1015", cat: "rain-shower", name: "Hex Ceiling Mounted Showers",  finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "480x330 mm · hex plate · LED strips + 5 jets", size: "480x330 mm", functions: 3 },
+  { code: "ST-C1014", cat: "rain-shower", name: "Hex Ceiling Mounted Showers",  finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "480x330 mm · hex plate · waterfall", size: "480x330 mm", functions: 2 },
+  { code: "ST-C1015", cat: "rain-shower", name: "Hex Ceiling Mounted Showers",  finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "480x330 mm · hex plate · waterfall + 5 mist jets", size: "480x330 mm", functions: 3 },
   /* THE PLAIN HEX PLATE (2026-09-24, asked for directly: "single function,
      rain shower", with its six colours and their prices).
 
@@ -230,12 +246,12 @@ const RAW_PRODUCTS = [
      price list never printed. Confirm the code and price with the factory. */
   { code: "ST-C1019", cat: "rain-shower", name: "Ceiling Mounted Showers",            finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], badge: "Bestseller", variant: "380x250 mm · wide plate · plain, slim edge", size: "380x250 mm", functions: 1 },
   // Added from the Stout asset library (2026-07-10) — descriptive names, rename to real SKU names anytime
-  { code: "ST-C1001", cat: "rain-shower", name: "Ceiling Mounted Showers",      finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "480x330 mm · wide plate · LED strip", size: "480x330 mm", functions: 2 },
+  { code: "ST-C1001", cat: "rain-shower", name: "Ceiling Mounted Showers",      finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "480x330 mm · wide plate · waterfall", size: "480x330 mm", functions: 2 },
   { code: "ST-C1002", cat: "rain-shower", name: "Ceiling Mounted Showers",      finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "480x330 mm · wide plate · 4 jets", size: "480x330 mm", functions: 2 },
-  { code: "ST-C1003", cat: "rain-shower", name: "Ceiling Mounted Showers",     finishes: ["chrome","gunGrey","roseGold","brushedRoseGold","matteBlack"], variant: "380x250 mm · slim plate · LED strip", size: "380x250 mm", functions: 2 },
+  { code: "ST-C1003", cat: "rain-shower", name: "Ceiling Mounted Showers",     finishes: ["chrome","gunGrey","roseGold","brushedRoseGold","matteBlack"], variant: "380x250 mm · slim plate · waterfall", size: "380x250 mm", functions: 2 },
   { code: "ST-C1004", cat: "rain-shower", name: "Ceiling Mounted Showers",  finishes: ["chrome","gunGrey","roseGold","brushedRoseGold","matteBlack"], variant: "380x250 mm · slim plate · 2 jets", size: "380x250 mm", functions: 2 },
-  { code: "ST-C1007", cat: "rain-shower", name: "Ceiling Mounted Showers",           finishes: ["chrome"], variant: "380x250 mm · slim plate · LED strip + 4 jets", size: "380x250 mm", functions: 3 },
-  { code: "ST-C1008", cat: "rain-shower", name: "Ceiling Mounted Showers",       finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "480x330 mm · wide plate · LED strip + 4 jets", size: "480x330 mm", functions: 3 },
+  { code: "ST-C1007", cat: "rain-shower", name: "Ceiling Mounted Showers",           finishes: ["chrome"], variant: "380x250 mm · slim plate · waterfall + 4 mist jets", size: "380x250 mm", functions: 3 },
+  { code: "ST-C1008", cat: "rain-shower", name: "Ceiling Mounted Showers",       finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "480x330 mm · wide plate · waterfall + 4 mist jets", size: "480x330 mm", functions: 3 },
   { code: "ST-C1010", cat: "rain-shower", name: "Ceiling Mounted Showers",        finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "480x330 mm · wide plate · plain", size: "480x330 mm", functions: 1 },
   { code: "ST-C1011", cat: "rain-shower", name: "Four Function Ceiling Showers",        finishes: ["chrome","gunGrey","champagne","roseGold","brushedRoseGold","matteBlack"], variant: "650x450 mm · waterfall blades + LED + centre jet", size: "650x450 mm", functions: 4 },
 
