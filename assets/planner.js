@@ -4481,7 +4481,20 @@ function deselect() {
   selected = null; renderTool();
 }
 
+/* SELECT ON A TAP, NOT ON A TOUCH. This ran on pointerdown, so on a phone every
+   drag to look round the room began by selecting whatever the finger landed on
+   and flying the camera into it — or, off a fitting, closing the tool the
+   client had open. A pick now needs the finger to come up close to where it
+   went down; anything that travelled is an orbit and is left to the controls. */
+let tapStart = null;
 renderer.domElement.addEventListener("pointerdown", e => {
+  tapStart = e.isPrimary ? { x: e.clientX, y: e.clientY, t: performance.now() } : null;
+});
+renderer.domElement.addEventListener("pointerup", e => {
+  const s = tapStart; tapStart = null;
+  if (!s || !e.isPrimary) return;
+  const slop = e.pointerType === "mouse" ? 5 : 12;
+  if (Math.hypot(e.clientX - s.x, e.clientY - s.y) > slop || performance.now() - s.t > 600) return;
   const uid = pickProduct(e);
   if (uid) {
     // Positions are LOCKED — tapping a fitting selects it (finish / size / remove
@@ -5147,6 +5160,15 @@ function renderRail() {
     if (isValve(p)) [...placed.values()].forEach(r => {
       if (r.product.catId !== p.catId && r.finishId !== fin) changeFinish(r.uid, fin, true);
     });
+    /* A FRESH pick does move forward, though: with nothing replaced, the client
+       has finished this step, so the rail opens on the next one instead of
+       leaving five closed headers to guess between (2026-09-29). Asked AFTER
+       placing, because the piece just placed changes what the room can take. */
+    if (!replaced) { const nx = nextStep(); openGroup = nx ? nx.id : null; renderRail(); }
+    if (isValve(p) && !replaced) showCoach();
+    // on a phone the sheet covers the wall the piece is going on — drop it so
+    // the client watches it land, and let the grip say what comes next
+    if (isPhone()) setSheet(false);
     toast(replaced ? `${p.name} replaced ${replaced.product.name}`
                    : isValve(p) ? `${p.name} added — the room is now ${finName(fin)}, and feeds ${p.outlets || 1}`
                                 : `${p.name} added`,
@@ -5174,6 +5196,7 @@ function renderRail() {
   syncRoomFin();          // the toolbar's finish button follows the room
   renderChosen();
   if (typeof renderEmptyState === "function") renderEmptyState();
+  if (typeof syncGrip === "function") syncGrip();
 }
 
 /* a plain-language description of the room for screen readers */
@@ -6609,16 +6632,71 @@ function syncToolbar(phase) {
 }
 window.addEventListener("resize", syncToolbar);
 
-/* ---- products sheet on a phone ----------------------------------------- */
+/* ---- products sheet on a phone -----------------------------------------
+   THE GRIP IS THE GUIDE. Reported 2026-09-29: on a phone a first-time visitor
+   could not work out how to pick anything. "Choose a diverter" opened a list
+   inside a sheet that stayed shut, a pick left the sheet over the room so the
+   piece landed out of sight, and every step then folded away with nothing to
+   say what came next. So the closed sheet now says the next step in words —
+   "Step 2 of 5 · Shower" — opens on that step, and gets out of the way the
+   moment something is placed so the client sees it go on the wall. */
+const PHONE_MQ = "(max-width:860px)";
+const isPhone = () => window.matchMedia(PHONE_MQ).matches;
+const groupHas = g => [...placed.values()].some(r => g.cats.includes(r.product.catId));
+/* the first step not yet done that the room can still take, or null when the
+   bathroom is as full as its diverter allows */
+function nextStep() {
+  if (!placedValve()) return RAIL_GROUPS[0];
+  return RAIL_GROUPS.find(g => !groupHas(g) && groupOffer(g).some(p => !blockReason(p))) || null;
+}
+function setSheet(open) {
+  const grip = $("#sheetGrip"), rail = $("#rail"); if (!grip || !rail) return;
+  if (open && !rail.classList.contains("open")) {
+    // open on the step the grip just promised, unless a search is running
+    const g = nextStep();
+    if (g && !railQuery.text && openGroup !== g.id) { openGroup = g.id; renderRail(); }
+  }
+  rail.classList.toggle("open", open);
+  document.body.classList.toggle("sheet-open", open);   // lifts the toast clear
+  grip.setAttribute("aria-expanded", String(open));
+  syncGrip();
+  if (open) requestAnimationFrame(() => {
+    const cats = $("#catAccordion"), g = cats && cats.querySelector(".cat-group.open");
+    if (g) cats.scrollTop = g.offsetTop - cats.offsetTop;
+  });
+}
+/* How to move round the room, said ONCE, the first time there is something in
+   it worth moving round to. A touch screen has no cursor to hint with, and
+   nobody guesses that one finger turns the room and a tap edits a fitting. */
+function showCoach() {
+  try { if (localStorage.getItem("stout.coach.v1")) return; localStorage.setItem("stout.coach.v1", "1"); } catch (_) {}
+  const touch = window.matchMedia("(pointer:coarse)").matches;
+  const el = document.createElement("div");
+  el.className = "coach"; el.setAttribute("role", "status");
+  el.innerHTML = touch
+    ? "<span><b>Drag</b> to look around</span><span><b>Pinch</b> to zoom</span><span><b>Tap a fitting</b> to change it</span>"
+    : "<span><b>Drag</b> to look around</span><span><b>Scroll</b> to zoom</span><span><b>Click a fitting</b> to change it</span>";
+  $(".stage3d").appendChild(el);
+  const bye = () => { el.classList.add("hide"); setTimeout(() => el.remove(), 400); };
+  setTimeout(bye, 7000);
+  renderer.domElement.addEventListener("pointerdown", bye, { once: true });
+}
+function syncGrip() {
+  const grip = $("#sheetGrip"), rail = $("#rail"); if (!grip || !rail) return;
+  const open = rail.classList.contains("open");
+  const step = grip.querySelector(".sg-step"), lbl = grip.querySelector(".sg-lbl");
+  const g = nextStep(), n = placed.size;
+  grip.classList.toggle("done", !open && !g);
+  if (open) { step.textContent = ""; lbl.textContent = "Close"; }
+  else if (!n) { step.textContent = `Step 1 of ${RAIL_GROUPS.length}`; lbl.textContent = "Choose a diverter"; }
+  else if (g) { step.textContent = `Step ${g.step} of ${RAIL_GROUPS.length}`; lbl.textContent = `Add a ${g.name.toLowerCase()}`; }
+  else { step.textContent = `${n} fitting${n > 1 ? "s" : ""}`; lbl.textContent = "Your bathroom is ready"; }
+  grip.setAttribute("aria-label", open ? "Close products" : `${step.textContent}: ${lbl.textContent}`);
+}
 (function initSheet() {
   const grip = $("#sheetGrip"), rail = $("#rail"); if (!grip || !rail) return;
-  grip.onclick = () => {
-    const open = !rail.classList.contains("open");
-    rail.classList.toggle("open", open);
-    document.body.classList.toggle("sheet-open", open);   // lifts the toast clear
-    grip.setAttribute("aria-expanded", String(open));
-    grip.querySelector("span").textContent = open ? "Close" : "Products";
-  };
+  grip.onclick = () => setSheet(!rail.classList.contains("open"));
+  syncGrip();
 })();
 $("#toggleBasin").onclick = () => { setBasin(!basinVisible); saveDesign(); };
 
@@ -6866,11 +6944,17 @@ function renderEmptyState() {
   el.id = "empty"; el.className = "empty";
   el.innerHTML =
     '<p class="e-kicker">Start your bathroom</p>' +
-    '<h2>Step 1 — choose your diverter</h2>' +
-    '<p class="e-body">The diverter comes first, because it decides the rest: tap one to pick ' +
-    'its finish, and the whole room is designed in that finish. How many functions it has is how ' +
-    'many fittings it can feed. Your PDF lists each fitting with its MRP from the July 2026 ' +
-    'price list — Stout supplies and installs the whole design, and your consultant confirms the quotation.</p>' +
+    '<h2>Your bathroom in 3 steps</h2>' +
+    /* THREE NUMBERED LINES, NOT A PARAGRAPH (2026-09-29). The old card was a
+       seven-line paragraph about outlets and price lists; on a phone it filled
+       half the screen and first-time visitors still did not know what to tap.
+       The detail is not lost: the finish chooser explains the lock, and the
+       PDF carries the MRP note. */
+    '<ol class="e-steps">' +
+      '<li><span><b>Pick a diverter</b> and its finish — the whole room follows that colour</span></li>' +
+      '<li><span><b>Add the rest</b> — shower, body jets, spout, hand shower</span></li>' +
+      '<li><span><b>Download the PDF</b> with every fitting and its MRP</span></li>' +
+    '</ol>' +
     '<div class="e-row">' +
       '<button type="button" data-e="first">Choose a diverter</button>' +
       '<button type="button" data-e="set">Auto-arrange a full set</button>' +
@@ -6881,6 +6965,9 @@ function renderEmptyState() {
     // one for you — the old button dropped the first rain shower in, which
     // both skipped the client's step 1 and picked their product for them.
     openGroup = RAIL_GROUPS[0].id; renderRail();
+    // on a phone that list lives in the products sheet, which has to come up —
+    // without this the button changed a list nobody could see and did nothing
+    if (isPhone()) setSheet(true);
     const first = $(".cat-group.open .pcard .pc-main");
     if (first) first.focus();
   };
