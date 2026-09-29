@@ -5931,13 +5931,13 @@ async function downloadSpecSheet() {
        binds. If any line was "on request" the total says how many it leaves
        out, so it is never mistaken for the whole bill. */
     /* Who the sheet was made for, if the gate knows. Read BEFORE the page-break
-       test below, because the block adds ~24 mm to the foot of the page and the
+       test below, because the block adds ~29 mm to the foot of the page and the
        test has to know whether that space is wanted. */
     const buyer = (() => {
       try { const v = readLead(); return (v && v.name && v.email) ? v : null; }
       catch (e) { return null; }
     })();
-    if (y + (buyer ? 44 : 20) > PH - 22) { doc.addPage(); y = M + 8; }
+    if (y + (buyer ? 49 : 20) > PH - 22) { doc.addPage(); y = M + 8; }
     y += 1;
     doc.setDrawColor(...INK); doc.setLineWidth(0.4); doc.line(X_FIN, y - 5, PW - M, y - 5);
     doc.setFont("helvetica", "bold"); doc.setFontSize(9); doc.setTextColor(...INK);
@@ -6021,9 +6021,22 @@ async function downloadSpecSheet() {
       doc.setFont("helvetica", "normal"); doc.setTextColor(...INK);
       fit(buyer.name, 9, 6.5);
       doc.text(buyer.name, M, y + 30);
+      /* THE NUMBER, between the name and the email (2026-09-29, asked for off
+         a printed sheet): the gate always collected it, the sheet just never
+         said it, so a consultant holding the paper had a name and an email
+         and nothing to dial. A tel: link like Stout's own above it. Older
+         saved details may predate the field, so the line only takes space
+         when there is a number to print. */
+      let ey = y + 35;
+      const phone = (buyer.phone || "").trim();
+      if (phone) {
+        fit(phone, 8.4, 6);
+        doc.textWithLink(phone, M, y + 35, { url: "tel:" + phone.replace(/[^0-9+]/g, "") });
+        ey = y + 40;
+      }
       doc.setTextColor(...MUTE);
       fit(buyer.email, 8.4, 6);
-      doc.text(buyer.email, M, y + 35);
+      doc.text(buyer.email, M, ey);
     }
 
     // ---- footer on every page ----
