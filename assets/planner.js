@@ -1161,7 +1161,7 @@ const THEMES = {
   },
   grey: {
     id: "grey", label: "Grey", swatch: "#93969a",
-    bg: 0x0e0f11, exposure: 0.96, art: 0.85,
+    bg: 0x0e0f11, exposure: 0.96, art: 0.85, metal: 0.85,
     env: ["#d3d3d7", "#84848a", "#2e2e32"],
     // walls carry no joints — see the white room's note
     surfaces: {
@@ -1209,7 +1209,7 @@ const THEMES = {
      NO JOINTS ANYWHERE, walls or floor, as asked. */
   beige: {
     id: "beige", label: "Beige", swatch: "#c9b195",
-    bg: 0x14110e, exposure: 0.98, art: 0.92,
+    bg: 0x14110e, exposure: 0.98, art: 0.92, metal: 0.90,
     env: ["#f2e2c6", "#c9ad85", "#63513c"],
     surfaces: {
       side:    { kind: "slab", base: "#dec5a4", vein: "#7d5c36", vein2: "#bd9c74", veins: 9, veinAlpha: 0.66, veinSoft: 7, flow: -0.62,
@@ -1437,9 +1437,19 @@ const finishRough = fid => FINISH_ROUGH[fid] == null ? 0.20 : FINISH_ROUGH[fid];
    spout is at PDF 124-125. Re-run the measurement on PDF 121-122 and it lands on
    the SINGLE FUNCTION and DANCING body jet spreads instead — which is a jet, the
    one shape the note above warns is mostly black spray face. */
+/* ROSE GOLD MOVED ONCE MORE, #e7beaa -> #e0af96 (2026-09-30, asked for
+   directly: "why the rose gold color is not properly visible on all the
+   products"). The catalogue page taken above is the palest of the witnesses it
+   lists, and it read on the wall as a pale pink-beige, not rose gold, on every
+   fitting at once — the diverter photograph is printed to this number and every
+   modelled piece is solved to the photograph. #e0af96 is the client's OWN
+   ST-PLAIN render, the witness the note ranks as the source of the range; the
+   catalogue median (#eab6a1) and the product renders in assets/products
+   (ST-PLAIN #d4a48c, ST-HY #d8ab90, saturation 0.33-0.34) all sit on its side.
+   ART_TONE follows it for the reason given there: one number per finish. */
 const METAL_TONE = {
   chrome: 0xd5d6d6, gunGrey: 0x8e8e8e, brushedGold: 0xa57c3f, champagne: 0xbeac93,
-  gold: 0xe8d8b7, roseGold: 0xe7beaa, brushedRoseGold: 0xdda78a,
+  gold: 0xe8d8b7, roseGold: 0xe0af96, brushedRoseGold: 0xdda78a,
   /* This table is the MEASUREMENT and nothing else — it is what the PDF swatch
      prints and what a colour is checked against. It is no longer what the
      shader is handed: that is METAL_BASE below, solved per finish so the wall
@@ -1500,7 +1510,39 @@ const METAL_TONE = {
    shoulder, which changes how glossy rose gold reads and is a decision for the
    client, not a calibration. Do not "finish the job" by pushing this number
    further: the row above shows what that costs. */
-const METAL_BASE = { chrome: 0xd9e4ef, gunGrey: 0x26272b, brushedGold: 0x6a3707, champagne: 0x6d4d2c, gold: 0xf4b357, polishedGold: 0xd88b26, roseGold: 0xcf4b2b, brushedRoseGold: 0xbc4422, matteBlack: 0x151617 };
+/* SUPERSEDED FOR THE FIVE COLOURED FINISHES (2026-09-30) — see the note under
+   this line. The history above is kept because it explains the pipeline. */
+const METAL_BASE = { chrome: 0xd9e4ef, gunGrey: 0x3a3a3f, brushedGold: 0x6a3707, champagne: 0x72583e, gold: 0xf4b357, polishedGold: 0xd88b26, roseGold: 0xb5563d, brushedRoseGold: 0xaa4e33, matteBlack: 0x1b1b1c };
+/* EVERY METAL NOW MATCHES THE DIVERTER'S PHOTOGRAPH ON THE WALL (2026-09-30).
+   Reported off a customer's iPad, twice in one day: Rose Gold jets ORANGE
+   beside a pink diverter, then Gun Grey jets lighter than their diverter, then
+   the spout. Three faults, one cause — the metal was calibrated against
+   ST-PLAIN's own render, while a customer compares a fitting with the
+   thermostatic plate a hand's width away, which is a PHOTOGRAPH:
+     - jet plates (flat, square to the camera) rendered far hotter than a
+       curved spout at the same base: rose gold at saturation 0.47 against
+       Stout's catalogue 0.29-0.34, gun grey and matt black 85-90 units too dark;
+     - the spout ran orange too (#e4ab8d beside a #e1bead plate);
+     - the diverter's OWN extruded side multiplied its photo by these bases, so
+       gun grey wore a near-black band and rose gold an orange one — the plate
+       did not match itself. extrudeCutout now prints the photo's edge instead.
+   Solved on the wall, White room: ST-D5019 + four ST-SF + ST-PLAIN, each piece
+   masked by hiding it and differencing the frame, the middle 60% of its pixels
+   by luminance averaged, each base stepped in linear light until the metal
+   equals the diverter's photographed face. Every finish converged to within 1
+   unit, on both shapes. Stout's catalogue renders agree that the jet, spout
+   and plate are one metal (gun grey #8e-#a7 across all three), which is why
+   the target is the plate and not a table.
+   JETS NEED THEIR OWN ROW because the plate and the spout take different
+   slices of the studio. Chrome's spout was already within 5 and keeps its
+   base; only its jet plate (12 units bright) takes a row.
+   Re-solve both rows together if the environment, roughness or exposure moves.
+   Rose gold re-solved the same day onto the richer #e0af96 print (see
+   METAL_TONE): spout 0xb5563d, jet 0xbb6149, both landing on the plate's
+   #dbb19c exactly. */
+const METAL_BASE_JET = { roseGold: 0xbb6149, champagne: 0x7a624a, brushedRoseGold: 0xb05a42,
+                         gunGrey: 0x494a4e, matteBlack: 0x2a2a2b, chrome: 0xc2c3d0 };
+const jetHex = (fid, fallback) => METAL_BASE_JET[fid] != null ? METAL_BASE_JET[fid] : fallback;
 /* How far fittingEnv's studio is pushed away from its own mean. See the note
    where it is applied: this is what stops every modelled fitting rendering flat. */
 let STUDIO_CONTRAST = 2.2;   /*TUNE*/
@@ -1560,7 +1602,18 @@ const finishMetal = fid => FINISH_METAL[fid] == null ? 1.0 : FINISH_METAL[fid];
    the frame; solving for zero on both gives:
      roughness 0.08 (chrome)      -> 0.87
      roughness 0.44 (the satins)  -> 1.04                                    */
-const envForMetal = (m, rough) => METAL_ENV_GAIN *
+/* x artExposure(): the metal dims with the room exactly as the photographs
+   do (2026-09-30). fittingEnvI only follows the room part-way (0.5 + 0.4 x),
+   so in the Black room, where the photos print at 0.64, a rose gold jet sat at
+   0.86 of value beside a plate at 0.75 — the same finish, visibly two. Swept
+   there, the metal's env matches the photo at a factor of 0.60-0.70, which is
+   the room's own art level; so that is the factor, and White (1.0) is
+   unchanged, which keeps every base above valid.
+   THEME.metal trims what that leaves: the Grey and Beige rooms' studios light
+   a fitting more than their art level says, so rose gold sat 10-13 levels
+   above its plate there. Swept per room (0.72-1.0), the error bottoms out at
+   0.85 (Grey) and 0.90 (Beige); White and Black match without it. */
+const envForMetal = (m, rough) => METAL_ENV_GAIN * artExposure() * (THEME && THEME.metal != null ? THEME.metal : 1) *
   fittingEnvI() * (0.26 + 0.99 * m) * (0.83 + 0.49 * (rough == null ? 0.45 : rough));
 
 function metalMat(hex, rough, fid) {
@@ -2673,7 +2726,7 @@ const ART_TONE = {   // sRGB band means of the built ST-PLAIN, White room
      plate whose own render is blown out (ST-D5018-roseGold bands #ffd5b7) is
      brought to the same tone by the tint this target drives. */
   chrome: 0xd5d6d6, gunGrey: 0x8e8e8e, brushedGold: 0xb08847, champagne: 0xbeac93, gold: 0xe8d8b7,
-  polishedGold: 0xd9bd74, roseGold: 0xe7beaa, brushedRoseGold: 0xdda78a,
+  polishedGold: 0xd9bd74, roseGold: 0xe0af96, brushedRoseGold: 0xdda78a,
   /* matt black is a coat, not a mirror, and how bright it bands on the wall
      depends on the shape it is on (spout 0x62, jets 0x3e); the print aims at the
      measured coat colour and sits between them */
@@ -2930,17 +2983,28 @@ function extrudeCutout(mesh, map, w, h, depth, hex, faceZ) {
   // between them, not the count: 8 layers was fine over 2 cm and shows daylight
   // stripes over 8. Keep them ~4 mm apart however deep the body runs.
   const layers = Math.max(8, Math.ceil(depth / 0.004)), step = depth / layers;
+  /* THE SIDE IS THE PHOTOGRAPH'S OWN EDGE, DARKENED — NOT A TINT ON IT
+     (2026-09-30). Each layer used to multiply the artwork by the finish's metal
+     base under the room's lights. The artwork already IS the finish, so that
+     counted the colour twice: a Gun Grey plate (face #a1a1a1 in Stout's
+     render) wore a near-black band down its side, and a Rose Gold one an
+     orange-copper band under a pink face — reported off a customer's iPad as
+     "the diverter and the jets are different colours", and the plate did not
+     even match itself. Now each layer prints the same pixels the face does,
+     through the same room exposure and finish print (artMaterial), and only
+     `shade` steps it darker with depth, which is what reads as a solid edge.
+     Unlit and not tone mapped, like the relief face it sits behind. */
   for (let i = 1; i <= layers; i++) {
     const shade = 1 - 0.55 * (i / layers);                 // deeper layers go darker
-    const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshStandardMaterial({
-      map, alphaTest: 0.45, side: THREE.DoubleSide,
-      color: new THREE.Color(hex).multiplyScalar(shade),
-      metalness: 0.8, roughness: 0.38, envMapIntensity: 1.05,
-    }));
+    const mat = new THREE.MeshBasicMaterial({ map, alphaTest: 0.45, side: THREE.DoubleSide, toneMapped: false });
+    artMaterial(mat);
+    mat.userData.artwork.color = shade;                     // exposeMaterial prints shade x room x finish tint
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), mat);
     m.position.z = faceZ - i * step;
-    m.userData.metal = true; m.userData.shade = shade;      // recolours with the finish
+    m.userData.shade = shade;
     g.add(m);
   }
+  exposeArtwork(g);
   mesh.add(g);
 }
 
@@ -3662,6 +3726,8 @@ function modelInstance(model, spec, hex, rule, rough, fid) {
   if (!spec.proc) {
     // the MTLs point at Windows paths — the brand metal in the chosen finish instead
     mat = metalMat(hex, rough, fid);
+    // a jet plate wears the jet row of the calibration (see METAL_BASE_JET)
+    if (spec.set === "jets") { mat.userData.jetPlate = true; mat.color.setHex(jetHex(fid, mat.color.getHex())); }
     // two-sided: one of these exports is an inside-out shell, and a culled body
     // is a spout floating over its own base. Back faces get their normal flipped.
     mat.side = THREE.DoubleSide;
@@ -3793,9 +3859,24 @@ function buildProcBody(kind, hex, fid) {
    three nozzles, a 25-hole disc — printed unlit like all artwork and exposed for
    the room. One texture is shared by the four members of a set. Re-run on a
    finish swap (holder.userData.reface). */
+/* A FACE BORROWED FROM A SISTER FINISH, printed in the finish asked for
+   (2026-09-30). The rose gold dancing jet has no face of its own: its render is
+   the one that shows a black face (see tools_decal.py), so it is skipped, and
+   the jet went on the wall as a blank plate — no nozzles, beside a detailed
+   diverter, and it read as unfinished. Brushed rose gold is the same metal
+   family and its render shows the three nozzle bosses in the metal; the decal
+   is cut from that and printed to ROSE GOLD by finishTexture, so the colour is
+   rose gold's own and only the relief is borrowed. Delete the entry once the
+   factory sends a rose gold render lit like the other seven. */
+const FACE_FROM = { "ST-DC": { roseGold: "brushedRoseGold" } };
 const faceArt = (product, fid) => {
-  const p = (product.images && (product.images[fid] || product.images[product.defaultFinish])) || null;
-  return p ? p.replace("assets/products/", "assets/products/face/") : null;
+  let p = (product.images && (product.images[fid] || product.images[product.defaultFinish])) || null;
+  if (!p) return null;
+  // the sister finish is not SOLD on this SKU, so it is not in `images`; the
+  // face file sits beside the others under the same naming
+  const src = FACE_FROM[product.code] && FACE_FROM[product.code][fid];
+  if (src) p = p.replace("-" + fid + ".", "-" + src + ".");
+  return p.replace("assets/products/", "assets/products/face/");
 };
 function applyDecals(holder, product, fid, spec) {
   if (!spec.decal) return;
@@ -4604,7 +4685,7 @@ function changeFinish(uid, fid, commit) {
     const hex = metalHex(fid, finishHex(fid, rec.product));
     rec.mesh.traverse(o => {
       if (!o.userData.metal || !o.material) return;
-      o.material.color.setHex(hex);
+      o.material.color.setHex(o.material.userData.jetPlate ? jetHex(fid, hex) : hex);
       if (o.userData.shade != null) o.material.color.multiplyScalar(o.userData.shade);
       if (o.material.userData.metalFinish) {
         // the SURFACE changes with the finish, not only its colour: swapping
@@ -4651,6 +4732,8 @@ function changeFinish(uid, fid, commit) {
       o.material.needsUpdate = true;
     });
     if (old) old.dispose();
+    // the extruded side prints the artwork too, so it takes the new finish print
+    exposeArtwork(rec.mesh);
     const hex = finishHex(fid, rec.product);
     const housing = rec.mesh.getObjectByName("housing");
     if (housing) housing.material.color.setHex(hex);
