@@ -1447,16 +1447,32 @@ const finishRough = fid => FINISH_ROUGH[fid] == null ? 0.20 : FINISH_ROUGH[fid];
    catalogue median (#eab6a1) and the product renders in assets/products
    (ST-PLAIN #d4a48c, ST-HY #d8ab90, saturation 0.33-0.34) all sit on its side.
    ART_TONE follows it for the reason given there: one number per finish. */
+/* THE CATALOGUE IS THE REFERENCE, FOR EVERY FINISH (2026-10-01, asked for
+   directly: "go through this pdf and take exact same color", STOUT July 2026).
+   Every product photograph in the 230-page price list was extracted with its
+   alpha mask, tied to the finish label printed under it (308 photos), and
+   measured with the statistic this file prints by (artBandMean: the linear mean
+   of the 40-90% luminance band). The table below is the MEDIAN per finish:
+       roseGold         #e3b093   50 photos
+       brushedRoseGold  #f3ba99   39
+       champagne        #c4ae8e   33   (the catalogue's BRUSHED BRONZE)
+       chrome           #dfdee1   70
+       gold             #e0c88e   20   (FRENCH GOLD)
+       gunGrey          #9c9c9c   40
+       matteBlack       #3c3c3a   56
+   It supersedes every single-witness value noted above (one spout page, one
+   render). ART_TONE follows it for the reason given there: one number per
+   finish. Re-measure with the same method if the catalogue is reissued. */
 const METAL_TONE = {
-  chrome: 0xd5d6d6, gunGrey: 0x8e8e8e, brushedGold: 0xa57c3f, champagne: 0xbeac93,
-  gold: 0xe8d8b7, roseGold: 0xe0af96, brushedRoseGold: 0xdda78a,
+  chrome: 0xdfdee1, gunGrey: 0x9c9c9c, brushedGold: 0xa57c3f, champagne: 0xc4ae8e,
+  gold: 0xe0c88e, roseGold: 0xe3b093, brushedRoseGold: 0xf3ba99,
   /* This table is the MEASUREMENT and nothing else — it is what the PDF swatch
      prints and what a colour is checked against. It is no longer what the
      shader is handed: that is METAL_BASE below, solved per finish so the wall
      shows these numbers. Matt black was once scaled down here (0x343434) to
      compensate for its diffuse lighting; that compensation now lives in its
      base like every other finish's, and the measured value stands. */
-  matteBlack: 0x5f5f5f,
+  matteBlack: 0x3c3c3a,
   polishedGold: 0xd8bd7c,          // measured with the rest — see catalog.js
 };
 /* WHAT THE SHADER IS HANDED SO THAT THE WALL SHOWS METAL_TONE.
@@ -1512,7 +1528,7 @@ const METAL_TONE = {
    further: the row above shows what that costs. */
 /* SUPERSEDED FOR THE FIVE COLOURED FINISHES (2026-09-30) — see the note under
    this line. The history above is kept because it explains the pipeline. */
-const METAL_BASE = { chrome: 0xd9e4ef, gunGrey: 0x3a3a3f, brushedGold: 0x6a3707, champagne: 0x72583e, gold: 0xf4b357, polishedGold: 0xd88b26, roseGold: 0xb5563d, brushedRoseGold: 0xaa4e33, matteBlack: 0x1b1b1c };
+const METAL_BASE = { chrome: 0xe7ecff, gunGrey: 0x525359, brushedGold: 0x6a3707, champagne: 0x8e6940, gold: 0xf4b357, polishedGold: 0xd88b26, roseGold: 0xc96643, brushedRoseGold: 0xec7949, matteBlack: 0x0e0e0e };
 /* EVERY METAL NOW MATCHES THE DIVERTER'S PHOTOGRAPH ON THE WALL (2026-09-30).
    Reported off a customer's iPad, twice in one day: Rose Gold jets ORANGE
    beside a pink diverter, then Gun Grey jets lighter than their diverter, then
@@ -1539,9 +1555,28 @@ const METAL_BASE = { chrome: 0xd9e4ef, gunGrey: 0x3a3a3f, brushedGold: 0x6a3707,
    Re-solve both rows together if the environment, roughness or exposure moves.
    Rose gold re-solved the same day onto the richer #e0af96 print (see
    METAL_TONE): spout 0xb5563d, jet 0xbb6149, both landing on the plate's
-   #dbb19c exactly. */
-const METAL_BASE_JET = { roseGold: 0xbb6149, champagne: 0x7a624a, brushedRoseGold: 0xb05a42,
-                         gunGrey: 0x494a4e, matteBlack: 0x2a2a2b, chrome: 0xc2c3d0 };
+   #dbb19c exactly.
+   ALL SIX re-solved 2026-10-01 after ART_TONE moved to the catalogue's own
+   medians (see METAL_TONE): every finish, spout and jet, lands on the printed
+   plate to 0 of 255 in the White room.
+   AND RE-SOLVED AGAIN THE SAME DAY against the plate's MEDIAN pixel, read off
+   the relief face alone. The 20-80% mean used above counts the plate's own
+   PRINTING (OFF/ON marks, the hot/cold arcs, the button rings) as if it were
+   metal; on a Matt Black plate that white print dragged the "plate" to
+   #5a5a59 when the coat itself is #40403e, and the jets solved to it came out
+   charcoal beside their own black spray faces (#3b3b39). The median ignores
+   the print. Every finish converged to 0 again, and each jet now sits a few
+   units from its own spray face as well as from the plate.
+   JETS ONLY, ONCE MORE, UP CLOSE (2026-10-01, reported: "the second body jet
+   still feels lighter than its original colour" — brushed rose gold). Solved
+   from the hero view, a jet read right at room distance and 13-26 units
+   LIGHTER once the camera closed in, which is exactly how a client looks at
+   one: tapping a fitting flies the camera to it. So the jet row is solved in
+   that close-up framing (plate median vs jet metal median, ST-D5011): rose
+   gold, champagne, brushed rose gold and gun grey move; matt black was within
+   4 and chrome already sits on its own chrome spray face, so both stay. */
+const METAL_BASE_JET = { roseGold: 0xc55438, champagne: 0x775735, brushedRoseGold: 0xfb613a,
+                         gunGrey: 0x434346, matteBlack: 0x131413, chrome: 0xcacddd };
 const jetHex = (fid, fallback) => METAL_BASE_JET[fid] != null ? METAL_BASE_JET[fid] : fallback;
 /* How far fittingEnv's studio is pushed away from its own mean. See the note
    where it is applied: this is what stops every modelled fitting rendering flat. */
@@ -2725,12 +2760,12 @@ const ART_TONE = {   // sRGB band means of the built ST-PLAIN, White room
      tables exists to prevent, and it is what the client was looking at. The
      plate whose own render is blown out (ST-D5018-roseGold bands #ffd5b7) is
      brought to the same tone by the tint this target drives. */
-  chrome: 0xd5d6d6, gunGrey: 0x8e8e8e, brushedGold: 0xb08847, champagne: 0xbeac93, gold: 0xe8d8b7,
-  polishedGold: 0xd9bd74, roseGold: 0xe0af96, brushedRoseGold: 0xdda78a,
+  chrome: 0xdfdee1, gunGrey: 0x9c9c9c, brushedGold: 0xb08847, champagne: 0xc4ae8e, gold: 0xe0c88e,
+  polishedGold: 0xd9bd74, roseGold: 0xe3b093, brushedRoseGold: 0xf3ba99,
   /* matt black is a coat, not a mirror, and how bright it bands on the wall
      depends on the shape it is on (spout 0x62, jets 0x3e); the print aims at the
      measured coat colour and sits between them */
-  matteBlack: 0x5f5f5f,
+  matteBlack: 0x3c3c3a,
 };
 const srgbToLin = v => v <= 0.04045 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
 const artTone = fid => {
